@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.engine;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.StateMachineDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.StateManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.TaskManager;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerControllerStub;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
@@ -41,7 +43,13 @@ public class FiniteStateMachineEngine implements Serializable {
     @Inject
     private StateMachineDao stateMachineDao;
 
+    @Inject
+    protected Deployment deployment;
+
     public FiniteStateMachineEngine() {
+        if (deployment != Deployment.PROD) {
+            setContext(new SchedulerContext(new SchedulerControllerStub()));
+        }
     }
 
     public FiniteStateMachineEngine(SchedulerContext context) {
@@ -128,6 +136,56 @@ public class FiniteStateMachineEngine implements Serializable {
         if (stateMachine.isComplete()) {
             stateMachine.setStatus(Status.COMPLETE);
             stateMachine.setDateCompleted(new Date());
+        }
+    }
+
+    public void incrementStateMachine(FiniteStateMachine stateMachine, MessageCollection messageCollection) {
+        if (stateMachine.getActiveStates().isEmpty()) {
+            throw new RuntimeException("No active states for " + stateMachine);
+        }
+
+        try {
+            for (State state: stateMachine.getActiveStates()) {
+                incrementStateMachine(stateMachine, state, messageCollection);
+            }
+            stateMachineDao.persist(stateMachine);
+            stateMachineDao.flush();
+        } catch (Exception e) {
+            String errMsg = "Error occurred when resuming state machine " + stateMachine;
+            log.error(errMsg, e);
+            messageCollection.addError(errMsg);
+        }
+    }
+
+    private void incrementStateMachine(FiniteStateMachine stateMachine, State state, MessageCollection messageCollection) {
+        if (stateManager.handleOnExit(state)) {
+            state.setAlive(false);
+            state.setEndTime(new Date());
+            List<Transition> transitionsFromState = stateMachine.getTransitionsFromState(state);
+            for (Transition transition : transitionsFromState) {
+                State toState = transition.getToState();
+                toState.setAlive(true);
+                if (stateManager.handleOnEnter(toState)) {
+                    toState.setStartTime(new Date());
+                    for (Task task : toState.getTasks()) {
+                        fireEventAndCheckStatus(task);
+                    }
+                } else {
+                    messageCollection.addError("Failed to enter state " + toState.getStateId());
+                }
+            }
+        } else {
+            messageCollection.addError("Failed to exit state " + state.getStateId());
+        }
+    }
+
+    private void fireEventAndCheckStatus(Task task){
+        try {
+            taskManager.fireEvent(task, context);
+            taskManager.checkTaskStatus(task, context);
+        } catch (Exception e) {
+            log.error("Error firing next task " + task.getTaskName(), e);
+            task.setStatus(Status.SUSPENDED);
         }
     }
 

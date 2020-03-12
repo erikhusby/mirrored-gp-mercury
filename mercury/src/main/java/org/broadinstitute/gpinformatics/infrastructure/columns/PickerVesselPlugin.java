@@ -12,11 +12,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class PickerVesselPlugin implements ListPlugin {
 
@@ -143,14 +149,36 @@ public class PickerVesselPlugin implements ListPlugin {
 
             // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
             if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
-                LabEvent latestCheckInEvent = findLatestCheckInEvent(labVessel);
-                if (latestCheckInEvent != null) {
-                    LabVessel tubeFormation = latestCheckInEvent.getInPlaceLabVessel();
-                    VesselPosition position = tubeFormation.getContainerRole().getPositionOfVessel(labVessel);
-                    RackOfTubes rack =
-                            OrmUtil.proxySafeCast(latestCheckInEvent.getAncillaryInPlaceVessel(), RackOfTubes.class);
-                    locationTrail = locationTrail + " [" + rack.getLabel() + "]";
-                    return Triple.of(rack, position, locationTrail);
+                SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
+                for (LabVessel container : labVessel.getContainers()) {
+                    if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(
+                                container, TubeFormation.class);
+                        for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
+                            if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
+                                sortedMap.put(labEvent.getEventDate(), tubeFormation);
+                            }
+                        }
+                    }
+                }
+                if (!sortedMap.isEmpty()) {
+                    TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
+                    for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                        if (rackOfTubes.getStorageLocation() != null) {
+                            if (rackOfTubes.getStorageLocation().equals(labVessel.getStorageLocation())) {
+                                VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+                                for (Map.Entry<VesselPosition, BarcodedTube> entry:
+                                        containerRole.getMapPositionToVessel().entrySet()) {
+                                    LabVessel value = entry.getValue();
+                                    if (value != null && value.getLabel().equals(labVessel.getLabel())) {
+                                        String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail() + "["
+                                                               + rackOfTubes.getLabel() + "]";
+                                        return Triple.of(rackOfTubes, entry.getKey(), locationTrail);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

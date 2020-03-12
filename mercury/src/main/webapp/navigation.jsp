@@ -524,11 +524,6 @@
                                       event="view">Create Fingerprint Task</stripes:link>
                     </li>
                     <li>
-                        <stripes:link id="viewDragenNodes"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.SlurmActionBean"
-                                      event="list">List Dragen Nodes</stripes:link>
-                    </li>
-                    <li>
                         <stripes:link id="viewTriage"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationTriageActionBean"
                                       event="list">Aggregation Triage</stripes:link>

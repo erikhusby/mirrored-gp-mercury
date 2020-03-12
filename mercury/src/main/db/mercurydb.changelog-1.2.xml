@@ -3508,4 +3508,66 @@
             'Sequencing Storage retrieval Queue for samples to be fetched by SRS headed for Sequencing');
         </sql>
     </changeSet>
+
+    <changeSet id="GPLIM-6242-47" author="jowalsh">
+        <createTable tableName="task_decision" schemaName="mercury">
+            <column name="task_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+            <column name="note" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="task_decision" columnNames="task_decision_id"
+                       constraintName="PK_TASK_DECISION"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-48" author="jowalsh">
+        <createTable tableName="task_decision_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="task_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+            <column name="note" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="task_decision_aud" columnNames="rev, task_decision_id"
+                       constraintName="PK_TASK_DECISION_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-49" author="jowalsh">
+        <addColumn tableName="task">
+            <column name="task_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6242-50" author="jowalsh">
+        <addColumn tableName="task_aud">
+            <column name="task_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6242-51" author="jowalsh">
+        <addForeignKeyConstraint constraintName="FK_TASK_DECISION"
+                                 baseTableName="task" baseColumnNames="task_decision"
+                                 referencedTableName="task_decision" referencedColumnNames="task_decision_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-52" author="jowalsh">
+        <addForeignKeyConstraint constraintName="FK_TASK_DEC_AUD_REV_INFO"
+                                 baseTableName="task_decision_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-53" author="jowalsh">
+        <createSequence sequenceName="SEQ_TASK_DECISION" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-54" author="thompson">
+        <createIndex tableName="TASK_DECISION_AUD" indexName="IX_DEC_ID_TASK_DEC_AUD">
+            <column name="TASK_DECISION_ID"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

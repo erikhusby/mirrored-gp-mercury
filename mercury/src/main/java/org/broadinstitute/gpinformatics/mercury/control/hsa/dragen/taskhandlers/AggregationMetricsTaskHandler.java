@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.AlignmentSta
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
@@ -87,7 +88,7 @@ public class AggregationMetricsTaskHandler extends AbstractMetricsTaskHandler<Al
             String runName = sampleName + "_" + outputDirectory.getName();
             Date runDate = new Date();
             String analysisname = outputDirectory.getName();
-            String readGroup = sampleName + "_Aggregation";
+            String readGroup = ReadGroupUtil.toAggregationReadGroupMetric(sampleName);
             boolean containsContamination = aggregationTask.getQcContaminationFile() != null;
             AlignmentStatsParser alignmentStatsParser = new AlignmentStatsParser();
             AlignmentStatsParser.AlignmentDataFiles alignmentDataFiles = alignmentStatsParser

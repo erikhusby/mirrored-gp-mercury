@@ -3,14 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.DemultiplexStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -31,7 +27,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -419,7 +414,7 @@ public class SequencingRunFixupTest extends Arquillian {
      * PO-136444 run folder moved after registration
      * 180721_SL-MAC_0453_FC000000000-BV4PM
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void addMissingSequencingRunChambers() throws Exception {
         userBean.loginOSUser();
 

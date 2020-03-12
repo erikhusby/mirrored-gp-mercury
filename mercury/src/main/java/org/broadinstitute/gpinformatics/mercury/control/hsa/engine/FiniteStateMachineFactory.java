@@ -399,7 +399,33 @@ public class FiniteStateMachineFactory {
                 aggregationStateMachine.setTransitions(Collections.singletonList(transition));
             }
 
+            String waitForReview = "DataReview";
+            GenericState dataReviewState = new GenericState(waitForReview, aggregationStateMachine);
+            dataReviewState.addSample(mercurySample);
+            WaitForReviewTask waitForReviewTask = new WaitForReviewTask(waitForReview);
+            dataReviewState.addTask(waitForReviewTask);
+            states.add(dataReviewState);
+
+            List<Transition> transitions = new ArrayList<>();
+            Transition aggToReview = new Transition("AggToReview_" + sampleKey, aggregationStateMachine);
+            aggToReview.setFromState(aggregationState);
+            aggToReview.setToState(dataReviewState);
+            transitions.add(aggToReview);
+
+            State uploadState = new GenericState("Upload_" + sampleKey, aggregationStateMachine, Collections.emptySet());
+            String gsBucket = dragenConfig.getGsBucket();
+            File cramFile = new File(outputDir, outputFilePrefix + ".cram");
+            GsUtilTask gsUtilTask = GsUtilTask.cp(cramFile, gsBucket);
+            uploadState.addTask(gsUtilTask);
+            states.add(uploadState);
+
+            Transition reviewToUpload = new Transition("ReviewToUpload_" + sampleKey, aggregationStateMachine);
+            reviewToUpload.setFromState(dataReviewState);
+            reviewToUpload.setToState(uploadState);
+            transitions.add(reviewToUpload);
+
             aggregationStateMachine.setStates(states);
+            aggregationStateMachine.setTransitions(transitions);
             aggregationStateMachine.setStatus(Status.RUNNING);
         } else {
             log.info("Agg already exists - restarting machine: " + aggregationState);

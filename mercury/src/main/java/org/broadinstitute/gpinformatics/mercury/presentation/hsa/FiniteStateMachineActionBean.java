@@ -290,8 +290,6 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
 
     @HandlesEvent(RESUME_MACHINE_ACTION)
     public Resolution resumeMachine() {
-        SchedulerContext schedulerContext = new SchedulerContext(new SchedulerControllerStub());
-        finiteStateMachineEngine.setContext(schedulerContext);
         Long selectedId = getSelectedIds().iterator().next();
         FiniteStateMachine stateMachine = stateMachineDao.findById(FiniteStateMachine.class, selectedId);
         finiteStateMachineEngine.resumeMachine(stateMachine);

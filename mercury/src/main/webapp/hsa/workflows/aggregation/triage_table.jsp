@@ -25,10 +25,13 @@
         <th>Sex@Birth</th>
         <th>Sex Concordant</th>
         <th>LOD</th>
+        <th>Decision</th>
+        <th>Comment</th>
     </tr>
     </thead>
     <tbody>
     <c:forEach items="${dtoList}" var="dto" varStatus="status">
+        <c:set var="decisionSet" value="${not empty dto.taskDecision}"/>
         <tr>
             <td>
                 <stripes:checkbox name="selectedSamples" class="${tableId}-checkbox"
@@ -38,6 +41,7 @@
             <td>
                     ${dto.pdoSample}
                     <stripes:hidden name="${dtoName}[${status.index}].pdoSample" value="${dto.pdoSample}"/>
+                    <stripes:hidden name="${dtoName}[${status.index}].taskId" value="${dto.taskId}"/>
             </td>
             <td>
                     ${dto.sampleVessel}
@@ -52,8 +56,8 @@
                     <stripes:hidden name="${dtoName}[${status.index}].coverage20x" value="${dto.coverage20x}"/>
             </td>
             <td>
-                    ${dto.contaminination}
-                    <stripes:hidden name="${dtoName}[${status.index}].contaminination" value="${dto.contaminination}"/>
+                    ${dto.contamination}
+                    <stripes:hidden name="${dtoName}[${status.index}].contamination" value="${dto.contamination}"/>
             </td>
             <td>
                     ${dto.alignedQ20Bases}
@@ -71,6 +75,16 @@
                     ${dto.lod}
                     <stripes:hidden name="${dtoName}[${status.index}].lod" value="${dto.lod}"/>
             </td>
+            <c:choose>
+                <c:when test="${decisionSet}">
+                    <td>${dto.taskDecision.decision.name()}</td>
+                    <td>${dto.taskDecision.overrideReason}</td>
+                </c:when>
+                <c:otherwise>
+                    <td></td>
+                    <td></td>
+                </c:otherwise>
+            </c:choose>
         </tr>
     </c:forEach>
     </tbody>

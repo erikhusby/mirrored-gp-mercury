@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.AlignmentMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.BclMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.CrosscheckFingerprintUploadTaskHandler;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DeleteFolderTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.DemultiplexMetricsTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandler;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.PushIdatsToCloudHandler;
@@ -44,6 +45,9 @@ public class TaskManager {
     private CrosscheckFingerprintUploadTaskHandler crosscheckFingerprintUploadTaskHandler;
 
     @Inject
+    private DeleteFolderTaskHandler deleteFolderTaskHandler;
+
+    @Inject
     private PushIdatsToCloudHandler pushIdatsToCloudHandler;
 
     @Inject
@@ -79,6 +83,8 @@ public class TaskManager {
             // TODO JW handle better as its own state to avoid entering in the normal sense?
             task.setStatus(Status.RUNNING);
             task.getState().getFiniteStateMachine().setStatus(Status.TRIAGE);
+        } else if (OrmUtil.proxySafeIsInstance(task, DeleteFolderTask.class)) {
+            task.setStatus(Status.RUNNING);
         }
     }
 
@@ -111,8 +117,15 @@ public class TaskManager {
 
             Status status = file.exists() ? Status.COMPLETE : Status.RUNNING;
             Date endTime = file.exists() ? new Date(file.lastModified()) : null;
-            statusDatepair = Pair.of(status, endTime);
-        } if (OrmUtil.proxySafeIsInstance(task, WaitForInfiniumMetric.class)) {
+            return Pair.of(status, endTime);
+        } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
+            return Pair.of(Status.RUNNING, null);
+        } else if (OrmUtil.proxySafeIsInstance(task, DeleteFolderTask.class)) {
+            deleteFolderTaskHandler.handleTask(OrmUtil.proxySafeCast(task, DeleteFolderTask.class), schedulerContext);
+            if (task.isComplete()) {
+                return Pair.of(task.getStatus(), new Date());
+            }
+        } else if (OrmUtil.proxySafeIsInstance(task, WaitForInfiniumMetric.class)) {
             waitForInfiniumMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, WaitForInfiniumMetric.class), schedulerContext);
             if (task.isComplete()) {
                 statusDatepair = Pair.of(Status.COMPLETE, new Date());
@@ -126,8 +139,6 @@ public class TaskManager {
             } else {
                 statusDatepair = Pair.of(Status.RUNNING, null);
             }
-        } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
-            return; // do nothing, wait for human review.
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForCustomerFilesTask.class)) {
             return; // check portal?
         }

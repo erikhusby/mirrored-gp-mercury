@@ -15,7 +15,8 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.hsa.FiniteStateMachineActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Workflow"
-                       sectionTitle="View Workflow: ${actionBean.editFiniteStateMachine.stateMachineName}: Current Status ${actionBean.editFiniteStateMachine.status}">
+                       sectionTitle="View Workflow: ${actionBean.editFiniteStateMachine.stateMachineName}: Current Status ${actionBean.editFiniteStateMachine.status}"
+                       dataTablesVersion="1.10" >
 
     <stripes:layout-component name="extraHead">
         <style type="text/css">
@@ -26,29 +27,19 @@
         <script type="text/javascript">
             $j(document).ready(function () {
 
-                $j('#taskList').DataTable({
-                    "oTableTools": {
-                        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [
-                            {
-                                "sExtends" : "csv",
-                                "bHeader" : false,
-                                "sFieldBoundary": "",
-                                "mColumns": [ 1, 2, 3, 4, 5 ]
-                            }
-                        ]
-                    },
-                    "aoColumns": [
-                        {"bSortable": false},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": false}
-                    ]
+                $j('#taskList').dataTable({
+                    renderer: "bootstrap",
+                    columns: [
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
+                        {sortable: true}
+                    ],
                 });
 
                 $j('.task-checkbox').enableCheckboxRangeSelection({

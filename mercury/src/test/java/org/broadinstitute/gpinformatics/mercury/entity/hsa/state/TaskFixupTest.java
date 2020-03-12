@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetr
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.BclDemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexMetricsTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
@@ -36,14 +35,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -52,7 +45,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_.sampleKey;
 
 /**
  * Fixups to HSA Task entities
@@ -126,7 +118,7 @@ public class TaskFixupTest extends Arquillian {
      * GPLIM-6242
      * {Task ID},CANCELLED
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim6242Status() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -155,7 +147,7 @@ public class TaskFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim6242AddExitTaskToStateAndStart() throws Exception {
         userBean.loginOSUser();
         utx.begin();

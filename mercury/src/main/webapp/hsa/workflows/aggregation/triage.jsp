@@ -41,7 +41,7 @@
         </style>
         <script type="text/javascript">
             $j(document).ready(function() {
-               var inSpecTable = $j('#inSpecTable').DataTable({
+               let inSpecTable = $j('#inSpecTable').dataTable({
                     renderer: "bootstrap",
                     columns: [
                         {sortable: false},
@@ -59,11 +59,13 @@
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true},
                         {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
                         {sortable: true}
                     ],
                 });
 
-                var oosTable = $j('#oosSpecTable').DataTable({
+                let oosTable = $j('#oosSpecTable').dataTable({
                     renderer: "bootstrap",
                     paging: true,
                     pageLength : 150,
@@ -86,6 +88,8 @@
                         {sortable: true, "sClass": "nowrap"},
                         {sortable: true},
                         {sortable: true},
+                        {sortable: true},
+                        {sortable: true},
                         {sortable: true}
                     ],
                 });
@@ -100,19 +104,19 @@
                     countDisplayClass:'oosSpecTable-checkedCount',
                     checkboxClass:'oosSpecTable-checkbox'});
 
-                $('#inSpecTab a').click(function (e) {
+                $j('.tab a').click(function (e) {
                     e.preventDefault();
                     $(this).tab('show');
                 });
 
-                $('#oosSpecTab a').click(function (e) {
-                    e.preventDefault();
-                    $(this).tab('show');
-                });
-
-                $('#oosSpecTable tbody').on('click', 'td.details-control', function () {
-                    var tr = $(this).closest('tr');
-                    var row = oosTable.row( tr );
+                $j('.table tbody').on('click', 'td.details-control', function () {
+                    var tr = $j(this).closest('tr');
+                    let tableId = $j(this).closest('table').attr('id');
+                    let tableObj = oosTable.api();
+                    if (tableId === 'inSpecTable') {
+                        tableObj = inSpecTable.api();
+                    }
+                    var row = tableObj.row( tr );
                     var rowData = row.data();
                     var pdoSample = rowData[2].split(/\s+/)[0]; // Include SM then the table data for some reason?
 
@@ -128,7 +132,6 @@
                             datatype: 'html',
                             success: function (resultHtml) {
                                 tr.removeClass("spinning");
-                                console.log(resultHtml);
                                 var div = $('<div/>');
                                 div.html(resultHtml);
                                 row.child(div).show();
@@ -142,18 +145,8 @@
                     }
                 });
 
-                $('.dataTables_filter input[type="search"]').css(
-                    {'width':'350px','display':'inline-block'}
-                );
-
-                // TODO JW Refactor
-                $('.dataTables_filter input[type="search"]').keyup(function() {
-                    var inputTxt = $(this).val();
-                    var searchTerms = inputTxt.split(/[ ,]+/).filter(Boolean);
-                    var asRegex = searchTerms.join("|");
-                    console.log(asRegex);
-                    oosTable.search(asRegex, true, false).draw() ;
-                });
+                includeAdvancedFilter(inSpecTable, "#inSpecTable");
+                includeAdvancedFilter(oosTable, "#oosSpecTable");
 
                 $j('.flowcellStatusTable').hide();
 
@@ -163,19 +156,38 @@
 
     <stripes:layout-component name="content">
         <ul class="nav nav-tabs" id="specTabs">
-            <li class="active"><a href="#inSpecTab" data-toggle="tab">In Spec</a></li>
-            <li><a href="#oosSpecTab" data-toggle="tab">Out Of Spec</a></li>
+            <li class="active tab"><a href="#inSpecTab" data-toggle="tab">In Spec</a></li>
+            <li><a href="#oosSpecTab" class="tab" data-toggle="tab">Out Of Spec</a></li>
         </ul>
 
         <div class="tab-content" id="specTabsContent">
             <div class="tab-pane active" id="inSpecTab">
-                <stripes:form beanclass="${actionBean.class.name}" id="inSpecForm" method="POST">
+                <stripes:form beanclass="${actionBean.class.name}" id="inSpecForm" class="form-horizontal" method="POST">
                     <c:set var="tableId" value="inSpecTable" scope="request"/>
                     <c:set var="inSpecTable" value="${true}" scope="request"/>
                     <c:set var="dtoList" value="${actionBean.passingTriageDtos}" scope="request"/>
                     <c:set var="dtoName" value="passingTriageDtos" scope="request"/>
                     <jsp:include page="triage_table.jsp"/>
-                    <stripes:submit name="sendToCloud" value="Send To Cloud" class="btn btn-primary"/>
+                    <div class="control-group">
+                        <stripes:label for="oosDecision" name="decision" class="control-label"/>
+                        <div class="controls">
+                            <stripes:select name="decision" id="inSpecDecision">
+                                <stripes:options-collection label="displayName"
+                                                            collection="${actionBean.inSpecOptions}"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="commentText" class="control-label"/>
+                        <div class="controls">
+                            <stripes:textarea id="inSpecComment" name="commentText"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="controls">
+                            <stripes:submit name="updateInSpec" value="Update" class="btn btn-primary"/>
+                        </div>
+                    </div>
                 </stripes:form>
             </div>
             <div class="tab-pane" id="oosSpecTab">
@@ -188,16 +200,16 @@
                     <div class="control-group">
                         <stripes:label for="oosDecision" name="decision" class="control-label"/>
                         <div class="controls">
-                            <stripes:select name="oosDecision" id="oosDecision">
-                                <stripes:options-enumeration label="displayName"
-                                                             enum="org.broadinstitute.gpinformatics.mercury.presentation.hsa.AggregationTriageActionBean.OutOfSpecCommands"/>
+                            <stripes:select name="decision" id="oosDecision">
+                                <stripes:options-collection label="displayName"
+                                                             collection="${actionBean.outOfSpecOptions}"/>
                             </stripes:select>
                         </div>
                     </div>
                     <div class="control-group">
                         <stripes:label for="commentText" class="control-label"/>
                         <div class="controls">
-                            <stripes:textarea id="commentText" name="commentText"/>
+                            <stripes:textarea id="oosComment" name="commentText"/>
                         </div>
                     </div>
                     <div class="control-group">
