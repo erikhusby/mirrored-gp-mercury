@@ -106,6 +106,11 @@ public class QueueEjb {
             return;
         }
         List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
+        if (labVessels.size() < sampleIds.size()) {
+            messageCollection.addError(sampleIds.size() + " barcodes were entered, but only " + labVessels.size() +
+                    " were found.   Nothing was added to the queue, resolve this issue and try again.");
+            return;
+        }
         enqueueLabVessels(labVessels, queueType, readableText, messageCollection, queueOrigin, queueSpecialization);
     }
 
