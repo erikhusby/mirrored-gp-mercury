@@ -117,13 +117,15 @@ public class TaskManager {
 
             Status status = file.exists() ? Status.COMPLETE : Status.RUNNING;
             Date endTime = file.exists() ? new Date(file.lastModified()) : null;
-            return Pair.of(status, endTime);
+            statusDatepair = Pair.of(status, endTime);
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
-            return Pair.of(Status.RUNNING, null);
+            statusDatepair = Pair.of(Status.RUNNING, null);
         } else if (OrmUtil.proxySafeIsInstance(task, DeleteFolderTask.class)) {
             deleteFolderTaskHandler.handleTask(OrmUtil.proxySafeCast(task, DeleteFolderTask.class), schedulerContext);
             if (task.isComplete()) {
-                return Pair.of(task.getStatus(), new Date());
+                statusDatepair = Pair.of(task.getStatus(), new Date());
+            } else {
+                statusDatepair = Pair.of(task.getStatus(), null);
             }
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForInfiniumMetric.class)) {
             waitForInfiniumMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, WaitForInfiniumMetric.class), schedulerContext);

@@ -171,7 +171,7 @@ public class PickerVesselPlugin implements ListPlugin {
                                         containerRole.getMapPositionToVessel().entrySet()) {
                                     LabVessel value = entry.getValue();
                                     if (value != null && value.getLabel().equals(labVessel.getLabel())) {
-                                        String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail() + "["
+                                        locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail() + "["
                                                                + rackOfTubes.getLabel() + "]";
                                         return Triple.of(rackOfTubes, entry.getKey(), locationTrail);
                                     }
@@ -183,32 +183,5 @@ public class PickerVesselPlugin implements ListPlugin {
             }
         }
         return null;
-    }
-
-    /**
-     * Find latest check-in event for a lab vessel (barcoded tube only) <br/>
-     * If a check-out occurs after a check-in, do not report the check-in event
-     */
-    private static LabEvent findLatestCheckInEvent(LabVessel labVessel ) {
-        LabEvent latestCheckInEvent = null;
-        List<LabEvent> inPlaceLabEvents;
-
-        // Barocded tube containers are TubeFormation
-        for( LabVessel container : labVessel.getContainers() ) {
-            for( LabEvent labEvent : container.getInPlaceLabEvents() ) {
-                if( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ) {
-                    if (latestCheckInEvent == null) {
-                        latestCheckInEvent = labEvent;
-                    } else if (labEvent.getEventDate().after(latestCheckInEvent.getEventDate())) {
-                        latestCheckInEvent = labEvent;
-                    }
-                } else if ( labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
-                    if (latestCheckInEvent != null && latestCheckInEvent.getEventDate().before(labEvent.getEventDate())) {
-                        latestCheckInEvent = null;
-                    }
-                }
-            }
-        }
-        return latestCheckInEvent;
     }
 }
