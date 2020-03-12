@@ -1708,14 +1708,14 @@ public class ProductOrderEjb {
      */
     public ProductOrder createProductOrder(ProductOrderData productOrderData) throws DuplicateTitleException,
             NoSamplesException, ApplicationValidationException, InvalidProductException {
-        return createProductOrder(productOrderData, Collections.emptyList(), null, null);
+        return createProductOrder(productOrderData, Collections.emptyList(), null, null, false);
     }
 
     /**
      * Creates a product order in Pending state, and creates its corresponding JIRA ticket.
      */
     public ProductOrder createProductOrder(ProductOrderData productOrderData, List<String> jiraWatchers,
-            String owner, String jiraLink)
+            String owner, String jiraLink, boolean addAddOns)
             throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
             InvalidProductException {
 
@@ -1735,6 +1735,12 @@ public class ProductOrderEjb {
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
+            }
+            if (addAddOns) {
+                // Adds the product add-ons to the order.
+                productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
+                        map(product -> new ProductOrderAddOn(product, productOrder)).
+                        collect(Collectors.toList()));
             }
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
@@ -1770,7 +1776,7 @@ public class ProductOrderEjb {
         ProductOrder productOrder = null;
         try {
             // Creates the PDO.
-            productOrder = createProductOrder(productOrderData, watchers, owner, linkedJiraTicket);
+            productOrder = createProductOrder(productOrderData, watchers, owner, linkedJiraTicket, true);
             attachMercurySamples(productOrder.getSamples());
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
