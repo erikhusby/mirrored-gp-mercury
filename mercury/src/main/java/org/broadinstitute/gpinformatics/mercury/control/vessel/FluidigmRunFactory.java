@@ -93,12 +93,8 @@ public class FluidigmRunFactory {
             Collection<Set<LabVessel>> vesselSets = transferTraverserCriteria.getVesselsForLabEventType().values();
             if (vesselSets.size() == 1) {
                 Set<LabVessel> labVessels = vesselSets.iterator().next();
-                if (labVessels.size() == 1) {
-                    // No reworks for All of Us fingerprints, so dequeue regardless of pass / fail
-                    queueEjb.dequeueLabVessels(labVessels, QueueType.FINGERPRINTING,messageCollection, null);
-                } else {
-                    messageCollection.addError("Expected one dilution vessel, but found " + vesselSets.size());
-                }
+                // No reworks for All of Us fingerprints, so dequeue regardless of pass / fail
+                queueEjb.dequeueLabVessels(labVessels, QueueType.FINGERPRINTING,messageCollection, null);
             } else {
                 messageCollection.addError("Expected one dilution event, but found " + vesselSets.size());
             }
