@@ -62,6 +62,7 @@ public class ProductOrderData {
      * This is really a list of sample IDs.
      */
     private List<String> samples = new ArrayList<>();
+    private List<String> addOnPartNumbers = new ArrayList<>();
 
     /** Also required by JAXB. */
     public ProductOrderData() {
@@ -405,5 +406,13 @@ public class ProductOrderData {
 
     public void setGenoChipType(String genoChipType) {
         this.genoChipType = genoChipType;
+    }
+
+    public List<String> getAddOnPartNumbers() {
+        return addOnPartNumbers;
+    }
+
+    public void setAddOnPartNumbers(List<String> addOnPartNumbers) {
+        this.addOnPartNumbers = addOnPartNumbers;
     }
 }

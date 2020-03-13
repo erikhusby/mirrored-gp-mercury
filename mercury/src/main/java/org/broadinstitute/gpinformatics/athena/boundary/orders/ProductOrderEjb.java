@@ -1708,14 +1708,14 @@ public class ProductOrderEjb {
      */
     public ProductOrder createProductOrder(ProductOrderData productOrderData) throws DuplicateTitleException,
             NoSamplesException, ApplicationValidationException, InvalidProductException {
-        return createProductOrder(productOrderData, Collections.emptyList(), null, null, false);
+        return createProductOrder(productOrderData, Collections.emptyList(), null, null);
     }
 
     /**
      * Creates a product order in Pending state, and creates its corresponding JIRA ticket.
      */
     public ProductOrder createProductOrder(ProductOrderData productOrderData, List<String> jiraWatchers,
-            String owner, String jiraLink, boolean addAddOns)
+            String owner, String jiraLink)
             throws DuplicateTitleException, NoSamplesException, ApplicationValidationException,
             InvalidProductException {
 
@@ -1736,12 +1736,11 @@ public class ProductOrderEjb {
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
             }
-            if (addAddOns) {
-                // Adds the product add-ons to the order.
-                productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
-                        map(product -> new ProductOrderAddOn(product, productOrder)).
-                        collect(Collectors.toList()));
-            }
+            // Adds valid product add-ons from productOrderData.addOnPartNumbers to this order.
+            productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
+                    filter(product -> productOrderData.getAddOnPartNumbers().contains(product.getPartNumber())).
+                    map(product -> new ProductOrderAddOn(product, productOrder)).
+                    collect(Collectors.toList()));
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
             // is only one IRB on the RP.
@@ -1776,7 +1775,7 @@ public class ProductOrderEjb {
         ProductOrder productOrder = null;
         try {
             // Creates the PDO.
-            productOrder = createProductOrder(productOrderData, watchers, owner, linkedJiraTicket, true);
+            productOrder = createProductOrder(productOrderData, watchers, owner, linkedJiraTicket);
             attachMercurySamples(productOrder.getSamples());
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);

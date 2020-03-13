@@ -1099,9 +1099,11 @@ public class MayoManifestEjb {
         List<String> watchers = Arrays.asList(StringUtils.normalizeSpace(params.get(WATCHERS_PARAM).
                 replaceAll(",", " ")).toLowerCase().split(" "));
         String rpId = params.get(RESEARCH_PROJECT_PARAM);
-        String productPartNumber = params.get(PRODUCT_PARAM);
         String quoteId = params.get(QUOTE_PARAM);
-        Product product = productDao.findByPartNumber(productPartNumber);
+        Pair<Product, List<String>> pair = parseAndValidatePartNumbers(params.get(PRODUCT_PARAM), mappingName,
+                true, messages);
+        Product product = pair.getLeft();
+        List<String> addOns = pair.getRight();
 
         String packageId = manifestSession.getSessionPrefix();
         Date now = new Date();
@@ -1113,7 +1115,8 @@ public class MayoManifestEjb {
         productOrderData.setModifiedDate(now);
         productOrderData.setPlacedDate(now);
         productOrderData.setNumberOfSamples(accessionedTubes.size());
-        productOrderData.setProduct(productPartNumber);
+        productOrderData.setProduct(product.getPartNumber());
+        productOrderData.getAddOnPartNumbers().addAll(addOns);
         productOrderData.setProductName(product.getProductName());
         productOrderData.setQuoteId(quoteId);
         productOrderData.setResearchProjectId(rpId);
@@ -1168,12 +1171,12 @@ public class MayoManifestEjb {
                     }
                     break;
                 case PRODUCT_PARAM:
-                    if (productDao.findByPartNumber(dto.getWgsValue()) == null) {
-                        messageCollection.addError("WGS product '" + dto.getWgsValue() + "' is unknown.");
-                    }
-                    if (productDao.findByPartNumber(dto.getArrayValue()) == null) {
-                        messageCollection.addError("Array product '" + dto.getArrayValue() + "' is unknown.");
-                    }
+                    Stream.of(Pair.of("WGS", dto.getWgsValue()), Pair.of("Array", dto.getArrayValue())).
+                            forEach(pair -> {
+                                String type = pair.getLeft();
+                                String delimitedValues = pair.getRight();
+                                parseAndValidatePartNumbers(delimitedValues, type, false, messageCollection);
+                            });
                     break;
                 case QUOTE_PARAM:
                     if (StringUtils.isBlank(dto.getWgsValue())) {
@@ -1201,6 +1204,39 @@ public class MayoManifestEjb {
         } else {
             messageCollection.addError("Parameter names must contain " + StringUtils.join(EXPECTED_PDO_PARAMS, ", "));
         }
+    }
+
+    private Pair<Product, List<String>> parseAndValidatePartNumbers(String delimitedValues, String prefix,
+            boolean onlyWarn, MessageCollection messageCollection) {
+
+        List<String> partNumbers = Arrays.asList(StringUtils.normalizeSpace(delimitedValues).
+                replaceAll(",", " ").split(" "));
+        Product product = productDao.findByPartNumber(partNumbers.get(0));
+        List<String> addOns = partNumbers.subList(1, partNumbers.size());
+
+        if (product == null) {
+            String message = prefix + " product '" + partNumbers.get(0) + "' is unknown.";
+            if (onlyWarn) {
+                messageCollection.addWarning(message);
+            } else {
+                messageCollection.addError(message);
+            }
+        } else {
+            List<String> configuredAddOnPartNumbers = product.getAddOns().stream().
+                    map(Product::getPartNumber).
+                    collect(Collectors.toList());
+            String invalidAddOns = StringUtils.join(CollectionUtils.subtract(addOns, configuredAddOnPartNumbers), ", ");
+            if (!invalidAddOns.isEmpty()) {
+                String message = prefix + " add-on products " + invalidAddOns + " are not valid for AoU product " +
+                        product.getPartNumber() + ".";
+                if (onlyWarn) {
+                    messageCollection.addWarning(message);
+                } else {
+                    messageCollection.addError(message);
+                }
+            }
+        }
+        return Pair.of(product, addOns);
     }
 
     /**
