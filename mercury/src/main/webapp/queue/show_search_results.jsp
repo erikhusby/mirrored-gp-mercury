@@ -10,28 +10,29 @@
 <stripes:layout-component name="extraHead">
 </stripes:layout-component>
 <stripes:layout-component name="content">
+    <h1 style="margin-top: 50px;text-align:center;">Samples listed below were found to not be in the ${actionBean.queueType.textName} Queue</h1>
     <c:choose>
         <c:when test="${not empty actionBean.labSearchResultList.resultRows}">
-            <div style="margin-top: 50px;">
-                <stripes:layout-render name="/columns/configurable_list.jsp"
-                                       entityName="${actionBean.entityName}"
-                                       sessionKey="${actionBean.sessionKey}"
-                                       columnSetName="${actionBean.columnSetName}"
-                                       downloadColumnSets="${actionBean.downloadColumnSets}"
-                                       resultList="${actionBean.labSearchResultList}"
-                                       action="${ctxpath}/search/ConfigurableSearch.action"
-                                       downloadViewedColumns="True"
-                                       isDbSortAllowed="False"
-                                       dbSortPath=""
-                                       dataTable="true"
-                                       loadDatatable="false"
-                                       showJumpToEnd="false"
-                />
+            <div style="margin-top: 50px;text-align:center;">
+                    <stripes:layout-render name="/columns/configurable_list.jsp"
+                                           entityName="${actionBean.entityName}"
+                                           sessionKey="${actionBean.sessionKey}"
+                                           columnSetName="${actionBean.columnSetName}"
+                                           downloadColumnSets="${actionBean.downloadColumnSets}"
+                                           resultList="${actionBean.labSearchResultList}"
+                                           action="${ctxpath}/search/ConfigurableSearch.action"
+                                           downloadViewedColumns="True"
+                                           isDbSortAllowed="False"
+                                           dbSortPath=""
+                                           dataTable="true"
+                                           loadDatatable="false"
+                                           showJumpToEnd="false"
+                    />
             </div>
         </c:when>
         <c:otherwise>
-            <div style="margin-top: 50px;">
-                All samples within the search are currently actively in the queue.
+            <div style="margin-top: 50px;text-align:center;">
+                All samples within the search are currently actively in the ${actionBean.queueType.textName} queue.
             </div>
         </c:otherwise>
     </c:choose>

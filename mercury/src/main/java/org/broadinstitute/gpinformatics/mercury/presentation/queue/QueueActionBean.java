@@ -18,13 +18,13 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.QueueEntitySearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.search.queue.DNAQuantQueueSearchTerms;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.Abstract
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
@@ -70,6 +71,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * ActionBean for interacting with Queues.
@@ -265,8 +267,33 @@ public class QueueActionBean extends CoreActionBean {
                     VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
 
                     Map<String, String> mapOfVesselToContainerBarcode = new HashMap<>();
+                    Map<String, String> mapOfVesselToPosition = new HashMap<>();
+
                     for (BarcodedTube containedVessel : containerRole.getContainedVessels()) {
                         mapOfVesselToContainerBarcode.put(containedVessel.getLabel(), selectedSearchTermValues);
+                        String vesselPosition = containedVessel.getVesselGeometry().getPositionNames().next();
+                        mapOfVesselToPosition.put(containedVessel.getLabel(), vesselPosition);
+
+                        TreeMap<String, String> sortedResults = new TreeMap<>();
+
+                        for (LabVessel container : containedVessel.getContainers()) {
+                            TubeFormation containerTubeFormation = (TubeFormation) container;
+
+                            TubeFormation vesselTubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+
+                            String vesselPositionInContainer = vesselTubeFormation.getContainerRole().getPositionOfVessel(containedVessel).name();
+                            Date createdOn = containerTubeFormation.getCreatedOn();
+
+                            Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
+                            for (RackOfTubes vesselsRackOfTubes : racksOfTubes) {
+                                String formattedCreatedOn = ColumnValueType.DATE_TIME.format(createdOn, "");
+                                String containerInfo = "<b>" + vesselsRackOfTubes.getLabel() + "</b>/<b>" + vesselPositionInContainer + "</b>:" + formattedCreatedOn;
+                                sortedResults.put(formattedCreatedOn, containerInfo);
+                            }
+                        }
+//                        for (Map.Entry<String, String> containerInformation : sortedResults.entrySet()) {
+//                            results.add(containerInformation.getValue());
+//                        }
                     }
 
                     Set<String> values = mapOfVesselToContainerBarcode.keySet();
@@ -278,7 +305,7 @@ public class QueueActionBean extends CoreActionBean {
                     userSelectedTerm.setOperator(SearchInstance.Operator.IN);
                     userSelectedTerm.setValues(manufacturerBarcodes);
                 } else {
-                    // todo need to figure out how we wanna handle a search with bad/unknown container id.
+                    addGlobalValidationError("Unable to find the container id selected.");
                 }
             } else {
 
@@ -287,29 +314,35 @@ public class QueueActionBean extends CoreActionBean {
                 userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
             }
 
-            // Check for vessels specifically in DNA Quant queue.
-            SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
-            queue_type.setOperator(SearchInstance.Operator.EQUALS);
-            queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
-            queue_type.setIncludeInResults(false);
+            if (userSelectedTerm != null) {
+                // Check for vessels specifically in DNA Quant queue.
+                SearchInstance.SearchValue queue_type =
+                        searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
+                queue_type.setOperator(SearchInstance.Operator.EQUALS);
+                queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
+                queue_type.setIncludeInResults(false);
 
-            // Check for vessels that are NOT active in a queue entity
-            SearchInstance.SearchValue queue_entity_status =
-                    searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
-            queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
-            queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
-            queue_entity_status.setIncludeInResults(false);
+                // Check for vessels that are NOT active in a queue entity
+                SearchInstance.SearchValue queue_entity_status =
+                        searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
+                queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
+                queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
+                queue_entity_status.setIncludeInResults(false);
 
-            searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
-            searchInstance.getPredefinedViewColumns()
-                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
-            searchInstance.getPredefinedViewColumns()
-                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
 
-            searchInstance.establishRelationships(configurableSearchDef);
-            ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
-                    searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
-            labSearchResultList = firstPageResults.getResultList();
+
+                searchInstance.getPredefinedViewColumns()
+                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+                searchInstance.getPredefinedViewColumns()
+                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+                searchInstance.getPredefinedViewColumns()
+                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+
+                searchInstance.establishRelationships(configurableSearchDef);
+                ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                        searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
+                labSearchResultList = firstPageResults.getResultList();
+            }
         } else {
             addGlobalValidationError("You must select a search term.");
         }
