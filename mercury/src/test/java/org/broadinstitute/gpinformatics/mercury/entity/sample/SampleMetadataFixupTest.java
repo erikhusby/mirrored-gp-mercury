@@ -293,30 +293,16 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
-     * SELECT
-     *     ms.sample_key, 'CLIENT', 'MAYO'
-     * FROM
-     *     metadata m
-     *     INNER JOIN mercury_sample_metadata msm
-     *         ON  msm.metadata = m.metadata_id
-     *     INNER JOIN mercury_sample ms
-     *         ON  ms.mercury_sample_id = msm.mercury_sample
-     * WHERE
-     *     m."KEY" = 'NY_STATE'
-     *     AND NOT EXISTS (
-     *                 SELECT
-     *                     1
-     *                 FROM
-     *                     mercury_sample_metadata msm2
-     *                     INNER JOIN metadata m2
-     *                         ON  m2.metadata_id = msm2.metadata
-     *                 WHERE
-     *                     msm2.mercury_sample = ms.mercury_sample_id
-     *                     AND m2."KEY" = 'CLIENT'
-     *         )
-     * ORDER BY
-     *     ms.mercury_sample_id;
-     * @throws IOException
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddSampleMetadata.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 and subsequent are SampleId\tMetadata.Key\tNew value.
+     * Note: currently, each sample can appear only once in the file; if there are multiple lines for the same sample,
+     * all but the last are ignored.
+     * Example contents of the file are:
+     * GPLIM-5856
+     * 1194526016	CLIENT	MAYO
+     * 1194526031	CLIENT	MAYO
      */
     @Test(enabled = false)
     public void gplim5856AddMetadata() throws IOException {
@@ -384,7 +370,7 @@ public class SampleMetadataFixupTest extends Arquillian {
      * Perform actual fixup and validate.
      */
     private void addMetadataAndValidate(@Nonnull Map<MercurySample, MetaDataFixupItem> fixupItems,
-                                        @Nonnull String fixupComment) {
+                                        String fixupComment) {
         userBean.loginOSUser();
         String originalValueDontMatchError =
                 "Original value of sample metadata is not what was expected. Key: %s, Expected: %s, Found: %s";
