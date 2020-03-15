@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -32,7 +33,9 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -290,6 +293,58 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * SELECT
+     *     ms.sample_key, 'CLIENT', 'MAYO'
+     * FROM
+     *     metadata m
+     *     INNER JOIN mercury_sample_metadata msm
+     *         ON  msm.metadata = m.metadata_id
+     *     INNER JOIN mercury_sample ms
+     *         ON  ms.mercury_sample_id = msm.mercury_sample
+     * WHERE
+     *     m."KEY" = 'NY_STATE'
+     *     AND NOT EXISTS (
+     *                 SELECT
+     *                     1
+     *                 FROM
+     *                     mercury_sample_metadata msm2
+     *                     INNER JOIN metadata m2
+     *                         ON  m2.metadata_id = msm2.metadata
+     *                 WHERE
+     *                     msm2.mercury_sample = ms.mercury_sample_id
+     *                     AND m2."KEY" = 'CLIENT'
+     *         )
+     * ORDER BY
+     *     ms.mercury_sample_id;
+     * @throws IOException
+     */
+    @Test(enabled = false)
+    public void gplim5856AddMetadata() throws IOException {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleMetadata.txt"));
+        String fixupComment = lines.get(0);
+
+        List<String> sampleIds = new ArrayList<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three tab separated fields in " + line);
+            }
+            sampleIds.add(fields[0]);
+        }
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            MercurySample mercurySample = mapIdToMercurySample.get(fields[0]);
+            Assert.assertNotNull(mercurySample, "Failed to find " + fields[0]);
+            MetaDataFixupItem fixupItem =
+                    new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.valueOf(fields[1]), "", fields[2]);
+            fixupItems.put(mercurySample, fixupItem);
+        }
+        addMetadataAndValidate(fixupItems, fixupComment);
+        mercurySampleDao.flush();
+    }
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
@@ -358,7 +413,9 @@ public class SampleMetadataFixupTest extends Arquillian {
                     fixupItem.validateUpdatedValue(sample), is(Collections.EMPTY_MAP));
         }
 
-        mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        if (!StringUtils.isEmpty(fixupComment)) {
+            mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        }
     }
 
     private String getSampleMetadataValue(Metadata.Key metadataKey, MercurySample sample) {
