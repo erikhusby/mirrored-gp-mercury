@@ -4569,93 +4569,166 @@ public class ProductOrderActionBeanTest {
         boolean noQuoteRequired = false;
         statusesForChangeNotAllowed.forEach(orderStatus -> {
             assertThat(orderStatus.canPlace(), is(false));
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote,1, false});
             // not chaning quote type is OK
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2,0, true});
 
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2,1, true});
 
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", false});
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", false});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null,0, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null,1, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "",0, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "",1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote,1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "",1, false});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "",1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "",1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote,1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "",1, false});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "",1, true});
         });
 
         // These should always allow changing status
         statusesForChangeAllowed.forEach(orderStatus -> {
             assertThat(orderStatus.canPlace(), is(true));
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2,0, true});
 
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, null, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, sapQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, qsQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, sapQuote2,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, qsQuote2,1, true});
 
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "", true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote, true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "", true});
-            testCases.add(new Object[]{orderStatus, quoteRequired, "", "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote, true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "", true});
-            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "", true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null,0, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, null,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, null,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, null, null,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, null,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, null,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, null, null,1, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote,0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "",0, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "",0, true});
+
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, qsQuote, "",1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, sapQuote, "",1, true});
+            testCases.add(new Object[]{orderStatus, quoteRequired, "", "",1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", qsQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, qsQuote, "",1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", sapQuote,1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, sapQuote, "",1, true});
+            testCases.add(new Object[]{orderStatus, noQuoteRequired, "", "",1, true});
         });
         return testCases.iterator();
     }
 
     @Test(dataProvider = "changeQuoteDataProvider")
     public void testChangeQuote(ProductOrder.OrderStatus orderStatus, boolean quoteRequired, String oldQuote,
-                                String newQuote, boolean canChange) throws InvalidProductException {
+                                String newQuote, Integer numberOfLedgers, boolean canChange) throws InvalidProductException {
         pdo.setOrderStatus(orderStatus);
         Product product = Mockito.mock(Product.class);
         Mockito.when(product.getSupportsSkippingQuote()).thenReturn(true);
         pdo.setProduct(product);
         if (!quoteRequired) {
             pdo.setSkipQuoteReason("quote not required");
+        }
+        if(numberOfLedgers.compareTo(0)>0) {
+            pdo.getSamples().get(0).addLedgerItem(new Date(), pdo.getProduct(), BigDecimal.ONE, false);
         }
         assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
     }

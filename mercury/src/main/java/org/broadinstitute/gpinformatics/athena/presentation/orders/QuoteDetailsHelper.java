@@ -70,7 +70,7 @@ public class QuoteDetailsHelper {
         this.sapService = sapService;
     }
 
-    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier, String originalQuote)
+    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier)
         throws Exception {
         Map<String, Object> rootMap = new HashMap<>();
         QuoteDetail quoteDetails = getQuoteDetails(quoteIdentifier, actionBean);

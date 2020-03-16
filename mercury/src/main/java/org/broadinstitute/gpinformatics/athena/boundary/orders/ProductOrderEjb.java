@@ -522,6 +522,7 @@ public class ProductOrderEjb {
      * @return
      * @throws InvalidProductException
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public String validateQuoteAndGetPrice(Quote orderQuote, Product product, ProductOrder productOrder)
             throws InvalidProductException {
 
