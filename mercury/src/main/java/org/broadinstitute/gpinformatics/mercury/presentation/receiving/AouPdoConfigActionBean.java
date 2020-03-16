@@ -20,6 +20,9 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping_;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
@@ -27,9 +30,11 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,6 +53,8 @@ public class AouPdoConfigActionBean extends CoreActionBean {
 
     @Inject
     private MayoManifestEjb mayoManifestEjb;
+    private BillingTriggerMapping billingTrigger;
+    private BillingTriggerMapping wgsBillingTrigger;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void postConstruct() {
@@ -55,10 +62,13 @@ public class AouPdoConfigActionBean extends CoreActionBean {
         Map<String, String> wgsParams = attributeArchetypeDao.findKeyValueMap(KeyValueMapping.AOU_PDO_WGS);
         Map<String, String> arrayParams = attributeArchetypeDao.findKeyValueMap(KeyValueMapping.AOU_PDO_ARRAY);
         dtos = Stream.concat(wgsParams.keySet().stream(), arrayParams.keySet().stream()).
-                distinct().
-                sorted(Comparator.reverseOrder()).
-                map(param -> new Dto(param, wgsParams.get(param), arrayParams.get(param))).
-                collect(Collectors.toList());
+            distinct().
+            sorted(Comparator.reverseOrder()).
+            map(param -> new Dto(param, wgsParams.get(param), arrayParams.get(param))).
+            collect(Collectors.toList());
+
+        billingTrigger = attributeArchetypeDao.findSingle(BillingTriggerMapping.class, BillingTriggerMapping_.group,
+            BillingTriggerMapping.AOU_PDO_BILLING);
     }
 
     @DefaultHandler
@@ -89,6 +99,14 @@ public class AouPdoConfigActionBean extends CoreActionBean {
         }
     }
 
+    public BillingTriggerMapping getBillingTrigger() {
+        return billingTrigger;
+    }
+
+    public void setBillingTrigger(BillingTriggerMapping billingTrigger) {
+        this.billingTrigger = billingTrigger;
+    }
+
     public List<Dto> getDtos() {
         return dtos;
     }
@@ -109,6 +127,7 @@ public class AouPdoConfigActionBean extends CoreActionBean {
         private String paramName;
         private String wgsValue;
         private String arrayValue;
+        private Set<ResearchProject.BillingTrigger> billingTrigger = new HashSet<>();
 
         public Dto(String paramName, String wgsValue, String arrayValue) {
             this.paramName = paramName;

@@ -383,7 +383,8 @@ public class ProductOrderResource {
                     // The sample's business key IS the aliquot Id since that is the sample on the order.
                     Map<String, Object> dataMap = Collections.emptyMap();
                     WorkCompleteMessage workComplete =
-                            new WorkCompleteMessage(pdoKey, sample.getBusinessKey(), Product.SAMPLE_INITIATION_PART_NUMBER, currentDate, dataMap);
+                        new WorkCompleteMessage(pdoKey, sample.getBusinessKey(), Product.SAMPLE_INITIATION_PART_NUMBER,
+                            bspUser.getUserId(), currentDate, dataMap);
                     workCompleteMessageDao.persist(workComplete);
                 }
             }

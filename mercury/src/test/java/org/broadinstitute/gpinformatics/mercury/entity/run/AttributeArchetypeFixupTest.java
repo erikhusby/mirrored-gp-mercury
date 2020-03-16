@@ -2,8 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping_;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -25,6 +28,7 @@ import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -628,6 +632,25 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.persistAll(workflowMetadataList);
         attributeArchetypeDao.flush();
+        utx.commit();
+
+    }
+
+    public void testInitBillingTriggerArchetype() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+        List<BillingTriggerMapping> keyValueMappings = attributeArchetypeDao
+            .findListByList(BillingTriggerMapping.class, BillingTriggerMapping_.group,
+                Arrays.asList(KeyValueMapping.AOU_PDO_ARRAY, BillingTriggerMapping.AOU_PDO_BILLING));
+        keyValueMappings.forEach(attributeArchetypeDao::remove);
+        BillingTriggerMapping arrayArchetype =
+            new BillingTriggerMapping(BillingTriggerMapping.AOU_PDO_BILLING, BillingTriggerMapping.BILLING_TRIGGER);
+        arrayArchetype
+            .addOrSetAttribute(BillingTriggerMapping.BILLING_TRIGGER, ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT.name());
+
+        attributeArchetypeDao
+            .persistAll(Arrays.asList(arrayArchetype, new FixupCommentary("GPLIM-6698 Initial Values")));
+
         utx.commit();
 
     }

@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -65,11 +64,10 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        String pdoKey = "PDO-21348";
+        String pdoKey = "PDO-22077";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
 
         Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put(WorkCompleteMessage.Properties.FORCE_AUTOBILL.name(), (double) BooleanUtils.toInteger(true));
 
         List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
         productOrder.getSamples().forEach(productOrderSample -> {
@@ -87,8 +85,8 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
                 messages.stream().map(WorkCompleteMessage::getProcessDate).anyMatch(Objects::isNull);
             if (!alreadyInQueue) {
                 Long userId = userBean.getBspUser().getUserId();
-                workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-WG-0073", new Date(), dataMap));
-                workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", new Date(), dataMap));
+                workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-WG-0073", userId, new Date(), dataMap));
+//                workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", new Date(), dataMap));
             }
         });
 

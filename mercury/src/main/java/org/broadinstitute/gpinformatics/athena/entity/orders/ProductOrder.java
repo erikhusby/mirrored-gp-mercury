@@ -60,6 +60,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -228,8 +229,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private Product.AggregationParticle defaultAggregationParticle;
 
+    @ElementCollection
+    @JoinTable(schema = "athena", name = "PDO_BILLING_TRIGGERS",
+        joinColumns = {@JoinColumn(name = "PRODUCT_ORDER_ID")})
     @Enumerated(EnumType.STRING)
-    private ResearchProject.BillingTrigger billingTrigger;
+    private Collection<ResearchProject.BillingTrigger> billingTriggers;
 
     /**
      * Alphanumeric Id
@@ -905,12 +909,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return displayValue;
     }
 
-    @Transient
-    public String getBillingTriggerDisplayName() {
-        if (billingTrigger == null) {
-            billingTrigger = researchProject.getDefaultBillingTrigger();
-        }
-        return billingTrigger.getDisplayName();
+    private Collection<ResearchProject.BillingTrigger> getDefaultBillingTrigger() {
+        return getResearchProject() != null ? getResearchProject().getDefaultBillingTriggers() :
+            ResearchProject.BillingTrigger.defaultValues();
+    }
+
+    public Collection<ResearchProject.BillingTrigger> getBillingTriggerOrDefault() {
+        return Optional.ofNullable(billingTriggers).orElse(getDefaultBillingTrigger());
     }
 
     public Product.AggregationParticle getDefaultAggregationParticle() {
@@ -2410,6 +2415,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.analyzeUmiOverride = analyzeUmiOverride;
     }
 
+    public Collection<ResearchProject.BillingTrigger> getBillingTriggers() {
+        return billingTriggers;
+    }
+
+    public void setBillingTriggers(ResearchProject.BillingTrigger... billingTriggers) {
+        this.billingTriggers = Arrays.asList(billingTriggers);
+    }
+
     /**
      * @return - Reagent Design set on Product if its 'Bait Locked', otherwise check the PDO for override else default
      * back to whatever the product says.
@@ -2690,6 +2703,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }

@@ -23,6 +23,15 @@ public class BillingRequirement {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_REQUIREMENT")
     private Long billing_requirement_id;
 
+    public BillingRequirement() {
+    }
+
+    public BillingRequirement(String attribute, Operator operator, double value) {
+        this.attribute = attribute;
+        this.operator = operator;
+        this.value = value;
+    }
+
     /**
      * Check to see if this requirement is satisfied with the data.
      * @param data a name, value map of data

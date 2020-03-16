@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -47,6 +48,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -108,6 +110,27 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
         public boolean isClinical() {
             return isClinical;
+        }
+    }
+
+    public enum BillingTrigger implements Displayable {
+        NONE("Manual Billing Only"),
+        ADDONS_ON_RECEIPT("Bill Add-ons on Sample Receipt"),
+        DATA_REVIEW("Bill at Data Review"),;
+
+        private final String displayName;
+
+        BillingTrigger(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public static Collection<BillingTrigger> defaultValues() {
+            return new HashSet<>(Collections.singleton(BillingTrigger.NONE));
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
@@ -240,32 +263,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
-    public enum BillingTrigger implements Displayable {
-        NONE("Manual Billing Only"), RECEIPT("Bill on Sample Receipt");
-
-        private final String displayName;
-
-        BillingTrigger(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
+    @ElementCollection
+    @JoinTable(schema = "athena", name = "RP_BILLING_TRIGGERS",
+        joinColumns = {@JoinColumn(name = "RESEARCH_PROJECT")})
     @Enumerated(EnumType.STRING)
-    private BillingTrigger defaultBillingTrigger=BillingTrigger.NONE;
-
-    public BillingTrigger getDefaultBillingTrigger() {
-        return defaultBillingTrigger;
-    }
-
-    public void setDefaultBillingTrigger(
-        BillingTrigger defaultBillingTrigger) {
-        this.defaultBillingTrigger = defaultBillingTrigger;
-    }
+    private Collection<BillingTrigger> defaultBillingTriggers = BillingTrigger.defaultValues();
 
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
@@ -476,6 +478,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public String getRegulatoryDesignationDescription() {
         return getRegulatoryDesignation().getDescription();
+    }
+
+    public Collection<BillingTrigger> getDefaultBillingTriggers() {
+        return defaultBillingTriggers;
+    }
+
+    public void setDefaultBillingTriggers(BillingTrigger ... defaultBillingTriggers) {
+        this.defaultBillingTriggers = Arrays.asList(defaultBillingTriggers);
     }
 
     /**

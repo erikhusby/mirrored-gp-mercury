@@ -31,13 +31,13 @@ public class WorkCompleteMessage  implements Serializable {
     }
 
     public WorkCompleteMessage(
-        @Nonnull String pdoName, @Nonnull String aliquotId, @Nullable String partNumber, @Nonnull Date completedDate,
-        @Nonnull Map<String, Object> dataMap) {
-
+        @Nonnull String pdoName, @Nonnull String aliquotId, @Nullable String partNumber, @Nullable Long userId,
+        @Nonnull Date completedDate, @Nonnull Map<String, Object> dataMap) {
         this.pdoName = pdoName;
         this.aliquotId = aliquotId;
-        this.completedDate = completedDate;
         this.partNumber = partNumber;
+        this.userId = userId;
+        this.completedDate = completedDate;
 
         data = new HashMap<>();
         for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
@@ -65,6 +65,10 @@ public class WorkCompleteMessage  implements Serializable {
     @Column(name = "PART_NUMBER", nullable = true)
     @Nullable
     private String partNumber;
+
+    @Column(name = "USER_ID", nullable = true)
+    @Nullable
+    private Long userId;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     @MapKeyColumn(name="KEY")
@@ -129,6 +133,11 @@ public class WorkCompleteMessage  implements Serializable {
     @Nullable
     public String getPartNumber() {
         return partNumber;
+    }
+
+    @Nullable
+    public Long getUserId() {
+        return userId;
     }
 
     private BigInteger getBigIntegerPropertyValue(Properties property) {

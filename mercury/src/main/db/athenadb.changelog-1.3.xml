@@ -167,6 +167,119 @@
             <column  name="PART_NUMBER" type="VARCHAR2(40)"/>
         </addColumn>
     </changeSet>
+    <changeSet author="dryan" id="GPLIM-6698_rp_join_table">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="RP_BILLING_TRIGGERS"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="RP_BILLING_TRIGGERS">
+            <column name="research_project_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BILLING_TRIGGER" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="RP_BILLING_TRIGGERS" constraintName="pk_rp_billing_trigger" columnNames="research_project_id,BILLING_TRIGGER"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6698_fk_rp_billing_trigger">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="athena" indexName="fk_rp_billing_trigger"/>
+            </not>
+        </preConditions>
+            <addForeignKeyConstraint constraintName="fk_rp_billing_trigger"
+                                     baseTableName="RP_BILLING_TRIGGERS" baseColumnNames="research_project_id"
+                                     referencedTableName="RESEARCH_PROJECT" referencedColumnNames="research_project_id"/>
+
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-6698_rp_join_table_aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="RP_BILLING_TRIGGERS_AUD"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="RP_BILLING_TRIGGERS_AUD">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="research_project_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BILLING_TRIGGER" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey  constraintName="PK_RP_BILL_TRIGGER_AUD" tableName="RP_BILLING_TRIGGERS_AUD"
+                        schemaName="athena" columnNames="REV, RESEARCH_PROJECT_ID, BILLING_TRIGGER"/>
+
+        <createIndex tableName="RP_BILLING_TRIGGERS_AUD" indexName="IX_RP_BILL_TRIGGER_AUD">
+            <column name="RESEARCH_PROJECT_ID"/>
+            <column name="BILLING_TRIGGER"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-6698_pdo_join_table">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="PDO_BILLING_TRIGGERS"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="RP_BILLING_TRIGGERS">
+            <column name="product_order_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BILLING_TRIGGER" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="PDO_BILLING_TRIGGERS" constraintName="pk_pdo_billing_trigger"
+                       columnNames="product_order_id,BILLING_TRIGGER"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-6698_fk_pdo_billing_trigger">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="athena" indexName="fk_pdo_billing_trigger"/>
+            </not>
+        </preConditions>
+            <addForeignKeyConstraint constraintName="fk_rp_billing_trigger"
+                                     baseTableName="PDO_BILLING_TRIGGERS" baseColumnNames="product_order_id"
+                                     referencedTableName="PRODUCT_ORDER" referencedColumnNames="product_order_id"/>
+
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-6698_pdo_join_table_aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="PDO_BILLING_TRIGGERS_AUD"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="PDO_BILLING_TRIGGERS_AUD">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="product_order_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BILLING_TRIGGER" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="PK_PDO_BILL_TRIGGER_AUD" tableName="PDO_BILLING_TRIGGERS_AUD"
+                        schemaName="athena" columnNames="REV, PRODUCT_ORDER_ID, BILLING_TRIGGER"/>
+        <createIndex tableName="PDO_BILLING_TRIGGERS_AUD" indexName="IX_PDO_BILL_TRIGGER_AUD">
+            <column name="PRODUCT_ORDER_ID"/>
+            <column name="BILLING_TRIGGER"/>
+        </createIndex>
+    </changeSet>
 
     <changeSet id="GPLIM-6677-1" author="thompson">
         <sql>
