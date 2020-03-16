@@ -1833,7 +1833,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails, saveOrderMessageCollection);
             originalBusinessKey = null;
 
-
             if (isInfinium() && editOrder.getPipelineLocation() == null) {
                 editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
                 productOrderDao.persist(editOrder);

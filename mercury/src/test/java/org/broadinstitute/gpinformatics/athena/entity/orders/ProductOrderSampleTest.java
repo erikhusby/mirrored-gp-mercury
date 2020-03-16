@@ -87,7 +87,7 @@ public class ProductOrderSampleTest {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
         if(sample.getProductOrder().hasSapQuote()) {
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE, false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE, null);
         } else {
             sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE);
         }
@@ -163,7 +163,7 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), null);
         } else {
 
             sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE.negate());
@@ -199,7 +199,7 @@ public class ProductOrderSampleTest {
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         if(sample.getProductOrder().hasSapQuote()) {
 
-            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), false);
+            sample.addLedgerItem(new Date(), sample.getProductOrder().getProduct(), BigDecimal.ONE.negate(), null);
         } else {
             sample.addLedgerItem(new Date(), billedPriceItem, BigDecimal.ONE.negate());
         }
@@ -257,7 +257,7 @@ public class ProductOrderSampleTest {
         LedgerEntry ledgerEntrySap = new LedgerEntry(dataSap.sample1, dataSap.product, completedDate, BigDecimal.ONE);
 
         // Bill sample2.
-        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, BigDecimal.ONE, false);
+        dataSap.sample2.addLedgerItem(completedDate, dataSap.product, BigDecimal.ONE, null);
         LedgerEntry ledgerSap = dataSap.sample2.getLedgerItems().iterator().next();
         ledgerSap.setBillingMessage(BillingSession.SUCCESS);
         ledgerSap.setBillingSession(new BillingSession(0L, Collections.singleton(ledgerSap)));
@@ -690,7 +690,7 @@ public class ProductOrderSampleTest {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
                             productOrderSample.getProductOrder().getProduct(), quantityBefore, currentQuantity,
-                            quantityRequested, workCompleteDate, false);
+                            quantityRequested, workCompleteDate, null);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
@@ -723,7 +723,7 @@ public class ProductOrderSampleTest {
         if(productOrderSample.getProductOrder().hasSapQuote()) {
 
             productOrderSample.addLedgerItem(oldWorkCompleteDate,
-                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill, false);
+                    productOrderSample.getProductOrder().getProduct(), quantityReadyToBill, null);
         } else {
             productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem,
                     quantityReadyToBill);
@@ -741,7 +741,7 @@ public class ProductOrderSampleTest {
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
                             productOrderSample.getProductOrder().getProduct(), BigDecimal.valueOf(1),
                             BigDecimal.valueOf(0), BigDecimal.valueOf(2),
-                            new Date(), false);
+                            new Date(), null);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, productOrderSample.getProductOrder().getProduct(),
@@ -766,7 +766,7 @@ public class ProductOrderSampleTest {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(),
                             productOrderSample.getProductOrder().getProduct(), BigDecimal.valueOf(0),
-                            BigDecimal.valueOf(0), BigDecimal.valueOf(1), null, false);
+                            BigDecimal.valueOf(0), BigDecimal.valueOf(1), null, null);
         } else {
             ledgerUpdate =
                     new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,

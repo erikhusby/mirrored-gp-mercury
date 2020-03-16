@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
@@ -105,19 +104,17 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case PROD:
             environment = SAPEnvironment.PRODUCTION;
             break;
-            case DEV:
-                environment = SAPEnvironment.DEV;
-                break;
-            case TEST:
-                environment = SAPEnvironment.DEV_400;
-                break;
-            case RC:
-                environment = SAPEnvironment.QA_400;
-                break;
-            case QA:
-            default:
-                environment = SAPEnvironment.QA;
-                break;
+        case DEV:
+            environment = SAPEnvironment.DEV;
+            break;
+        case TEST:
+            environment = SAPEnvironment.DEV_400;
+            break;
+        case RC:
+        case QA:
+        default:
+            environment = SAPEnvironment.QA_100;
+            break;
         }
 
         log.debug("Config environment is: " + sapConfig.getExternalDeployment().name());
@@ -406,7 +403,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         (quantityOverride == null)?quoteItemForBilling.getQuantity():quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
-            lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
+            lineItem.addCondition(quoteItemForBilling.getSapReplacementCondition());
         }
 
         deliveryDocument.addDeliveryItem(lineItem);
