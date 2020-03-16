@@ -1,33 +1,44 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
+import com.google.common.collect.ImmutableMap;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.mock.MockRoundtrip;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParserTest;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParserTest.SINGLE_WELL_FILE;
 import static org.mockito.Mockito.mock;
@@ -87,12 +98,44 @@ public class ManualTransferActionBeanTest {
         Assert.assertEquals(actionBean.isParseLimsFile(), true);
     }
 
+    public void testQiaSymphonyCellFreeMixedIds() throws IOException {
+        for (String eventType : Arrays.asList("QiaSymphonyCellFree", "QiaSymphonyGenomic")) {
+            MercurySampleDao mockMercurySampleDao = mock(MercurySampleDao.class);
+            ManualTransferActionBean actionBean = chooseEvent(eventType, mockMercurySampleDao);
+            Assert.assertEquals(actionBean.isParseLimsFile(), true);
+            actionBean.setLimsFileType(LimsFileType.QIAGEN_BLOOD_BIOPSY_24);
+            FileBean mockFileBean = mock(FileBean.class);
+            when(mockFileBean.getInputStream())
+                    .thenReturn(VarioskanParserTest.getTestResource("RackFile_1584371893.xml"));
+            actionBean.setLimsUploadFile(mockFileBean);
+            actionBean.setLimsUploadFile(mockFileBean);
+            Map<String, MercurySample> mercurySamples = ImmutableMap.of(
+                    "SM-158437189301", new MercurySample("SM-158437189301", MercurySample.MetadataSource.MERCURY),
+                    "SM-158437189303", new MercurySample("SM-158437189303", MercurySample.MetadataSource.MERCURY),
+                    "SM-158437189305", new MercurySample("SM-158437189305", MercurySample.MetadataSource.MERCURY),
+                    "SM-158437189307", new MercurySample("SM-158437189307", MercurySample.MetadataSource.MERCURY));
+            mercurySamples.values().forEach(mercurySample ->
+                    mercurySample.addLabVessel(new BarcodedTube(mercurySample.getSampleKey().replaceFirst("SM-", ""))));
+            when(mockMercurySampleDao.findMapIdToMercurySample(new ArrayList<>(mercurySamples.keySet()))).
+                    thenReturn(mercurySamples);
+            actionBean.parseLimsFile();
+            List<StationEventType> stationEvents = actionBean.getStationEvents();
+            PlateTransferEventType plateTransferEventType =
+                    (PlateTransferEventType) stationEvents.iterator().next();
+            Assert.assertEquals(plateTransferEventType.getPlate().getBarcode(), "CO/158437189300");
+            Assert.assertEquals(plateTransferEventType.getSourcePositionMap().getReceptacle().size(), 7);
+            Assert.assertTrue(plateTransferEventType.getSourcePositionMap().getReceptacle().stream().
+                    noneMatch(receptacleType -> receptacleType.getBarcode().contains("SM-")));
+            Assert.assertFalse(actionBean.hasErrors(), StringUtils.join(actionBean.getFormattedErrors(), " ; "));
+        }
+    }
+
     /**
      * Simulate choosing an event, and return the resulting action bean.
      */
-    private ManualTransferActionBean chooseEvent(String eventType) {
+    private ManualTransferActionBean chooseEvent(String eventType, Object... mock) {
         try {
-            MockRoundtrip roundTrip = StripesMockTestUtils.createMockRoundtrip(ManualTransferActionBean.class);
+            MockRoundtrip roundTrip = StripesMockTestUtils.createMockRoundtrip(ManualTransferActionBean.class, mock);
             roundTrip.setParameter("stationEvents[0].eventType", eventType);
             roundTrip.execute(ManualTransferActionBean.CHOOSE_EVENT_TYPE_ACTION);
             return roundTrip.getActionBean(ManualTransferActionBean.class);

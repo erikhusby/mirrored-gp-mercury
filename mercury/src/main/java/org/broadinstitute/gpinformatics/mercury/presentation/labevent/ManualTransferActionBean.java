@@ -570,16 +570,18 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
                     for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
                         String barcode = receptacleType.getBarcode();
-                        MercurySample mercurySample = mapIdToMercurySample.get(barcode);
-                        if (mercurySample == null) {
-                            messageCollection.addError("Failed to find sample " + barcode);
-                        } else {
-                            Set<LabVessel> labVessels = mercurySample.getLabVessel();
-                            if (labVessels.size() != 1) {
-                                messageCollection.addError("Expected one vessel for " + barcode + ", found " +
-                                        labVessels.size());
+                        if (mapIdToMercurySample.containsKey(barcode)) {
+                            MercurySample mercurySample = mapIdToMercurySample.get(barcode);
+                            if (mercurySample == null) {
+                                messageCollection.addError("Failed to find sample " + barcode);
+                            } else {
+                                Set<LabVessel> labVessels = mercurySample.getLabVessel();
+                                if (labVessels.size() != 1) {
+                                    messageCollection.addError("Expected one vessel for " + barcode + ", found " +
+                                            labVessels.size());
+                                }
+                                receptacleType.setBarcode(labVessels.iterator().next().getLabel());
                             }
-                            receptacleType.setBarcode(labVessels.iterator().next().getLabel());
                         }
                     }
                 }
