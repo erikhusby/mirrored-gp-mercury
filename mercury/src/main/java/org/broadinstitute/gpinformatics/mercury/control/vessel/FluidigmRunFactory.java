@@ -8,6 +8,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -15,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
@@ -25,8 +28,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
@@ -35,6 +40,8 @@ import javax.inject.Inject;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,6 +74,33 @@ public class FluidigmRunFactory {
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
+
+    @Inject
+    private QueueEjb queueEjb;
+
+    public Pair<StaticPlate, LabMetricRun> createFluidigmChipRunAndDequeue(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
+        Pair<StaticPlate, LabMetricRun> plateRunPair = createFluidigmChipRun(inputStream, decidingUser,
+                messageCollection);
+        if (!messageCollection.hasErrors()) {
+            // Find the ancestor dilution plate
+            TransferTraverserCriteria.VesselForEventTypeCriteria transferTraverserCriteria =
+                    new TransferTraverserCriteria.VesselForEventTypeCriteria(
+                            Arrays.asList(LabEventType.PICO_DILUTION_TRANSFER,
+                                    LabEventType.PICO_DILUTION_TRANSFER_FORWARD_BSP),
+                            true, true);
+            plateRunPair.getLeft().getContainerRole().applyCriteriaToAllPositions(transferTraverserCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
+            Collection<Set<LabVessel>> vesselSets = transferTraverserCriteria.getVesselsForLabEventType().values();
+            if (vesselSets.size() == 1) {
+                Set<LabVessel> labVessels = vesselSets.iterator().next();
+                // No reworks for All of Us fingerprints, so dequeue regardless of pass / fail
+                queueEjb.dequeueLabVessels(labVessels, QueueType.FINGERPRINTING,messageCollection, null);
+            } else {
+                messageCollection.addError("Expected one dilution event, but found " + vesselSets.size());
+            }
+        }
+        return plateRunPair;
+    }
 
     public Pair<StaticPlate, LabMetricRun> createFluidigmChipRun(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();

@@ -37,6 +37,7 @@ public class LabMetricDecision {
         TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
         RISK(true),
+        NORM(true),
         DIVERTED_TO_XL20(false);
 
         private boolean editable;

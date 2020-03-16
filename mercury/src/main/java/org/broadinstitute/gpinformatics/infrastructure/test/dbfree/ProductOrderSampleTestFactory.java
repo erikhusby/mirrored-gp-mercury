@@ -92,7 +92,7 @@ public class ProductOrderSampleTestFactory {
 
         if(sampleToBeBilled.getProductOrder().hasSapQuote()) {
             sampleToBeBilled.addLedgerItem(new Date(), sampleToBeBilled.getProductOrder().getProduct(), BigDecimal.ONE,
-                    false);
+                    null);
         } else {
             sampleToBeBilled.addLedgerItem(new Date(), priceItem, BigDecimal.ONE);
         }

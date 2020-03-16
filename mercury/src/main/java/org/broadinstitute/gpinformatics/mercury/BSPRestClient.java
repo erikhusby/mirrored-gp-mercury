@@ -11,13 +11,20 @@
 
 package org.broadinstitute.gpinformatics.mercury;
 
+import org.broadinstitute.bsp.client.response.ExomeExpressCheckResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJaxRsClientService;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This contains common code used by all clients of BSP rest, ie: non-broadcore) services.
@@ -25,14 +32,18 @@ import javax.ws.rs.client.WebTarget;
 @Dependent
 public class BSPRestClient extends AbstractJaxRsClientService {
 
+    private static final String EXOMEEXPRESS_CHECK_IS_EXEX = "exomeexpress/check_is_exex_with_wrapper";
+
     private static final long serialVersionUID = 5472586820069306030L;
 
     @Inject
     private BSPConfig bspConfig;
 
+    @SuppressWarnings("unused")
     public BSPRestClient() {
     }
 
+    @SuppressWarnings("unused")
     public BSPRestClient(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
     }
@@ -52,5 +63,25 @@ public class BSPRestClient extends AbstractJaxRsClientService {
 
     public WebTarget getWebResource(String urlString) {
         return getJaxRsClient().target(urlString);
+    }
+
+    public ExomeExpressCheckResponse callExomeExpressCheck(List<String> barcodes) {
+        WebTarget webResource = getJaxRsClient().target(getUrl(EXOMEEXPRESS_CHECK_IS_EXEX));
+        Response post = webResource.request().post(Entity.entity(new ListWrapper(barcodes), MediaType.APPLICATION_JSON_TYPE));
+        return post.readEntity(ExomeExpressCheckResponse.class);
+    }
+
+    @XmlRootElement
+    public static class ListWrapper {
+        @SuppressWarnings("unused")
+        public ListWrapper() {
+            this(Collections.emptyList());
+        }
+
+        ListWrapper(List<String> list) {
+            this.list = list.toArray(new String[0]);
+        }
+
+        public String[] list;
     }
 }
