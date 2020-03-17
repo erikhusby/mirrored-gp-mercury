@@ -240,7 +240,7 @@ public class ConcordanceCalculator {
     /**
      * OS Specific way to grab the necessary files. Mac OS will need to mount the specific server (currently helium)
      */
-    private String convertFilePaths(String path) {
+    public static String convertFilePaths(String path) {
         if (SystemUtils.IS_OS_WINDOWS) {
             path = path.replace("/seq/references", "\\\\helium\\seq_references");
             path = path.replace("/prodinfo/prodapps", "\\\\neon\\prodinfo_prodapps");
