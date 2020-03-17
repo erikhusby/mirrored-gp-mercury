@@ -13,6 +13,7 @@ public class ReadGroupUtil {
     private static final String RGPU_FORMAT = "%s.%d.%s";
     private static final String RG_ID_SS_FORMAT = "%s_%d_%s";
     private static final Pattern RG_SS_PATTERN = Pattern.compile("([A-Za-z0-9]+)_(\\d+)_(.*)");
+    private static final String AGG_RG_METRIC_FORMAT = "%s_Aggregation";
 
     public static String createRgId(RunCartridge flowcell, int lane) {
         return String.format(RGID_FORMAT, flowcell.getLabel(), lane);
@@ -40,5 +41,9 @@ public class ReadGroupUtil {
             return matcher.group(3);
         }
         return null;
+    }
+
+    public static String toAggregationReadGroupMetric(String sampleKey) {
+        return String.format(AGG_RG_METRIC_FORMAT, sampleKey);
     }
 }

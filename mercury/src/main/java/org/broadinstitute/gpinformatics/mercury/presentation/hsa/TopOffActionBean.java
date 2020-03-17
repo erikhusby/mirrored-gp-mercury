@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.TopOffEjb;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.TopOffStateMachineDecorator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -641,7 +642,7 @@ public class TopOffActionBean extends CoreActionBean {
 
         List<AlignmentMetric> alignmentMetrics = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
         Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
-                .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
+                .collect(Collectors.toMap(AlignmentMetric::getReadGroup, Function.identity()));
 
         Set<String> coverageTypeKeys = bucketEntrySet.stream()
                 .map(BucketEntry::getProductOrder)
@@ -662,14 +663,16 @@ public class TopOffActionBean extends CoreActionBean {
             }
             HoldForTopoffDto holdForTopoffDto = new HoldForTopoffDto();
             holdForTopoffDto.setIndex(StringUtils.join(molecularIndexes, ","));
-            holdForTopoffDto.setPdoSample(mapVesselToSample.get(labVessel));
+            String sampleKey = mapVesselToSample.get(labVessel);
+            holdForTopoffDto.setPdoSample(sampleKey);
             ProductOrder productOrder = bucketEntry.getProductOrder();
             holdForTopoffDto.setPdo(productOrder.getBusinessKey());
             holdForTopoffDto.setLibrary(labVessel.getLabel());
             holdForTopoffDto.setSeqType( mapVesselToSeqType.get(labVessel));
             holdForTopoffDto.setLcset(mapVesselToLcset.get(labVessel));
             holdForTopoffDto.setBucketEntryId(bucketEntry.getBucketEntryId());
-            AlignmentMetric alignmentMetric = mapAliasToMetric.get(mapVesselToSample.get(labVessel));
+            String aggReadGroup = ReadGroupUtil.toAggregationReadGroupMetric(sampleKey);
+            AlignmentMetric alignmentMetric = mapAliasToMetric.get(aggReadGroup);
 
             BigDecimal xNeeded = calculateXNeeded(productOrder, alignmentMetric, messageCollection);
             if (xNeeded != null) {
@@ -809,7 +812,9 @@ public class TopOffActionBean extends CoreActionBean {
             dto.setTopOffLcset(topOffLcset);
             dto.setLibrary(pond.getLabel());
             dto.setVolume(pond.getVolume());
-            dto.setStorage(pond.getStorageLocation().buildLocationTrail());
+            if (pond.getStorageLocation() != null) {
+                dto.setStorage(pond.getStorageLocation().buildLocationTrail());
+            }
             dto.setClinical(isClinical);
         }
         return dto;

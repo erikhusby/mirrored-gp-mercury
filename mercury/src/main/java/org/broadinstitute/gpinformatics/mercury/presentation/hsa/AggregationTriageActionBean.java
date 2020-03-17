@@ -9,12 +9,12 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -22,22 +22,20 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.AlignmentMetricsDao;
-import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.DashboardLink;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationTaskDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.WaitForReviewTaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.TriageEjb;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask_;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -53,6 +51,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +77,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     private static final String UPDATE_OOS_ACTION = "updateOutOfSpec";
 
-    private static final String SEND_TO_CLOUD = "sendToCloud";
+    private static final String UPDATE_IN_SPEC = "updateInSpec";
 
     public static final double MAX_CONTAM = 0.01;
     public static final int MIN_COV_20 = 95;
@@ -92,7 +91,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Validate(required = true, on = UPDATE_OOS_ACTION)
     private String commentText;
 
-    private OutOfSpecCommands oosDecision;
+    private OutOfSpecCommands decision;
 
     private List<String> selectedSamples;
 
@@ -104,15 +103,10 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     private Map<String, LabVessel> mapKeyToPond = new HashMap<>();
 
-    private List<FlowcellStatus> flowcellStatuses;
-
     private String pdoSample;
 
     @Inject
-    private AggregationStateDao aggregationStateDao;
-
-    @Inject
-    private AggregationTaskDao aggregationTaskDao;
+    private WaitForReviewTaskDao waitForReviewTaskDao;
 
     @Inject
     private AlignmentMetricsDao alignmentMetricsDao;
@@ -121,55 +115,45 @@ public class AggregationTriageActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private FingerprintScoreDao fingerprintScoreDao;
-
-    @Inject
     private ReworkEjb reworkEjb;
-
-    @Inject
-    private LabVesselDao labVesselDao;
-
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
-    private BucketEjb bucketEjb;
-
-    @Inject
-    private ReworkReasonDao reworkReasonDao;
-
-    @Inject
     private DashboardLink dashboardLink;
-
-    @Inject
-    private TriageEjb triageEjb;
-
-    @Inject
-    private FiniteStateMachineFactory finiteStateMachineFactory;
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    @Inject
+    private FiniteStateMachineEngine finiteStateMachineEngine;
+
     private TriageDto dto;
+
+    private List<WaitForReviewTask> selectedTasks;
+    private Map<TriageDto, WaitForReviewTask> mapDtoToTask;
 
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        List<AggregationTask> inTriage = aggregationTaskDao.findByStatus(Status.COMPLETE);
-        Set<String> sampleIds = inTriage.stream()
-                .map(AggregationTask::getFastQSampleId)
-                .collect(Collectors.toSet());
+        List<WaitForReviewTask> runningWithSamples = waitForReviewTaskDao.findRunningWithSamples();
+
+        Map<String, WaitForReviewTask> mapSampleToTask = new HashMap<>();
+        for (WaitForReviewTask task: runningWithSamples) {
+            MercurySample mercurySample = task.getState().getMercurySamples().iterator().next();
+            mapSampleToTask.put(mercurySample.getSampleKey(), task);
+        }
+
+        Set<String> sampleIds = mapSampleToTask.keySet();
 
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleIds);
 
         List<AlignmentMetric> bySampleAlias = alignmentMetricsDao.findAggregationBySampleAlias(sampleIds);
         Set<AlignmentMetric> alignmentMetrics = new HashSet<>(bySampleAlias);
         Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
-                .collect(Collectors.toMap(AlignmentMetric::getSampleAlias, Function.identity()));
+                .collect(Collectors.toMap(AlignmentMetric::getReadGroup, Function.identity()));
 
         List<TriageDto> dtos = new ArrayList<>();
         // todo jmt optimize search column list
@@ -177,32 +161,63 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 PDO_SEARCH_COLUMNS);
 
         for (MercurySample mercurySample: mercurySamples) {
-            mercurySample.setSampleData(mapIdToSampleData.get(mercurySample.getSampleKey()));
+            String sampleKey = mercurySample.getSampleKey();
+            String aggReadGroup = ReadGroupUtil.toAggregationReadGroupMetric(sampleKey);
+            mercurySample.setSampleData(mapIdToSampleData.get(sampleKey));
 
-            AlignmentMetric alignmentMetric = mapAliasToMetric.get(mercurySample.getSampleKey());
+            AlignmentMetric alignmentMetric = mapAliasToMetric.get(aggReadGroup);
             if (alignmentMetric == null) {
-                log.debug("Failed to find alignment metric for sample in 'triage' " + mercurySample.getSampleKey());
+                log.debug("Failed to find alignment metric for sample in 'triage' " + sampleKey);
                 continue;
             }
 
-            TriageDto dto = createTriageDto(mercurySample.getSampleKey(), mercurySample, alignmentMetric);
+            TriageDto dto = createTriageDto(sampleKey, mercurySample, alignmentMetric);
+            WaitForReviewTask task = mapSampleToTask.get(sampleKey);
+            dto.setTaskId(task.getTaskId());
+            if (task.getTaskDecision() != null) {
+                dto.setTaskDecision(task.getTaskDecision());
+            }
             dtos.add(dto);
         }
 
-        Set<MercurySample> overrideInSpecSamples = triageEjb.fetchSamplesInSpecOverride();
-        Set<String> overrideSampleKeys =
-                overrideInSpecSamples.stream().map(MercurySample::getSampleKey).collect(Collectors.toSet());
+        Set<String> overrideSampleKeys = runningWithSamples.stream()
+                .filter(Task::isOverrideOutOfSpec)
+                .map(task -> task.getState().getMercurySamples())
+                .flatMap(Collection::stream)
+                .map(MercurySample::getSampleKey)
+                .collect(Collectors.toSet());
         Map<Boolean, List<TriageDto>> mapPassToDtos = dtos.stream().collect(Collectors.partitioningBy(isAggregationInSpec(overrideSampleKeys)));
         passingTriageDtos = mapPassToDtos.get(Boolean.TRUE);
         oosTriageDtos = mapPassToDtos.get(Boolean.FALSE);
 
+        commentText = "";
         return new ForwardResolution(ALIGNMENT_TRIAGE_PAGE);
     }
 
-    @ValidationMethod(on = {SEND_TO_CLOUD, UPDATE_OOS_ACTION})
+    @ValidationMethod(on = {UPDATE_IN_SPEC, UPDATE_OOS_ACTION})
     public void validateSamplesSelected() {
-        if (selectedSamples.isEmpty()) {
+        if (selectedSamples == null || selectedSamples.isEmpty()) {
             addValidationError("selectedIds", "Please select a sample.");
+        } else {
+            List<TriageDto> allDtos = ListUtils.union(passingTriageDtos, oosTriageDtos);
+            for (TriageDto dto: allDtos) {
+                if (dto != null) {
+                    if (selectedSamples.contains(dto.getPdoSample())) {
+                        selectedDtos.add(dto);
+                    }
+                }
+            }
+            Set<Long> selectedTaskIds = selectedDtos.stream().map(TriageDto::getTaskId).collect(Collectors.toSet());
+            selectedTasks = waitForReviewTaskDao.findListByList(
+                    WaitForReviewTask.class, WaitForReviewTask_.taskId, selectedTaskIds);
+            mapDtoToTask = new HashMap<>();
+            for (WaitForReviewTask waitForReviewTask: selectedTasks) {
+                for (TriageDto triageDto: selectedDtos) {
+                    if (triageDto.getTaskId() == waitForReviewTask.getTaskId()) {
+                        mapDtoToTask.put(triageDto, waitForReviewTask);
+                    }
+                }
+            }
         }
     }
 
@@ -213,7 +228,6 @@ public class AggregationTriageActionBean extends CoreActionBean {
         for (TriageDto dto: oosTriageDtos) {
             if (dto != null) {
                 if (selectedSamples.contains(dto.getPdoSample())) {
-                    selectedDtos.add(dto);
                     pdos.add(dto.getPdo());
                 }
             }
@@ -251,16 +265,18 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     @HandlesEvent(UPDATE_OOS_ACTION)
     public Resolution updateOos() {
-        if (oosDecision == OutOfSpecCommands.OVERRIDE_IN_SPEC) {
-            triageEjb.addToOverrideState(mapNameToSample.values(), commentText);
+        if (decision == OutOfSpecCommands.OVERRIDE_IN_SPEC) {
+            updateDecision(TaskDecision.Decision.OVERRIDE_TO_IN_SPEC, false);
+            addMessage("Successfully saved decision.");
             return view();
         }
         String reworkReason = "Other..."; // TODO JW
         List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
+        TaskDecision.Decision taskDecision = (decision == OutOfSpecCommands.REWORK_FROM_STOCK) ? TaskDecision.Decision.REWORK : TaskDecision.Decision.TOP_OFF;
         for (String sample: mapNameToSample.keySet()) {
             ProductOrder productOrder = mapKeyToProductOrder.get(sample);
             LabVessel library = mapKeyToPond.get(sample);
-            if (oosDecision == OutOfSpecCommands.REWORK_FROM_STOCK) {
+            if (decision == OutOfSpecCommands.REWORK_FROM_STOCK) {
                 library = mapNameToSample.get(sample).getLabVessel().iterator().next();
             }
             String lastEventName = library.getLastEventName();
@@ -273,15 +289,15 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
         try {
             Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
-                    reworkReason, commentText, getUserBean().getLoginUserName(), oosDecision.getBucketDefName());
+                    reworkReason, commentText, getUserBean().getLoginUserName(), decision.getBucketDefName());
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
                     addGlobalValidationError(validationMessage);
                 }
             } else {
-                // TODO Change status of aggregation state to be rework
-                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), oosDecision.getBucketDefName());
+                updateDecision(taskDecision, true);
+                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), decision.getBucketDefName());
             }
 
         } catch (ValidationException e) {
@@ -291,16 +307,61 @@ public class AggregationTriageActionBean extends CoreActionBean {
         return view();
     }
 
-    @HandlesEvent(SEND_TO_CLOUD)
-    public Resolution sendToCloud() {
-        MessageCollection messageCollection = new MessageCollection();
-        finiteStateMachineFactory.createUploadTasks(selectedSamples, messageCollection);
-        if (messageCollection.hasErrors()) {
-            addMessages(messageCollection);
-        } else {
-            addMessage("{0} file(s) have been queued for upload.", selectedSamples.size());
+    private void updateDecision(TaskDecision.Decision decision, boolean cancelMachine) {
+        Date now = new Date();
+        for (WaitForReviewTask selectedTask : selectedTasks) {
+            TaskDecision taskDecision = selectedTask.getTaskDecision();
+            if (selectedTask.getTaskDecision() == null) {
+                taskDecision = new TaskDecision(decision, selectedTask,
+                        commentText, now, userBean.getBspUser().getUserId(), null);
+                selectedTask.setTaskDecision(taskDecision);
+            } else if (taskDecision.getDecision().isEditable()) {
+                taskDecision.setDecidedDate(now);
+                taskDecision.setDeciderUserId(userBean.getBspUser().getUserId());
+                taskDecision.setDecision(decision);
+                taskDecision.setOverrideReason(commentText);
+            }
+
+            if (cancelMachine) {
+                selectedTask.setStatus(Status.COMPLETE);
+                selectedTask.setEndTime(now);
+                selectedTask.getState().getFiniteStateMachine().setStatus(Status.CANCELLED);
+                selectedTask.getState().getFiniteStateMachine().setDateCompleted(now);
+            }
         }
+
+        waitForReviewTaskDao.flush();
+    }
+
+    @HandlesEvent(UPDATE_IN_SPEC)
+    public Resolution updateInSpec() {
+        MessageCollection messageCollection = new MessageCollection();
+        TaskDecision.Decision taskDecision = null;
+        if (decision == OutOfSpecCommands.SEND_TO_CLOUD) {
+            taskDecision = TaskDecision.Decision.PASS;
+            for (Map.Entry<TriageDto, WaitForReviewTask> entry: mapDtoToTask.entrySet()) {
+                incrementMachine(entry.getValue(), entry.getKey().getPdoSample(), messageCollection);
+            }
+        } else if (decision == OutOfSpecCommands.MARK_OOS) {
+            taskDecision = TaskDecision.Decision.MARK_OUT_OF_SPEC;
+        }
+        updateDecision(taskDecision, false);
+        addMessages(messageCollection);
         return view();
+    }
+
+    private void incrementMachine(WaitForReviewTask task, String sampleKey, MessageCollection messageCollection) {
+        FiniteStateMachine finiteStateMachine = task.getState().getFiniteStateMachine();
+        MessageCollection stateMessageCollection = new MessageCollection();
+        task.setStatus(Status.COMPLETE);
+        task.setEndTime(new Date());
+        finiteStateMachine.setStatus(Status.RUNNING);
+        finiteStateMachineEngine.incrementStateMachine(finiteStateMachine, stateMessageCollection);
+        if (!stateMessageCollection.hasErrors()) {
+            messageCollection.addInfo("Incremented %s sample to next state.", sampleKey);
+        } else {
+            messageCollection.addErrors(stateMessageCollection.getErrors());
+        }
     }
 
     @HandlesEvent("expandSample")
@@ -536,10 +597,6 @@ public class AggregationTriageActionBean extends CoreActionBean {
         this.selectedSamples = selectedSamples;
     }
 
-    public List<FlowcellStatus> getFlowcellStatuses() {
-        return flowcellStatuses;
-    }
-
     public String getPdoSample() {
         return pdoSample;
     }
@@ -548,13 +605,12 @@ public class AggregationTriageActionBean extends CoreActionBean {
         this.pdoSample = pdoSample;
     }
 
-    public OutOfSpecCommands getOosDecision() {
-        return oosDecision;
+    public OutOfSpecCommands getDecision() {
+        return decision;
     }
 
-    public void setOosDecision(
-            OutOfSpecCommands oosDecision) {
-        this.oosDecision = oosDecision;
+    public void setDecision(OutOfSpecCommands decision) {
+        this.decision = decision;
     }
 
     public String getCommentText() {
@@ -573,7 +629,16 @@ public class AggregationTriageActionBean extends CoreActionBean {
         this.dto = dto;
     }
 
+    public List<OutOfSpecCommands> getOutOfSpecOptions() {
+        return OutOfSpecCommands.oosDecisions;
+    }
+
+    public List<OutOfSpecCommands> getInSpecOptions() {
+        return OutOfSpecCommands.inSpecDecisions;
+    }
+
     public static class TriageDto {
+        private long taskId;
         private String library;
         private String pdoSample;
         private String sampleVessel;
@@ -589,7 +654,15 @@ public class AggregationTriageActionBean extends CoreActionBean {
         private String genderConcordance;
         private List<FlowcellStatus> missingFlowcellStatuses;
         private List<FlowcellStatus> completedFlowcellStatuses;
+        private TaskDecision taskDecision;
 
+        public long getTaskId() {
+            return taskId;
+        }
+
+        public void setTaskId(long taskId) {
+            this.taskId = taskId;
+        }
 
         public String getLibrary() {
             return library;
@@ -712,16 +785,27 @@ public class AggregationTriageActionBean extends CoreActionBean {
         public void setGenderConcordance(String genderConcordance) {
             this.genderConcordance = genderConcordance;
         }
+
+        public void setTaskDecision(TaskDecision taskDecision) {
+            this.taskDecision = taskDecision;
+        }
+
+        public TaskDecision getTaskDecision() {
+            return taskDecision;
+        }
     }
 
     public enum OutOfSpecCommands implements Displayable {
         SEND_TO_TOP_OFFS("Send To Topoffs", "Pooling Bucket"),
         REWORK_FROM_STOCK("Rework From Stock", "Pico/Plating Bucket", IsRework.TRUE),
-        OVERRIDE_IN_SPEC("Override As In Spec");
+        OVERRIDE_IN_SPEC("Override As In Spec"),
+        MARK_OOS("Mark as Out of Spec",  null, IsRework.FALSE, VisibleInSpec.TRUE),
+        SEND_TO_CLOUD("Send To Cloud",  null, IsRework.FALSE, VisibleInSpec.TRUE);
 
         private final String displayName;
         private final String bucketDefName;
         private final IsRework isRework;
+        private final VisibleInSpec visibleInSpec;
 
         OutOfSpecCommands(String displayName) {
             this(displayName, null, IsRework.FALSE);
@@ -732,9 +816,14 @@ public class AggregationTriageActionBean extends CoreActionBean {
         }
 
         OutOfSpecCommands(String displayName, String bucketDefName, IsRework isRework) {
+            this(displayName, bucketDefName, isRework, VisibleInSpec.FALSE);
+        }
+
+        OutOfSpecCommands(String displayName, String bucketDefName, IsRework isRework, VisibleInSpec visibleInSpec) {
             this.displayName = displayName;
             this.bucketDefName = bucketDefName;
             this.isRework = isRework;
+            this.visibleInSpec = visibleInSpec;
         }
 
         @Override
@@ -749,6 +838,23 @@ public class AggregationTriageActionBean extends CoreActionBean {
         public boolean getIsRework() {
             return isRework == IsRework.TRUE;
         }
+
+        public boolean isVisibleInSpec() {
+            return visibleInSpec == VisibleInSpec.TRUE;
+        }
+
+        private static List<OutOfSpecCommands> oosDecisions = new ArrayList<>();
+        private static List<OutOfSpecCommands> inSpecDecisions = new ArrayList<>();
+
+        static {
+            for (OutOfSpecCommands outOfSpecCommands: OutOfSpecCommands.values()) {
+                if (outOfSpecCommands.isVisibleInSpec()) {
+                    inSpecDecisions.add(outOfSpecCommands);
+                } else {
+                    oosDecisions.add(outOfSpecCommands);
+                }
+            }
+        }
     }
 
     public enum IsRework {
@@ -757,6 +863,20 @@ public class AggregationTriageActionBean extends CoreActionBean {
         private final boolean value;
 
         IsRework(boolean value) {
+            this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
+        }
+    }
+
+    public enum VisibleInSpec {
+        TRUE(true),
+        FALSE(false);
+        private final boolean value;
+
+        VisibleInSpec(boolean value) {
             this.value = value;
         }
 

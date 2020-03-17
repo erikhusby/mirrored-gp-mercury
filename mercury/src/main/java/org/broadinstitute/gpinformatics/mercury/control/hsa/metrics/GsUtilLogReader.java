@@ -17,6 +17,9 @@ public class GsUtilLogReader {
     private final static Pattern UPLOAD_PATTERN = Pattern.compile(".*\\[(\\d+ files)\\]\\[ (\\d+\\.\\d+) (\\w+)\\/ (\\d+\\.\\d+) (\\w+)\\]  (\\d+\\.\\d+ \\w+\\/\\w+)");
 
     public static Result parseTransferStatus(File logFile) throws IOException {
+        if (!logFile.exists()) {
+            return null;
+        }
         ReversedLinesFileReader reversedLinesFileReader = new ReversedLinesFileReader(logFile);
         int nLines = 10; //Read the last 10 lines at the most
         int counter = 0;
