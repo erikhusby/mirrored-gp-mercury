@@ -26,7 +26,7 @@ public class DragenInfoFetcher {
     public static List<String> sshCommand(List<String> parameters) {
         List<String> cmds = new ArrayList<>();
         cmds.add("ssh");
-        // Windows ssh defaults to charles\user, so have to specify user explicitly
+        // Windows ssh defaults to charles\\user, so have to specify user explicitly
         if (SystemUtils.IS_OS_WINDOWS) {
             cmds.add("-l");
             cmds.add(SystemUtils.USER_NAME);
