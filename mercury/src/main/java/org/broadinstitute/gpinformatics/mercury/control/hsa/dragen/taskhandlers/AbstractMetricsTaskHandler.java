@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DemultiplexS
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.DragenReplayInfo;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.ShellUtils;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.zeroturnaround.exec.ProcessResult;
@@ -43,11 +44,11 @@ public abstract class AbstractMetricsTaskHandler<T extends Task> extends Abstrac
         // TODO JW set host from config
         String ldruid = "mercurydw/seq_dev3@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=seqdev.broad.mit.edu)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=seqdev3)))\"";
         if (SystemUtils.IS_OS_WINDOWS) {
-            ldruid = ldruid.replace("(", "\\(").replace(")", "\\)");
+            ldruid = ldruid.replace("(", "\\(").replace(")", "\\)").replace("\"", "\\\"");
         }
         List<String> cmds = Arrays.asList(dragenConfig.getSqlldrPath(),
-                String.format("control=%s", ctlFilePath),
-                String.format("log=%s", loadLog),
+                String.format("control=%s", ConcordanceCalculator.convertFilePaths(ctlFilePath)),
+                String.format("log=%s", ConcordanceCalculator.convertFilePaths(loadLog)),
                 String.format("bad=%s/load.bad", dataPath.getParentFile().getPath()),
                 String.format("data=%s", dataPath.getPath()),
                 String.format("discard=%s/load.dsc", dataPath.getParentFile().getPath()),
