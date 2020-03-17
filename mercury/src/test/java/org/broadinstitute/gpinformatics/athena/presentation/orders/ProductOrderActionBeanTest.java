@@ -4728,7 +4728,7 @@ public class ProductOrderActionBeanTest {
             pdo.setSkipQuoteReason("quote not required");
         }
         if(numberOfLedgers.compareTo(0)>0) {
-            pdo.getSamples().get(0).addLedgerItem(new Date(), pdo.getProduct(), BigDecimal.ONE, false);
+            pdo.getSamples().get(0).addLedgerItem(new Date(), pdo.getProduct(), BigDecimal.ONE, null);
         }
         assertThat(ProductOrderActionBean.canChangeQuote(pdo, oldQuote, newQuote), is(canChange));
     }

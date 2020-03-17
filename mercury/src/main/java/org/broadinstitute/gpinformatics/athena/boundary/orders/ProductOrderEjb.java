@@ -280,7 +280,7 @@ public class ProductOrderEjb {
                 }
             }
             if (editedProductOrder.hasSapQuote()) {
-                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+                publishProductOrderToSAP(editedProductOrder, messageCollection);
             }
         }
         attachMercurySamples(editedProductOrder.getSamples());
@@ -320,7 +320,7 @@ public class ProductOrderEjb {
             updateJiraIssue(editedProductOrder);
 
             if (editedProductOrder.hasSapQuote()) {
-                publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+                publishProductOrderToSAP(editedProductOrder, messageCollection);
             }
         }
         attachMercurySamples(editedProductOrder.getSamples());
@@ -334,21 +334,16 @@ public class ProductOrderEjb {
      *
      * @param editedProductOrder Product order entity which intends to be reflected in SAP
      * @param messageCollection  Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
-     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                           order but needs a new one)
-     *
      * @throws SAPInterfaceException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
-        publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, false);
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection) throws SAPInterfaceException {
+        publishProductOrderToSAP(editedProductOrder, messageCollection, false);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-            boolean allowCreateOrder, boolean updateQuoteItems) throws SAPInterfaceException {
+                                         boolean updateQuoteItems) throws SAPInterfaceException {
 
         if (!editedProductOrder.hasSapQuote()) {
             throw new SAPInterfaceException("Cannot make an SAP order for " + editedProductOrder.getBusinessKey() +
@@ -365,7 +360,7 @@ public class ProductOrderEjb {
 
             final boolean quoteIdChange = editedProductOrder.isSavedInSAP() && !editedProductOrder.isLatestSapQuote();
 
-            if ((!editedProductOrder.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
+            if (!editedProductOrder.isSavedInSAP() || quoteIdChange) {
                 createOrderInSAP(editedProductOrder, quoteIdChange, allProductsOrdered, messageCollection, true);
 
             } else if (editedProductOrder.isSavedInSAP()) {
@@ -1006,7 +1001,7 @@ public class ProductOrderEjb {
 
         try {
             if (order.hasSapQuote()) {
-                publishProductOrderToSAP(order, messageCollection, false);
+                publishProductOrderToSAP(order, messageCollection);
             }
         } catch (SAPInterfaceException e) {
             log.error("SAP Error when attempting to abandon samples", e);
@@ -1282,7 +1277,7 @@ public class ProductOrderEjb {
 
             try {
                 if(targetSapPdo.hasSapQuote()) {
-                    publishProductOrderToSAP(productOrder, new MessageCollection(), false);
+                    publishProductOrderToSAP(productOrder, new MessageCollection());
 
                 }   else {
                     sendSapOrderShortCloseRequest(
@@ -1377,7 +1372,7 @@ public class ProductOrderEjb {
 
         MessageCollection collection = new MessageCollection();
         if (order.hasSapQuote()) {
-            publishProductOrderToSAP(order, collection, false);
+            publishProductOrderToSAP(order, collection);
         }
         for (String error : collection.getErrors()) {
             reporter.addMessage(error);
@@ -1779,7 +1774,7 @@ public class ProductOrderEjb {
             placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(), messageCollection);
             if (!messageCollection.hasErrors() && productOrder.hasSapQuote()) {
                 // Publishes the PDO to SAP.
-                publishProductOrderToSAP(productOrder, messageCollection, true, true);
+                publishProductOrderToSAP(productOrder, messageCollection, true);
             }
             if ((!productOrder.hasSapQuote() || StringUtils.isNotBlank(productOrder.getSapOrderNumber())) &&
                     !messageCollection.hasErrors()) {

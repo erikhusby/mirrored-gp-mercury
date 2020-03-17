@@ -1254,7 +1254,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1290,7 +1290,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1494,7 +1494,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         if(productOrder.isSavedInSAP()) {
-            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         }
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");

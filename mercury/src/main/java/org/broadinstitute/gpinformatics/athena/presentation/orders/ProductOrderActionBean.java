@@ -1706,7 +1706,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
 
         if (editOrder.hasSapQuote()) {
-            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection);
         } else {
             addGlobalValidationError("This order does not have an SAP quote so it is not eligible to be an SAP order");
         }
@@ -1733,7 +1733,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             originalBusinessKey = null;
 
             if (editOrder.hasSapQuote()) {
-                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
+                productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection);
             }
             addMessages(placeOrderMessageCollection);
 
