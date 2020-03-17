@@ -244,10 +244,12 @@ public class ConcordanceCalculator {
         if (SystemUtils.IS_OS_WINDOWS) {
             path = path.replace("/seq/references", "\\\\helium\\seq_references");
             path = path.replace("/prodinfo/prodapps", "\\\\neon\\prodinfo_prodapps");
+            path = path.replace("/seq/lims", "\\\\neon\\seq_lims");
             path = FilenameUtils.separatorsToWindows(path);
         } else if (SystemUtils.IS_OS_MAC) {
             path = path.replace("/seq/references", "/volumes/seq_references");
             path = path.replace("/prodinfo/prodapps", "/volumes/prodinfo_prodapps");
+            path = path.replace("/seq/lims", "/volumes/seq_lims");
         }
         return path;
     }
