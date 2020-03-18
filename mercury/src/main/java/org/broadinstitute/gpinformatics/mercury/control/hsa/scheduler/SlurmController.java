@@ -71,7 +71,7 @@ public class SlurmController implements SchedulerController {
         if (partition == null) {
             cmd = DragenInfoFetcher.sshCommand(Arrays.asList(dragenConfig.getSlurmHost(), "sbatch", "--exclusive",
                     "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
-                    "--nice=" + NICE_DEFAULT, dragenCmd);
+                    "--nice=" + NICE_DEFAULT, dragenCmd));
         } else {
             cmd = new ArrayList<>(DragenInfoFetcher.sshCommand(Arrays.asList(dragenConfig.getSlurmHost(), "sbatch",
                     "-J", processTask.getTaskName(), "--output", dragenConfig.getLogFilePath(),
