@@ -2961,4 +2961,37 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-6969-01" author="epolk">
+        <createTable schemaName="mercury" tableName="manifest_file">
+            <column name="manifest_file_id" type="number(19,0)"/>
+            <column name="filename" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6969-02" author="epolk">
+        <addPrimaryKey constraintName="pk_manifest_file" tableName="manifest_file"
+                       schemaName="mercury" columnNames="manifest_file_id"/>
+        <createIndex tableName="manifest_file" indexName="ix_manifest_file">
+            <column name="filename"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6969-03" author="epolk">
+        <createTable schemaName="mercury" tableName="manifest_file_aud">
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+            <column name="manifest_file_id" type="number(19,0)"/>
+            <column name="filename" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-6969-04" author="epolk">
+        <addPrimaryKey constraintName="pk_manifest_file_aud" tableName="manifest_file_aud"
+                       schemaName="mercury" columnNames="rev, manifest_file_id"/>
+        <createIndex tableName="manifest_file_aud" indexName="ix_manifest_file_aud">
+            <column name="manifest_file_id"/>
+            <column name="rev"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6969-05" author="epolk">
+        <createSequence schemaName="mercury" sequenceName="seq_manifest_file" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>

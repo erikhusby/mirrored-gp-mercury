@@ -311,6 +311,33 @@ MayoManifestGoogleStorage:
         bucketName: genomics-broad-dryrun
         dailyCredentialRenewal: true
 
+covidIntakeStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: dev_113959925643235198999
+        dailyCredentialRenewal:
+    TEST:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName:
+        dailyCredentialRenewal:
+    QA:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName:
+        dailyCredentialRenewal:
+    RC:
+        credentialFilename: serviceAccountKeys/rc_reader.json
+        writerCredentialFilename: serviceAccountKeys/rc_writer.json
+        bucketName:
+        dailyCredentialRenewal:
+    PROD:
+        credentialFilename: serviceAccountKeys/prod_covidReader.json
+        writerCredentialFilename:
+        bucketName:
+        dailyCredentialRenewal:
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -332,6 +359,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: DEV
+      covidIntakeStorage: DEV
 
     AUTO_BUILD:
 
@@ -351,6 +379,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: DEV
+      covidIntakeStorage: DEV
 
     TEST:
 
@@ -370,6 +399,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: TEST
+      covidIntakeStorage: TEST
 
     QA:
       app:      QA
@@ -388,6 +418,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: QA
+      covidIntakeStorage: QA
 
     RC:
 
@@ -407,6 +438,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: RC
+      covidIntakeStorage: RC
 
     PROD:
 
@@ -426,3 +458,4 @@ mercury:
       sap:  PROD
       decoder: PROD
       MayoManifestGoogleStorage: PROD
+      covidIntakeStorage: PROD
