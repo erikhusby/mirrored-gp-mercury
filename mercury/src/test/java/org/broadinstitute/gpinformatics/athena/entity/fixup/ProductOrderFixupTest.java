@@ -2260,6 +2260,7 @@ public class ProductOrderFixupTest extends Arquillian {
         ProductOrder orderToClean = productOrderDao.findByBusinessKey("PDO-21736");
         assertThat(orderToClean.getCreatedBy(), is(equalTo(bspUserList.getByUsername("scottmat").getUserId())));
         assertThat(orderToClean.getQuoteId(), is(equalTo("2700467")));
+        assertThat(orderToClean.getOrderStatus(), is(equalTo(ProductOrder.OrderStatus.Abandoned)));
 
         orderToClean.setJiraTicketKey("PDO-21736_bad");
 
