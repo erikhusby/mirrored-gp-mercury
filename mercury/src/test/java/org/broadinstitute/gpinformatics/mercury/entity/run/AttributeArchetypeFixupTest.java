@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMap
 import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping_;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -646,7 +646,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         BillingTriggerMapping arrayArchetype =
             new BillingTriggerMapping(BillingTriggerMapping.AOU_PDO_BILLING, BillingTriggerMapping.BILLING_TRIGGER);
         arrayArchetype
-            .addOrSetAttribute(BillingTriggerMapping.BILLING_TRIGGER, ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT.name());
+            .addOrSetAttribute(BillingTriggerMapping.BILLING_TRIGGER, BillingTrigger.ADDONS_ON_RECEIPT.name());
 
         attributeArchetypeDao
             .persistAll(Arrays.asList(arrayArchetype, new FixupCommentary("GPLIM-6698 Initial Values")));

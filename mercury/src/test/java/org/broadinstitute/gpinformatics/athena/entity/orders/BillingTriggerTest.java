@@ -11,9 +11,12 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,39 +32,39 @@ public class BillingTriggerTest {
         ProductOrder productOrder = new ProductOrder();
         productOrder.setResearchProject(new ResearchProject());
         assertThat(productOrder.getBillingTriggerOrDefault(),
-            equalTo(productOrder.getResearchProject().getDefaultBillingTriggers()));
+            equalTo(productOrder.getResearchProject().getBillingTriggers()));
     }
 
     public void testBillingTriggerOverridden() throws Exception {
         ProductOrder productOrder = new ProductOrder();
         productOrder.setResearchProject(new ResearchProject());
-        productOrder.setBillingTriggers(ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT);
+        productOrder.setBillingTriggers(Collections.singleton(BillingTrigger.ADDONS_ON_RECEIPT));
         assertThat(productOrder.getBillingTriggerOrDefault(),
-            hasItems(ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT));
+            hasItems(BillingTrigger.ADDONS_ON_RECEIPT));
     }
 
     public void testBillingTriggerDefaultToRP() throws Exception {
         ProductOrder productOrder = new ProductOrder();
         ResearchProject researchProject = new ResearchProject();
-        researchProject.setDefaultBillingTriggers(ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT);
+        researchProject.setBillingTriggers(Collections.singleton(BillingTrigger.ADDONS_ON_RECEIPT));
         productOrder.setResearchProject(researchProject);
         assertThat(productOrder.getBillingTriggerOrDefault(),
-            equalTo(productOrder.getResearchProject().getDefaultBillingTriggers()));
+            equalTo(productOrder.getResearchProject().getBillingTriggers()));
     }
 
     public void testBillingTriggerDifferentThenRP() throws Exception {
         ProductOrder productOrder = new ProductOrder();
-        productOrder.setBillingTriggers(ResearchProject.BillingTrigger.NONE);
+        productOrder.setBillingTriggers(Collections.singleton(BillingTrigger.NONE));
         ResearchProject researchProject = new ResearchProject();
-        researchProject.setDefaultBillingTriggers(ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT);
+        researchProject.setBillingTriggers(Collections.singleton(BillingTrigger.ADDONS_ON_RECEIPT));
         productOrder.setResearchProject(researchProject);
-        assertThat(productOrder.getBillingTriggerOrDefault(), contains(ResearchProject.BillingTrigger.NONE));
+        assertThat(productOrder.getBillingTriggerOrDefault(), contains(BillingTrigger.NONE));
         assertThat(productOrder.getBillingTriggerOrDefault(),
-            not(containsInAnyOrder(productOrder.getResearchProject().getDefaultBillingTriggers())));
+            not(containsInAnyOrder(productOrder.getResearchProject().getBillingTriggers())));
     }
 
     public void testBillingTriggerDefaultNoRP() throws Exception {
         ProductOrder productOrder = new ProductOrder();
-        assertThat(productOrder.getBillingTriggerOrDefault(), contains(ResearchProject.BillingTrigger.NONE));
+        assertThat(productOrder.getBillingTriggerOrDefault(), contains(BillingTrigger.NONE));
     }
 }

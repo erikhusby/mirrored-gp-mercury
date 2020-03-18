@@ -115,6 +115,7 @@ public class BillingAdaptor implements Serializable {
      * @return collection of "Billing Results".  Each one represents the aggregation of billing charges and will
      * record the success or failure of the billing attempt
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<BillingEjb.BillingResult> billSessionItems(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
         List<BillingEjb.BillingResult> billingResults;
@@ -143,6 +144,7 @@ public class BillingAdaptor implements Serializable {
      * @return List of BillingResults describing the success or failure of billing for each previously un-billed
      * QuoteImportItem associated with the BillingSession.
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     private List<BillingEjb.BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
         boolean errorsInBilling = false;

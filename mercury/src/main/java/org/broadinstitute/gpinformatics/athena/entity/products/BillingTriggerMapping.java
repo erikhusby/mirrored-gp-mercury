@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.hibernate.envers.Audited;
@@ -39,10 +39,10 @@ public class BillingTriggerMapping extends AttributeArchetype {
     }
 
     @Transient
-    public ResearchProject.BillingTrigger getBillingTriggerAttribute() {
+    public BillingTrigger getBillingTriggerAttribute() {
         String attributeValue = super.getAttribute(BILLING_TRIGGER).getAttributeValue();
-        ResearchProject.BillingTrigger billingTrigger = Stream.of(ResearchProject.BillingTrigger.values())
-            .filter(s -> s.name().equals(attributeValue)).findFirst().orElse(ResearchProject.BillingTrigger.NONE);
+        BillingTrigger billingTrigger = Stream.of(BillingTrigger.values())
+            .filter(s -> s.name().equals(attributeValue)).findFirst().orElse(BillingTrigger.NONE);
 
         return billingTrigger;
     }

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -98,11 +99,12 @@ public class AutomatedBiller {
                     });
                 }
             }
-
+            workCompleteMessageDao.persistAll(newMessages);
+            workCompleteMessageDao.flush();
             messagesByUserIdAndPdo.forEach((userId, billingMap)->{
-                List<String> productOrders = billingMap.values().stream().flatMap(Collection::stream)
-                    .map(WorkCompleteMessage::getPdoName).collect(Collectors.toList());
-                billingEjb.createAndBillSession(productOrders, userId);
+                Set<String> productOrders = billingMap.values().stream().flatMap(Collection::stream)
+                    .map(WorkCompleteMessage::getPdoName).collect(Collectors.toSet());
+                billingEjb.createAndBillSession(new ArrayList<>(productOrders), userId);
             });
         });
     }

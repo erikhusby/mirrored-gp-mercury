@@ -22,7 +22,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.BillingTriggerMapping_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMapping;
@@ -127,7 +127,7 @@ public class AouPdoConfigActionBean extends CoreActionBean {
         private String paramName;
         private String wgsValue;
         private String arrayValue;
-        private Set<ResearchProject.BillingTrigger> billingTrigger = new HashSet<>();
+        private Set<BillingTrigger> billingTrigger = new HashSet<>();
 
         public Dto(String paramName, String wgsValue, String arrayValue) {
             this.paramName = paramName;

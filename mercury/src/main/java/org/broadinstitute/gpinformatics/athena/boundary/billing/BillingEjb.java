@@ -69,46 +69,32 @@ public class BillingEjb {
 
         Set<LedgerEntry> ledgerItems =
             ledgerEntryDao.findWithoutBillingSessionByOrderList(productOrders,errorMessages);
-//ledgerItems.stream().filter()
-        // Add error messages
-//             addGlobalValidationErrors(errorMessages);
 
         if (CollectionUtils.isEmpty(ledgerItems)) {
             log.error("no ledgers to bill");
             return;
-//                 addGlobalValidationError("There are no items to bill on any of the selected orders");
-//                 return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
-
-//             if (hasErrors()) {
-//                 return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
-//             }
-
         BillingSession session = new BillingSession(userId, ledgerItems);
         billingSessionDao.persist(session);
+        billingSessionDao.flush();
         List<BillingEjb.BillingResult> billingResults = null;
         try {
             billingResults = billingAdaptor.billSessionItems("automated_biller", session.getBusinessKey());
             createBillingMessage(billingResults);
         } catch (Exception e) {
-            log.error(e);
-//            errorsInBilling = true;
-//            addGlobalValidationError(e.getMessage());
+            log.error(e.getMessage(), e);
         } finally {
             billingSessionAccessEjb.saveAndUnlockSession(session);
         }
 
     }
+
     public boolean createBillingMessage(List<BillingEjb.BillingResult> billingResults) {
             boolean errorsInBilling = false;
             HashMultimap<ProductOrder.QuoteSourceType, String> billingDestinationMap = HashMultimap.create();
             for (BillingEjb.BillingResult billingResult : billingResults) {
-
                 if (billingResult.isError()) {
                     errorsInBilling = true;
-//                    addGlobalValidationError(billingResult.getErrorMessage());
-                } else {
-//                    billingDestinationMap.putAll(getQuoteLink(billingResult.getQuoteImportItem()));
                 }
             }
             billingDestinationMap.asMap().entrySet().stream().collect(
@@ -514,6 +500,7 @@ public class BillingEjb {
         this.billingAdaptor = billingAdaptor;
     }
 
+    @Inject
     public void setBillingSessionAccessEjb(BillingSessionAccessEjb billingSessionAccessEjb) {
         this.billingSessionAccessEjb = billingSessionAccessEjb;
     }

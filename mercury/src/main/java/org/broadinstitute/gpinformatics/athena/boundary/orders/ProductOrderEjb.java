@@ -31,7 +31,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -1750,7 +1750,7 @@ public class ProductOrderEjb {
             productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers, owner, jiraLink);
 
             List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
-            if (productOrder.getBillingTriggerOrDefault().contains(ResearchProject.BillingTrigger.ADDONS_ON_RECEIPT)) {
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
                 productOrder.getSamples().forEach(pdoSample -> {
                     pdoSample.getProductOrder().getAddOns().stream().map(ProductOrderAddOn::getAddOn).forEach(product -> {
                         workCompleteMessages.add(new WorkCompleteMessage(pdoSample.getProductOrder().getJiraTicketKey(),

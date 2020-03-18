@@ -59,12 +59,12 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void addWorkCompleteMessage() throws Exception {
         userBean.loginOSUser();
         utx.begin();
 
-        String pdoKey = "PDO-22077";
+        String pdoKey = "PDO-21657";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
 
         Map<String, Object> dataMap = new HashMap<>();
@@ -86,7 +86,8 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
             if (!alreadyInQueue) {
                 Long userId = userBean.getBspUser().getUserId();
                 workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-WG-0073", userId, new Date(), dataMap));
-//                workCompleteMessages.add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", new Date(), dataMap));
+                workCompleteMessages
+                    .add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", userId, new Date(), dataMap));
             }
         });
 

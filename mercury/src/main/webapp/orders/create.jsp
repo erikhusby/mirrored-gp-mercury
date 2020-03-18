@@ -1709,13 +1709,12 @@
                 <div class="control-group">
                     <stripes:label for="billingTrigger" class="control-label"/>
                     <div class="controls">
-                        <stripes:select style="width: auto;" id="billingTrigger"
-                                        name="editOrder.billingTrigger"
+                        <stripes:select multiple="true" style="width: auto;" id="billingTrigger"
+                                        name="editOrder.billingTriggers"
+                                        value="${actionBean.editOrder.billingTriggerOrDefault}"
                                         title="What can trigger billing.">
-                            <stripes:option value=""><%=actionBean.getEditOrder().getBillingTriggerDisplayName()%>
-                            </stripes:option>
                             <stripes:options-enumeration label="displayName"
-                                                         enum="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.BillingTrigger"/>
+                                                         enum="org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger"/>
                         </stripes:select>
                     </div>
                 </div>

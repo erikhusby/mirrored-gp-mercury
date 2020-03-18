@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -59,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -169,6 +171,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return foundProduct;
     }
 
+    public boolean hasBillingTriggerSelected() {
+        return CollectionUtils.isNotEmpty(billingTriggers);
+    }
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -229,11 +235,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     private Product.AggregationParticle defaultAggregationParticle;
 
-    @ElementCollection
-    @JoinTable(schema = "athena", name = "PDO_BILLING_TRIGGERS",
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(schema = "athena", name = "PDO_BILLING_TRIGGERS",
         joinColumns = {@JoinColumn(name = "PRODUCT_ORDER_ID")})
     @Enumerated(EnumType.STRING)
-    private Collection<ResearchProject.BillingTrigger> billingTriggers;
+    private Set<BillingTrigger> billingTriggers;
 
     /**
      * Alphanumeric Id
@@ -909,13 +915,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return displayValue;
     }
 
-    private Collection<ResearchProject.BillingTrigger> getDefaultBillingTrigger() {
-        return getResearchProject() != null ? getResearchProject().getDefaultBillingTriggers() :
-            ResearchProject.BillingTrigger.defaultValues();
+    private Set<BillingTrigger> getDefaultBillingTrigger() {
+        return getResearchProject() != null ? getResearchProject().getBillingTriggers() :
+            BillingTrigger.defaultValues();
     }
 
-    public Collection<ResearchProject.BillingTrigger> getBillingTriggerOrDefault() {
+    public Set<BillingTrigger> getBillingTriggerOrDefault() {
         return Optional.ofNullable(billingTriggers).orElse(getDefaultBillingTrigger());
+    }
+
+    public Set<BillingTrigger> getBillingTriggers() {
+        return billingTriggers;
+    }
+
+    public void setBillingTriggers(Set<BillingTrigger> billingTriggers) {
+        this.billingTriggers = billingTriggers;
     }
 
     public Product.AggregationParticle getDefaultAggregationParticle() {
@@ -2413,14 +2427,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
         this.analyzeUmiOverride = analyzeUmiOverride;
-    }
-
-    public Collection<ResearchProject.BillingTrigger> getBillingTriggers() {
-        return billingTriggers;
-    }
-
-    public void setBillingTriggers(ResearchProject.BillingTrigger... billingTriggers) {
-        this.billingTriggers = Arrays.asList(billingTriggers);
     }
 
     /**

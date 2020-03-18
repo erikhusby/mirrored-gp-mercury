@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -12,7 +13,6 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -25,6 +25,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -48,7 +49,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -110,27 +110,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
         public boolean isClinical() {
             return isClinical;
-        }
-    }
-
-    public enum BillingTrigger implements Displayable {
-        NONE("Manual Billing Only"),
-        ADDONS_ON_RECEIPT("Bill Add-ons on Sample Receipt"),
-        DATA_REVIEW("Bill at Data Review"),;
-
-        private final String displayName;
-
-        BillingTrigger(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public static Collection<BillingTrigger> defaultValues() {
-            return new HashSet<>(Collections.singleton(BillingTrigger.NONE));
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
         }
     }
 
@@ -263,11 +242,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
-    @ElementCollection
-    @JoinTable(schema = "athena", name = "RP_BILLING_TRIGGERS",
-        joinColumns = {@JoinColumn(name = "RESEARCH_PROJECT")})
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(schema = "athena", name = "RP_BILLING_TRIGGERS",
+        joinColumns = {@JoinColumn(name = "RESEARCH_PROJECT_ID")})
     @Enumerated(EnumType.STRING)
-    private Collection<BillingTrigger> defaultBillingTriggers = BillingTrigger.defaultValues();
+    private Set<BillingTrigger> billingTriggers = BillingTrigger.defaultValues();
 
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
@@ -480,12 +459,15 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return getRegulatoryDesignation().getDescription();
     }
 
-    public Collection<BillingTrigger> getDefaultBillingTriggers() {
-        return defaultBillingTriggers;
+    public Set<BillingTrigger> getBillingTriggers() {
+        if (CollectionUtils.isEmpty(billingTriggers)) {
+            billingTriggers = BillingTrigger.defaultValues();
+        }
+        return billingTriggers;
     }
 
-    public void setDefaultBillingTriggers(BillingTrigger ... defaultBillingTriggers) {
-        this.defaultBillingTriggers = Arrays.asList(defaultBillingTriggers);
+    public void setBillingTriggers(Set<BillingTrigger> defaultBillingTriggers) {
+        this.billingTriggers = defaultBillingTriggers;
     }
 
     /**
