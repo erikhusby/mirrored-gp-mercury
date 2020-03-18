@@ -2970,9 +2970,8 @@
     <changeSet id="GPLIM-6969-02" author="epolk">
         <addPrimaryKey constraintName="pk_manifest_file" tableName="manifest_file"
                        schemaName="mercury" columnNames="manifest_file_id"/>
-        <createIndex tableName="manifest_file" indexName="ix_manifest_file">
-            <column name="filename"/>
-        </createIndex>
+        <addUniqueConstraint constraintName="ux_manifest_file" tableName="manifest_file"
+                             schemaName="mercury" columnNames="filename"/>
     </changeSet>
     <changeSet id="GPLIM-6969-03" author="epolk">
         <createTable schemaName="mercury" tableName="manifest_file_aud">

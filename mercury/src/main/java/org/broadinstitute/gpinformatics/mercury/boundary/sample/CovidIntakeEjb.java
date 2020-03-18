@@ -105,6 +105,7 @@ public class CovidIntakeEjb {
             MercurySample sample = samples.get(dto.getSampleName());
             if (sample == null) {
                 sample = new MercurySample(dto.getSampleName(), MercurySample.MetadataSource.MERCURY);
+                sample.addMetadata(sampleMetadata);
                 labVesselDao.persist(sample);
             } else {
                 List<String> intakeMetadata =
@@ -119,10 +120,12 @@ public class CovidIntakeEjb {
                                     sorted().collect(Collectors.joining(",")) +
                             " and will be reset to match the intake manifest.");
                     sample.getMetadata().clear();
+                    sample.addMetadata(sampleMetadata);
                 }
             }
-            sample.addMetadata(sampleMetadata);
-            labVessel.addSample(sample);
+            if (labVessel.getMercurySamples().isEmpty()) {
+                labVessel.addSample(sample);
+            }
         }
     }
 
