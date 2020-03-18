@@ -23,6 +23,8 @@ public class ManifestFile {
     @Column
     private String filename;
 
+    public ManifestFile() {}
+
     public ManifestFile(String filename) {
         this.filename = filename;
     }

@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,6 +38,8 @@ import java.util.stream.Stream;
  * Parses cell data from a Covid manifest file into Dtos.
  */
 public class CovidIntakeParser {
+    private static int BARCODE_LENGTH = 10;
+
     /**
      * Required headers. If others are present they are ignored.
      */
@@ -98,42 +101,48 @@ public class CovidIntakeParser {
                         filter(row -> row.size() > 0).
                         collect(Collectors.toList()));
             }
-        } catch(Exception e) {
-            log.error("Manifest file " + filename + " cannot be parsed.", e);
+        } catch (Exception e) {
+            log.error("Manifest file " + filename + " cannot be parsed. " + e.getMessage());
         }
 
-        // Cleans up headers and values by removing characters that may present a problem later.
-        int maxColumnIndex = -1;
-        for (List<String> columns : cellGrid) {
-            for (int i = 0; i < columns.size(); ++i) {
-                columns.set(i, cleanupValue(columns.get(i)));
-                if (StringUtils.isNotBlank(columns.get(i))) {
-                    maxColumnIndex = Math.max(maxColumnIndex, i);
+        if (cellGrid.size() > 1) {
+            // Cleans up headers and values by removing characters that may present a problem later.
+            int maxColumnIndex = -1;
+            for (List<String> columns : cellGrid) {
+                for (int i = 0; i < columns.size(); ++i) {
+                    columns.set(i, cleanupValue(columns.get(i)));
+                    if (StringUtils.isNotBlank(columns.get(i))) {
+                        maxColumnIndex = Math.max(maxColumnIndex, i);
+                    }
                 }
             }
-        }
 
-        // Makes headers from the first row in the cell grid.
-        List<Header> sheetHeaders = extractHeaders(cellGrid.get(0));
+            // Makes headers from the first row in the cell grid.
+            List<Header> sheetHeaders = extractHeaders(cellGrid.get(0));
 
-        // Parses the expected data values. Unexpected data is ignored.
-        for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
-            Dto dto = new Dto();
-            for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
-                Header header = sheetHeaders.get(columnIndex);
-                String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
-                if (header != null && StringUtils.isNotBlank(value)) {
-                    if (header.metadataKey == Metadata.Key.BROAD_2D_BARCODE) {
-                        dto.setLabel(value);
-                        dto.setSampleName(value);
-                    } else if (header.getMetadataKey() != null) {
-                        dto.getSampleMetadata().put(header.getMetadataKey(), value);
+            // Parses the expected data values. Unexpected data is ignored.
+            for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
+                Dto dto = new Dto();
+                for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
+                    Header header = sheetHeaders.get(columnIndex);
+                    String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
+                    if (header != null && StringUtils.isNotBlank(value)) {
+                        if (header.metadataKey == Metadata.Key.BROAD_2D_BARCODE) {
+                            value = StringUtils.leftPad(value, BARCODE_LENGTH, '0');
+                            dto.setLabel(value);
+                            dto.setSampleName(value);
+                        } else if (header.getMetadataKey() != null) {
+                            dto.getSampleMetadata().put(header.getMetadataKey(), value);
+                        }
                     }
+                }
+                // Keeps only valid dtos.
+                if (StringUtils.isNotBlank(dto.getLabel()) && StringUtils.isNotBlank(dto.getSampleName())) {
+                    dtos.add(dto);
                 }
             }
         }
     }
-
     /**
      * Parses the header row.
      */
@@ -172,7 +181,7 @@ public class CovidIntakeParser {
     class Dto {
         private String label;
         private String sampleName;
-        private Map<Metadata.Key, String> sampleMetadata;
+        private Map<Metadata.Key, String> sampleMetadata = new HashMap<>();
 
         public void setLabel(String label) {
             this.label = label;

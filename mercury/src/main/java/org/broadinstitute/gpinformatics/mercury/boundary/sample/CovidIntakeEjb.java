@@ -17,34 +17,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.ejb.ConcurrencyManagement;
-import javax.ejb.ScheduleExpression;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.Timeout;
-import javax.ejb.Timer;
-import javax.ejb.TimerConfig;
-import javax.ejb.TimerService;
+import javax.ejb.Stateless;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static javax.ejb.ConcurrencyManagementType.BEAN;
-
-@Startup
-@Singleton
-@ConcurrencyManagement(BEAN)
+@Stateless
+@Dependent
 public class CovidIntakeEjb {
-    private static final Log log = LogFactory.getLog(CovidIntakeEjb.class);
-
     // Covid intake files in the Google bucket must be named starting with this string,
     // otherwise they are ignored.
     private static final String COVID_FILE_PREFIX = "covid_";
+    private static final Log log = LogFactory.getLog(CovidIntakeEjb.class);
+    private CovidIntakeBucketConfig config;
 
     @Inject
     private GoogleBucketDao googleBucketDao;
@@ -57,54 +45,19 @@ public class CovidIntakeEjb {
     @Inject
     private Deployment deployment;
 
-    @Resource
-    private TimerService timerService;
-    private static Date previousNextTimeout = new Date(0);
-    private final String timerName = "CovidIntake timer";
-
-    /**
-     * Interval in minutes for the timer to fire off.
-     */
-    private int timerPeriod = 1;
-
     /** CDI constructor. */
     @SuppressWarnings("UnusedDeclaration")
     public CovidIntakeEjb() {}
-
-    @PostConstruct
-    public void postConstruct() {
-        // Gets the yaml file config.
-        CovidIntakeBucketConfig config = (CovidIntakeBucketConfig) MercuryConfiguration.getInstance().
-                getConfig(CovidIntakeBucketConfig.class, deployment);
-
-        // Sets up the period timer if bucket access is configured.
-        if (config != null &&
-                StringUtils.isNotBlank(config.getBucketName()) &&
-                StringUtils.isNotBlank(config.getCredentialFilename())) {
-            googleBucketDao.setConfigGoogleStorageConfig(config);
-            ScheduleExpression expression = new ScheduleExpression();
-            expression.minute("*/" + timerPeriod).hour("*");
-            timerService.createCalendarTimer(expression, new TimerConfig(timerName, false));
-        }
-    }
-
-    @Timeout
-    void timeout(Timer timer) {
-        // Skips retries, indicated by a repeated nextTimeout value.
-        Date nextTimeout = timer.getNextTimeout();
-        if (nextTimeout.after(previousNextTimeout)) {
-            previousNextTimeout = nextTimeout;
-            pollAndAccession();
-        } else {
-            log.trace("Skipping retry of " + timerName);
-        }
-    }
 
     /**
      * Polls the google bucket looking for unprocessed files.
      * For each new file, parses the spreadsheet and accessions the tube and mercury sample.
      */
     public void pollAndAccession() {
+        config = (CovidIntakeBucketConfig) MercuryConfiguration.getInstance().
+                getConfig(CovidIntakeBucketConfig.class, deployment);
+
+        googleBucketDao.setConfigGoogleStorageConfig(config);
         List<String> filenames = findNewFiles();
         if (!filenames.isEmpty()) {
             userBean.login("seqsystem");
@@ -187,7 +140,7 @@ public class CovidIntakeEjb {
     }
 
     /**
-     * Gets a listing of all files in the google bucket and removes the filenames
+     * Gets a listing of all files in the google bucket and removes all of the the filenames
      * that have already been processed.
      */
     List<String> findNewFiles() {
@@ -197,7 +150,8 @@ public class CovidIntakeEjb {
                         filename.contains("/" + COVID_FILE_PREFIX)).
                 collect(Collectors.toList());
         logErrorsAndWarns(messageCollection);
-        listing.removeAll(labVesselDao.findListByList(ManifestFile.class, ManifestFile_.filename, listing));
+        listing.removeAll(labVesselDao.findListByList(ManifestFile.class, ManifestFile_.filename, listing).stream().
+                map(ManifestFile::getFilename).collect(Collectors.toList()));
         return listing;
     }
 
