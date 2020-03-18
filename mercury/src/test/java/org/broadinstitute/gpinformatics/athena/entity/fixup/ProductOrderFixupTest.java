@@ -2251,4 +2251,19 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary(commentary));
         commitTransaction();
     }
+
+    public void cleanupAccidentalProductionOrderCreation() throws Exception {
+        userBean.loginOSUser();
+
+        beginTransaction();
+
+        ProductOrder orderToClean = productOrderDao.findByBusinessKey("PDO-21736");
+        assertThat(orderToClean.getCreatedBy(), is(equalTo(bspUserList.getByUsername("scottmat").getUserId())));
+        assertThat(orderToClean.getQuoteId(), is(equalTo("2700467")));
+
+        orderToClean.setJiraTicketKey("PDO-21736_bad");
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-6974 cleaning up accidental product order creation"));
+        commitTransaction();
+    }
 }
