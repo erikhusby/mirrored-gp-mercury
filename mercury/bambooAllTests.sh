@@ -22,8 +22,8 @@ EOF
 }
 
 
-TESTS_ARQUILLIAN="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.ExternalIntegration Tests.Alternatives"
-#TESTS_ARQUILLIAN="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.ExternalIntegration"
+#TESTS_ARQUILLIAN="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.ExternalIntegration Tests.Alternatives"
+TESTS_ARQUILLIAN=""
 TESTS_NONARQUILLIAN="Tests.Multithreaded Tests.DatabaseFree "
 TESTS_PROFILE=
 BUILD="BUILD"
