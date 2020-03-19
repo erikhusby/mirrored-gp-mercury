@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProcessor;
@@ -127,7 +128,7 @@ public class CovidIntakeParser {
                     Header header = sheetHeaders.get(columnIndex);
                     String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
                     if (header != null && StringUtils.isNotBlank(value)) {
-                        if (header.metadataKey == Metadata.Key.BROAD_2D_BARCODE) {
+                        if (header.metadataKey == Metadata.Key.BROAD_2D_BARCODE && NumberUtils.isDigits(value)) {
                             value = StringUtils.leftPad(value, BARCODE_LENGTH, '0');
                             dto.setLabel(value);
                             dto.setSampleName(value);
