@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
@@ -20,20 +19,15 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProce
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Parses cell data from a Covid manifest file into Dtos.
@@ -41,33 +35,17 @@ import java.util.stream.Stream;
 public class CovidIntakeParser {
     private static int BARCODE_LENGTH = 10;
 
-    /**
-     * Required headers. If others are present they are ignored.
-     */
-    public enum Header {
-        // The order is not important here. For matching, names are lowercased and stripped of ' ' and '_'
-        BARCODE("barcode", Metadata.Key.BROAD_2D_BARCODE), // also used for MercurySample name.
-        SAMPLE_ID("sampleid", Metadata.Key.SAMPLE_ID),
-        ;
-
-        @NotNull
-        private final String columnName;
-        private final Metadata.Key metadataKey;
-
-        Header(@NotNull String columnName, @Nullable Metadata.Key metadataKey) {
-            this.columnName = columnName;
-            this.metadataKey = metadataKey;
-        }
-
-        public String getText() {
-            return columnName;
-        }
-
-        @Nullable
-        public Metadata.Key getMetadataKey() {
-            return metadataKey;
-        }
-    }
+    private static Map<String, Metadata.Key> headerMap = new HashMap<String, Metadata.Key>() {{
+        // For matching, the name is lowercased and stripped of ' ' and '_'.
+        put("barcode",Metadata.Key.BROAD_2D_BARCODE);
+        put("matrixtube",Metadata.Key.BROAD_2D_BARCODE);
+        put("matrixtubeid",Metadata.Key.BROAD_2D_BARCODE);
+        put("tubeid",Metadata.Key.BROAD_2D_BARCODE);
+        put("sampleid",Metadata.Key.SAMPLE_ID);
+        put("collaboratorsampleid",Metadata.Key.SAMPLE_ID);
+        put("patientsampleid",Metadata.Key.SAMPLE_ID);
+        put("patientname",Metadata.Key.SAMPLE_ID);
+    }};
 
     final private Log log = LogFactory.getLog(getClass());
     final private byte[] content;
@@ -95,8 +73,7 @@ public class CovidIntakeParser {
             } else {
                 // Parses file as Excel spreadsheet.
                 GenericTableProcessor processor = new GenericTableProcessor();
-                InputStream inputStream = IOUtils.toInputStream(StringUtils.toEncodedString(content,
-                        Charset.defaultCharset()));
+                InputStream inputStream = new ByteArrayInputStream(content);
                 PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
                 cellGrid.addAll(processor.getHeaderAndDataRows().stream().
                         filter(row -> row.size() > 0).
@@ -118,22 +95,32 @@ public class CovidIntakeParser {
                 }
             }
 
-            // Makes headers from the first row in the cell grid.
-            List<Header> sheetHeaders = extractHeaders(cellGrid.get(0));
+            // Matches the spreadsheet's headers with the supported header names trying to
+            // accommodate some imprecision in the names (case insensitive, with or without spaces and '_').
+            // Unknown headers are added as nulls, to maintain a corresponding index with data rows.
+            List<Metadata.Key> sheetHeaders = new ArrayList<>();
+            for (String column : cellGrid.get(0)) {
+                String header = (column == null) ? "" : column.toLowerCase().replaceAll("_", "").replaceAll(" ", "");
+                sheetHeaders.add(headerMap.get(header));
+            }
 
             // Parses the expected data values. Unexpected data is ignored.
             for (List<String> row : cellGrid.subList(1, cellGrid.size())) {
                 Dto dto = new Dto();
                 for (int columnIndex = 0; columnIndex < sheetHeaders.size(); ++columnIndex) {
-                    Header header = sheetHeaders.get(columnIndex);
+                    Metadata.Key metadataKey = sheetHeaders.get(columnIndex);
                     String value = (row.size() > columnIndex) ? row.get(columnIndex) : null;
-                    if (header != null && StringUtils.isNotBlank(value)) {
-                        if (header.metadataKey == Metadata.Key.BROAD_2D_BARCODE && NumberUtils.isDigits(value)) {
+                    if (metadataKey != null && StringUtils.isNotBlank(value)) {
+                        // If the spreadsheet has duplicate headers or headers that map to the
+                        // same metadata key, uses the first one encountered (the left-most one on a row).
+                        if (StringUtils.isBlank(dto.getLabel()) &&
+                                metadataKey == Metadata.Key.BROAD_2D_BARCODE &&
+                                NumberUtils.isDigits(value)) {
                             value = StringUtils.leftPad(value, BARCODE_LENGTH, '0');
                             dto.setLabel(value);
                             dto.setSampleName(value);
-                        } else if (header.getMetadataKey() != null) {
-                            dto.getSampleMetadata().put(header.getMetadataKey(), value);
+                        } else if (StringUtils.isBlank(dto.getSampleMetadata().get(metadataKey))) {
+                            dto.getSampleMetadata().put(metadataKey, value);
                         }
                     }
                 }
@@ -143,27 +130,6 @@ public class CovidIntakeParser {
                 }
             }
         }
-    }
-    /**
-     * Parses the header row.
-     */
-    private List<Header> extractHeaders(List<String> headerRow) {
-        Map<String, Header> nameToHeader = Stream.of(Header.values()).
-                collect(Collectors.toMap(Header::getText, Function.identity()));
-
-        List<Header> headers = new ArrayList<>();
-        for (String column : headerRow) {
-            // Lowercases the header string.
-            // Only keeps the substring before '/' (e.g. box id/plate id -> box id)
-            // and before parenthesis if they appear.
-            // Removes underscores and spaces (e.g. bar_code -> barcode and sample id -> sampleid)
-            String header = StringUtils.substringBefore(StringUtils.substringBefore(column.toLowerCase(), "("), "/").
-                    replaceAll("_", "").replaceAll(" ", "");
-            Header match = nameToHeader.get(header);
-            // Unknown headers are added as nulls, to maintain a corresponding index with data rows.
-            headers.add(match);
-        }
-        return headers;
     }
 
     /**

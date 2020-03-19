@@ -53,8 +53,8 @@ public class CovidIntakeEjb {
     public void pollAndAccession() {
         config = (CovidIntakeBucketConfig) MercuryConfiguration.getInstance().
                 getConfig(CovidIntakeBucketConfig.class, deployment);
-
         googleBucketDao.setConfigGoogleStorageConfig(config);
+
         List<String> filenames = findNewFiles();
         if (!filenames.isEmpty()) {
             userBean.login("seqsystem");
