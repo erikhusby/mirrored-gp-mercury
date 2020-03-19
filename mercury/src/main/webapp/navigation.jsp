@@ -151,6 +151,13 @@
                         </li>
                         <li>
                             <stripes:link id="accessioning"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"
+                                          event="startACovidSession">
+                                Accession COVID Manifest
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="accessioning"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean">
                                 Accession Manifest
                             </stripes:link>

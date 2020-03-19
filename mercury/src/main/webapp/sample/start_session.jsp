@@ -90,7 +90,9 @@
                                 ${openSession.status}
                         </td>
                         <td>
+                            <c:if test="${openSession.researchProject != null}">
                                 ${openSession.researchProject.businessKey}
+                            </c:if>
                         </td>
                         <td>
                                 ${actionBean.getUserFullName(openSession.updateData.createdBy)}
@@ -117,16 +119,18 @@
         <div id="startNewSession">
             <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
                 <div class="form-horizontal span6">
-                    <div class="control-group">
-                        <stripes:label for="researchProjectKey" class="control-label">
-                            Research Project *
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:text id="researchProjectKey" name="projectTokenInput.listOfKeys"
-                                          class="defaultText input-xlarge"
-                                          maxlength="255" title="Enter the JIRA ticket of the Research Project"/>
+                    <c:if test="${!actionBean.covidProcess}">
+                        <div class="control-group">
+                            <stripes:label for="researchProjectKey" class="control-label">
+                                Research Project *
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="researchProjectKey" name="projectTokenInput.listOfKeys"
+                                              class="defaultText input-xlarge"
+                                              maxlength="255" title="Enter the JIRA ticket of the Research Project"/>
+                            </div>
                         </div>
-                    </div>
+                    </c:if>
                     <div class="control-group">
                         <stripes:label for="manifestFile" class="control-label">Manifest File *</stripes:label>
 
@@ -135,7 +139,14 @@
                         </div>
                     </div>
                     <div class="actionButtons">
-                        <stripes:submit name="uploadManifest" value="Upload manifest" class="btn"/>
+                        <c:choose>
+                            <c:when test="${actionBean.covidProcess}">
+                                <stripes:submit name="uploadCovidManifest" value="Upload Covid manifest" class="btn"/>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:submit name="uploadManifest" value="Upload manifest" class="btn"/>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </stripes:form>

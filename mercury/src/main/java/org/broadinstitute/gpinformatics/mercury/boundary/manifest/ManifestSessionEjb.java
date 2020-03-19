@@ -16,9 +16,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -32,6 +34,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -39,6 +43,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +86,8 @@ public class ManifestSessionEjb {
 
     private JiraService jiraService;
 
+    private LabVesselFactory labVesselFactory;
+
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
@@ -96,7 +103,8 @@ public class ManifestSessionEjb {
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
                               BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb,
-                              DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
+                              DnaQuantEnqueueOverride dnaQuantEnqueueOverride,
+                              LabVesselFactory labVesselFactoryIn) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -106,6 +114,7 @@ public class ManifestSessionEjb {
         this.jiraService = jiraService;
         this.queueEjb = queueEjb;
         this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+        this.labVesselFactory = labVesselFactoryIn;
     }
 
     /**
@@ -118,15 +127,20 @@ public class ManifestSessionEjb {
      *                           manifest name which will help to identify the accessioning session
      * @param fromSampleKit      whether or not the samples are in containers from a Broad sample kit
      *
+     * @param accessioningProcessType
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          boolean fromSampleKit) {
+                                          boolean fromSampleKit,
+                                          AccessioningProcessType accessioningProcessType) {
 
-        ResearchProject researchProject = findResearchProject(researchProjectKey);
-        Collection<ManifestRecord> manifestRecords = importManifestRecords(inputStream);
+        ResearchProject researchProject = null;
+        if(accessioningProcessType != AccessioningProcessType.COVID) {
+            researchProject = findResearchProject(researchProjectKey);
+        }
+        Collection<ManifestRecord> manifestRecords = importManifestRecords(inputStream, accessioningProcessType);
         return createManifestSession(FilenameUtils.getBaseName(pathToFile), manifestRecords, researchProject,
-                fromSampleKit);
+                fromSampleKit, accessioningProcessType);
     }
 
     /**
@@ -138,14 +152,16 @@ public class ManifestSessionEjb {
      *                               associated
      * @param fromSampleKit          whether or not the samples are in containers from a Broad sample kit
      *
+     * @param accessioningProcessType
      * @return the newly created manifest session
      */
     @Nonnull
     public ManifestSession createManifestSession(String manifestSessionName,
                                                  Collection<ManifestRecord> manifestRecords,
-                                                 ResearchProject researchProject, boolean fromSampleKit) {
+                                                 ResearchProject researchProject, boolean fromSampleKit,
+                                                 AccessioningProcessType accessioningProcessType) {
         ManifestSession manifestSession = new ManifestSession(researchProject, manifestSessionName,
-                userBean.getBspUser(), fromSampleKit);
+                userBean.getBspUser(), fromSampleKit, accessioningProcessType);
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
 
@@ -155,8 +171,16 @@ public class ManifestSessionEjb {
         return manifestSession;
     }
 
-    private Collection<ManifestRecord> importManifestRecords(InputStream inputStream) {
-        ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
+    public enum AccessioningProcessType {
+        CRSP,
+        COVID,
+        DYNAMIC /* Placeholder for a future implementation to allow us to not have to modify the
+        code when a new process comes up*/;
+    }
+
+    private Collection<ManifestRecord> importManifestRecords(InputStream inputStream,
+                                                             AccessioningProcessType accessioningProcessType) {
+        ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor(accessioningProcessType);
         List<String> messages;
         try {
             messages = manifestImportProcessor.processSingleWorksheet(inputStream);
@@ -227,16 +251,32 @@ public class ManifestSessionEjb {
      * @param manifestSessionId    Database ID of the session
      * @param referenceSampleId sample identifier for a source clinical sample
      * @param barcode 2d vessel barcode.  Expected only if accessioning a sample kit
+     * @param patientId
      */
-    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
+    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode,
+                              String patientId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
-        Metadata.Key referenceScanKey =
-                (manifestSession.isFromSampleKit())?Metadata.Key.BROAD_SAMPLE_ID:Metadata.Key.SAMPLE_ID;
-        manifestSession.accessionScan(referenceSampleId, referenceScanKey);
-        if(manifestSession.isFromSampleKit()) {
-            manifestSession.getRecordWithMatchingValueForKey(referenceScanKey, referenceSampleId)
-                    .addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+        if (!manifestSession.isCovidSession()) {
+            Metadata.Key referenceScanKey =
+                    (manifestSession.isFromSampleKit()) ? Metadata.Key.BROAD_SAMPLE_ID : Metadata.Key.SAMPLE_ID;
+            manifestSession.accessionScan(referenceSampleId, referenceScanKey);
+            if (manifestSession.isFromSampleKit()) {
+                manifestSession.getRecordWithMatchingValueForKey(referenceScanKey, referenceSampleId)
+                        .addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+            }
+        } else {
+            manifestSession.accessionScan(patientId, Metadata.Key.PATIENT_ID);
+
+            final ManifestRecord recordWithMatchingValueForKey =
+                    manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.PATIENT_ID, patientId);
+            if(recordWithMatchingValueForKey == null) {
+                throw new InformaticsServiceException(
+                        ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
+                                Metadata.Key.PATIENT_ID, patientId));
+            }
+            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, barcode);
+            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
         }
     }
 
@@ -255,11 +295,20 @@ public class ManifestSessionEjb {
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 LabVessel labVessel;
+                if(manifestSession.isCovidSession()) {
+                    createVesselAndSample(record.getSampleId(),record.getSampleId());
+                }
+
                 if (manifestSession.isFromSampleKit()) {
                     labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(),
                             record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
-                    transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
-                            record.getSampleId(), disambiguator++, labVessel);
+                    if(manifestSession.isCovidSession()) {
+                        transferSample(manifestSessionId, null,
+                                record.getSampleId(), disambiguator++, labVessel);
+                    } else {
+                        transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
+                                record.getSampleId(), disambiguator++, labVessel);
+                    }
                 }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                     List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                     if (labVessels.size() != 1) {
@@ -287,6 +336,21 @@ public class ManifestSessionEjb {
 
         if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
             transitionReceiptTicket(manifestSession, accessionedSamples);
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void createVesselAndSample(String targetSampleKey, String targetVesselLabel) {
+        LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
+        MercurySample foundSample = mercurySampleDao.findBySampleKey(targetSampleKey);
+        if(foundSample == null && foundVessel == null) {
+            ParentVesselBean parentVesselBean =new ParentVesselBean(targetVesselLabel, targetVesselLabel,
+                    "Matrix Tube [0.75mL]", new ArrayList<>());
+            final List<LabVessel> vessels = labVesselFactory
+                    .buildLabVessels(Collections.singletonList(parentVesselBean), userBean.getLoginUserName(),
+                            new Date(), null, MercurySample.MetadataSource.MERCURY).getLeft();
+            labVesselDao.persistAll(vessels);
+            labVesselDao.flush();
         }
     }
 
@@ -339,12 +403,12 @@ public class ManifestSessionEjb {
      */
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
+        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
 
-        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         MercurySample.AccessioningCheckResult canBeAccessioned = foundSample.canSampleBeAccessionedWithTargetVessel(foundVessel);
         if(canBeAccessioned != MercurySample.AccessioningCheckResult.CAN_BE_ACCESSIONED) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
@@ -471,7 +535,8 @@ public class ManifestSessionEjb {
     }
 
     /**
-     * Creates a new manifest session for the given research project.
+     * Creates a new manifest session for the given research project.  This method is solely used by the Clinical
+     * Resource
      *
      * @param researchProjectKey    the business key of the research project for these samples
      * @param sessionName           the name to give the manifest session
@@ -490,7 +555,7 @@ public class ManifestSessionEjb {
             validateSamplesAreAvailableForAccessioning(samples);
             Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
             manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
-                    manifestRecords);
+                    manifestRecords, AccessioningProcessType.CRSP);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
         }

@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.broadinstitute.gpinformatics.infrastructure.parsers.AccessioningColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -45,7 +46,7 @@ public class ManifestImportProcessorTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        processor = new ManifestImportProcessor();
+        processor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP);
         dataRow = makeDataRow();
     }
 
@@ -67,7 +68,8 @@ public class ManifestImportProcessorTest {
             ManifestHeader.fromColumnName(unknownHeaderName);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(), is(ManifestHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + unknownHeaderName));
+            assertThat(e.getMessage(), is(
+                    AccessioningColumnHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + unknownHeaderName));
         }
     }
 

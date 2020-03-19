@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,10 +35,11 @@ public class ManifestTestFactory {
 
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
                                                        BspUser createdBy, int numberOfRecords,
-                                                       ManifestRecord.Status defaultStatus, boolean fromSampleKit) {
+                                                       ManifestRecord.Status defaultStatus, boolean fromSampleKit,
+                                                       ManifestSessionEjb.AccessioningProcessType accessioningProcessType) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
-                createdBy, fromSampleKit);
+                createdBy, fromSampleKit, accessioningProcessType);
 
         EnumSet<Metadata.Key> excludeKeys = EnumSet.of(Metadata.Key.BROAD_2D_BARCODE);
         if(fromSampleKit){

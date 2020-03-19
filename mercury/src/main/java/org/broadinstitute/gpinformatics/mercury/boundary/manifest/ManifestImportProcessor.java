@@ -42,15 +42,21 @@ public class ManifestImportProcessor extends TableProcessor {
     public static final String NO_DATA_ERROR = "The uploaded Manifest has no data.";
     private ColumnHeader[] columnHeaders;
     private List<ManifestRecord> manifestRecords = new ArrayList<>();
+    private ManifestSessionEjb.AccessioningProcessType accessioningProcess;
     List<String> errors = new ArrayList<>();
 
-    protected ManifestImportProcessor() {
+    private ManifestImportProcessor() {
+        this(ManifestSessionEjb.AccessioningProcessType.CRSP);
+    }
+
+    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType) {
         super(null, IgnoreTrailingBlankLines.YES);
+        accessioningProcess = processType;
     }
 
     @Override
     public List<String> getHeaderNames() {
-        return ManifestHeader.headerNames(columnHeaders);
+        return ColumnHeader.headerNames(columnHeaders);
     }
 
     /**
@@ -61,8 +67,12 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     @Override
     public void processHeader(List<String> headers, int rowIndex) {
-        Collection<? extends ColumnHeader> foundHeaders =
-                ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        Collection<? extends ColumnHeader> foundHeaders = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            foundHeaders = ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        } else if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            foundHeaders = CovidHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        }
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
     }
 
@@ -76,7 +86,12 @@ public class ManifestImportProcessor extends TableProcessor {
 
         validateRow(dataRow, rowIndex);
 
-        ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        ManifestRecord manifestRecord = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        } else if (accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID){
+            manifestRecord = new ManifestRecord(CovidHeader.toMetadata(dataRow));
+        }
         manifestRecord.setManifestRecordIndex(rowIndex);
         manifestRecords.add(manifestRecord);
     }
@@ -121,7 +136,13 @@ public class ManifestImportProcessor extends TableProcessor {
 
     @Override
     protected ColumnHeader[] getColumnHeaders() {
-        return ManifestHeader.values();
+        ColumnHeader[] values = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            values = ManifestHeader.values();
+        } else if (accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            values = CovidHeader.values();
+        }
+        return values;
     }
 
     @Override

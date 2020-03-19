@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession_;
 
@@ -37,8 +38,9 @@ public class ManifestSessionDao extends GenericDao {
         return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
                 ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING,
                 ManifestSession.SessionStatus.PENDING_SAMPLE_INFO)).stream().
-                // Excludes manifest sessions without a research project such as Mayo manifests.
-                filter(manifestSession -> manifestSession.getResearchProject() != null).
+                // Excludes CRSP manifest sessions without a research project such as Mayo manifests.
+                filter(manifestSession -> manifestSession.getResearchProject() != null
+                                          || (manifestSession.getAccessioningProcessType() == ManifestSessionEjb.AccessioningProcessType.COVID)).
                 collect(Collectors.toList());
     }
 
