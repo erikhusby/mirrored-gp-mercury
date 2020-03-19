@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -36,12 +37,14 @@ public class ClinicalResourceDbFreeTest {
     private ClinicalResource clinicalResource;
     private UserBean userBean;
     private ManifestSessionEjb manifestSessionEjb;
+    private MercurySampleDao mercurySampleDao;
 
     @BeforeMethod
     public void setUp() throws Exception {
         userBean = Mockito.mock(UserBean.class);
         manifestSessionEjb = Mockito.mock(ManifestSessionEjb.class);
-        clinicalResource = new ClinicalResource(userBean, manifestSessionEjb);
+        mercurySampleDao = Mockito.mock(MercurySampleDao.class);
+        clinicalResource = new ClinicalResource(userBean, manifestSessionEjb, mercurySampleDao);
     }
 
     /**
