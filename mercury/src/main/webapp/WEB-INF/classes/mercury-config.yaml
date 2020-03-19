@@ -315,28 +315,23 @@ covidIntakeStorage:
     DEV:
         credentialFilename: serviceAccountKeys/dev_reader.json
         writerCredentialFilename: serviceAccountKeys/dev_writer.json
-        bucketName: dev_113959925643235198999
-        dailyCredentialRenewal:
+        bucketName: dev_covid_1584612353
     TEST:
         credentialFilename: serviceAccountKeys/dev_reader.json
         writerCredentialFilename: serviceAccountKeys/dev_writer.json
-        bucketName:
-        dailyCredentialRenewal:
+        bucketName: dev_covid_1584612353
     QA:
         credentialFilename: serviceAccountKeys/rc_reader.json
         writerCredentialFilename: serviceAccountKeys/rc_writer.json
-        bucketName:
-        dailyCredentialRenewal:
+        bucketName: dev_covid_1584612353
     RC:
         credentialFilename: serviceAccountKeys/rc_reader.json
         writerCredentialFilename: serviceAccountKeys/rc_writer.json
-        bucketName:
-        dailyCredentialRenewal:
+        bucketName: dev_covid_1584612353
     PROD:
         credentialFilename: serviceAccountKeys/prod_covidReader.json
         writerCredentialFilename:
         bucketName:
-        dailyCredentialRenewal:
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:

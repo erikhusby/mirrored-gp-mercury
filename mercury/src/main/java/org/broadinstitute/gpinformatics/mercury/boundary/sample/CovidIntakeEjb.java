@@ -28,9 +28,6 @@ import java.util.stream.Collectors;
 @Stateless
 @Dependent
 public class CovidIntakeEjb {
-    // Covid intake files in the Google bucket must be named starting with this string,
-    // otherwise they are ignored.
-    private static final String COVID_FILE_PREFIX = "covid_";
     private static final Log log = LogFactory.getLog(CovidIntakeEjb.class);
     private CovidIntakeBucketConfig config;
 
@@ -62,11 +59,18 @@ public class CovidIntakeEjb {
         if (!filenames.isEmpty()) {
             userBean.login("seqsystem");
             for (String filename : filenames) {
-                byte[] content = download(filename);
-                CovidIntakeParser covidIntakeParser = new CovidIntakeParser(content, filename);
-                covidIntakeParser.parse();
-                makeTubesAndSamples(covidIntakeParser.getDtos());
-                labVesselDao.persist(new ManifestFile(filename));
+                try {
+                    byte[] content = download(filename);
+                    CovidIntakeParser covidIntakeParser = new CovidIntakeParser(content, filename);
+                    covidIntakeParser.parse();
+                    makeTubesAndSamples(covidIntakeParser.getDtos());
+                    labVesselDao.persist(new ManifestFile(filename));
+                    labVesselDao.flush();
+                    int tubeCount = Math.max(0, covidIntakeParser.getDtos().size() - 1);
+                    log.info("Processed covid file " + filename + " having " + tubeCount + " tubes.");
+                } catch (Exception e) {
+                    log.error("Failed to process covid file " + filename, e);
+                }
             }
         }
     }
@@ -87,15 +91,14 @@ public class CovidIntakeEjb {
                 labVessel = new BarcodedTube(dto.getLabel(), BarcodedTube.BarcodedTubeType.MatrixTube);
                 labVesselDao.persist(labVessel);
             } else {
-                // Logs the error if the tube already has multiple samples or one that doesn't match
+                // Logs a message if the tube already has multiple samples or one that doesn't match
                 // the intake manifest. Tube and sample are made to match the intake manifest.
                 if (labVessel.getMercurySamples().size() > 1 ||
                         !labVessel.getMercurySamples().iterator().next().getSampleKey().equals(dto.getSampleName())) {
-                    log.error("Covid tube " + labVessel.getLabel() +
-                            " is already in Mercury and contains unexpected sample " +
+                    log.warn("Existing Covid tube " + labVessel.getLabel() + " sample contents " +
                             labVessel.getMercurySamples().stream().map(MercurySample::getSampleKey).
                                     sorted().collect(Collectors.joining(",")) +
-                            " and will be reset to have sample " + dto.getSampleName());
+                            " will be changed to " + dto.getSampleName());
                     labVessel.clearSamples();
                 }
             }
@@ -108,17 +111,16 @@ public class CovidIntakeEjb {
                 sample.addMetadata(sampleMetadata);
                 labVesselDao.persist(sample);
             } else {
+                // Logs a message if existing sample metadata is different than the intake manfiest,
+                // and changes the metadata to match the manifest.
                 List<String> intakeMetadata =
                         sampleMetadata.stream().map(Metadata::toString).sorted().collect(Collectors.toList());
                 List<String> existingMetadata =
                         sample.getMetadata().stream().map(Metadata::toString).sorted().collect(Collectors.toList());
-                intakeMetadata.removeAll(existingMetadata);
-                if (!intakeMetadata.isEmpty()) {
-                    log.error("Covid sample " + sample.getSampleKey() +
-                            " is already in Mercury and contains unexpected metadata " +
-                            labVessel.getMercurySamples().stream().map(MercurySample::getSampleKey).
-                                    sorted().collect(Collectors.joining(",")) +
-                            " and will be reset to match the intake manifest.");
+                if (!existingMetadata.containsAll(intakeMetadata)) {
+                    log.warn("Existing Covid sample metadata for " + sample.getSampleKey() +
+                            " will be changed to match the intake manifest (" +
+                            existingMetadata + " -> " + intakeMetadata + ").");
                     sample.getMetadata().clear();
                     sample.addMetadata(sampleMetadata);
                 }
@@ -149,8 +151,9 @@ public class CovidIntakeEjb {
     List<String> findNewFiles() {
         MessageCollection messageCollection = new MessageCollection();
         List<String> listing = googleBucketDao.list(messageCollection).stream().
-                filter(filename -> filename.startsWith(COVID_FILE_PREFIX) ||
-                        filename.contains("/" + COVID_FILE_PREFIX)).
+                filter(filename -> filename.toLowerCase().endsWith(".csv") ||
+                        filename.toLowerCase().endsWith(".xls") ||
+                        filename.toLowerCase().endsWith(".xlst")).
                 collect(Collectors.toList());
         logErrorsAndWarns(messageCollection);
         listing.removeAll(labVesselDao.findListByList(ManifestFile.class, ManifestFile_.filename, listing).stream().
