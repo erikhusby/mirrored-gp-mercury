@@ -29,10 +29,11 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
     }
 
     public enum DNA_QUANT_TERMS {
-        MANUFACTURER_BARCODE("Manufacturer Barcode"),
-        SAMPLE_ID("Sample ID"),
-        CONTAINER_INFO("Container Information"), // Displaying container information.
-        CONTAINER_BARCODE("Container Barcode"); // Searching by container ID.
+        BARCODE("Barcode"),                      // Used to search by manufacturer barcode.s
+        MERCURY_SAMPLE_ID("Mercury Sample ID"),  // Used to actually search by Sample ID.
+        NEAREST_SAMPLE_ID("Nearest Sample ID"),  // Used to return the nearest sample ID to the barcode scanned (for display of results only).
+        CONTAINER_BARCODE("Container Barcode"),  // Searching by container ID.
+        CONTAINER_INFO("Container Information"); // Displaying container information.
 
         String term;
 
@@ -51,25 +52,28 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
     protected void addSearchTerms() {
         {
             SearchTerm searchTerm = new SearchTerm();
-            searchTerm.setName(DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+            searchTerm.setName(DNA_QUANT_TERMS.BARCODE.getTerm());
             searchTerm.setRackScanSupported(Boolean.TRUE);
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+            criteriaPath.setPropertyName("label"); // might need to be label
+
+            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
 
             searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
                 @Override
                 public String evaluate(Object entity, SearchContext context) {
-                    QueueEntity queueEntity = (QueueEntity) entity;
-
-                    return queueEntity.getLabVessel().getLabel();
+                    LabVessel labVessel = (LabVessel) entity;
+                    // If the lab vessel isn't found we'll return empty row.
+                    if( labVessel != null) {
+                        return String.valueOf(labVessel.getLabVesselId());
+                    } else {
+                        return null;
+                    }
                 }
             });
 
-            criteriaPath.setCriteria(Arrays.asList("ManufacturerBarcode", "labVessel"));
-            criteriaPath.setPropertyName("label"); // might need to be lab_vessel_id
 
-            searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
-
-            termDescriptionMap.put(searchTerm, DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
+            termDescriptionMap.put(searchTerm, DNA_QUANT_TERMS.BARCODE.getTerm());
             mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
         }
         {
@@ -80,15 +84,20 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueTypeValuesExpression());
             searchTerm.setSearchValueConversionExpression( new SearchDefinitionFactory.QueueTypeValueConversionExpression());
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-            criteriaPath.setCriteria(Arrays.asList("QueueType", "queueGrouping", "associatedQueue"));
+            criteriaPath.setCriteria(Arrays.asList("QueueType", "queueEntities", "queueGrouping", "associatedQueue"));
             criteriaPath.setPropertyName("queueType");
             searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
 
             searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
                 @Override
-                public String evaluate(Object entity, SearchContext context) {
-                    QueueEntity queueEntity = (QueueEntity) entity;
-                    return queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType().toString();
+                public Set<String> evaluate(Object entity, SearchContext context) {
+                    LabVessel labVessel = (LabVessel) entity;
+                    Set<String> queueTypes = new HashSet<>();
+                    for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
+                        queueTypes.add(queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType().getTextName());
+                    }
+
+                    return queueTypes;
                 }
             });
             searchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
@@ -130,7 +139,7 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
         }
         {
             SearchTerm searchTerm = new SearchTerm();
-            searchTerm.setName(DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+            searchTerm.setName(DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
 
             criteriaPath.setCriteria(Arrays.asList("SampleID", "labVessel", "mercurySamples"));
@@ -154,7 +163,7 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
                 }
             });
 
-            termDescriptionMap.put(searchTerm, DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
+            termDescriptionMap.put(searchTerm, DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
             mapNameToSearchTerm.put(searchTerm.getName(), searchTerm);
         }
         {
@@ -236,11 +245,13 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
             List<SearchTerm.CriteriaPath> criteriaPaths = searchTerm.getCriteriaPaths();
             if (criteriaPaths != null && !criteriaPaths.isEmpty() &&
                 ((searchTerm.getName().compareToIgnoreCase("Queue Type") != 0) &&
-                 (searchTerm.getName().compareToIgnoreCase("Queue Entity Status") != 0))) {
+                 (searchTerm.getName().compareToIgnoreCase("Queue Entity Status") != 0) &&
+                 (searchTerm.getName().compareToIgnoreCase(DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm()) != 0))) {
                 allowed.add(searchTerm.getName());
             }
         }
         allowed.add(DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm());
+        allowed.add(DNA_QUANT_TERMS.MERCURY_SAMPLE_ID.getTerm());
         return allowed;
     }
 

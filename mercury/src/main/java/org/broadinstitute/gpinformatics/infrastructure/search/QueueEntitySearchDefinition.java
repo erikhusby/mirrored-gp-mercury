@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.search.queue.DNAQuantQueueSearchTerms;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 
 import java.util.ArrayList;
@@ -27,12 +28,12 @@ public class QueueEntitySearchDefinition {
         mapGroupSearchTerms.put("IDs", new ArrayList<>(QUEUE_ENTITY_SEARCH_TERMS.getSearchTerms()));
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
+        //lab_vessel_id
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ManufacturerBarcode", "labVesselId",
+        "labVesselId", LabVessel.class));
 
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("ManufacturerBarcode", "labVessel",
-        "labVessel", QueueEntity.class));
-
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QueueType", "queueGrouping",
-                "queueGrouping", QueueEntity.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QueueType", "labVessel",
+                "labVesselId", LabVessel.class));
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("QueueEntityStatus", "queueStatus",
                 "queueStatus", QueueEntity.class));

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.queue;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue_;

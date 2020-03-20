@@ -250,99 +250,40 @@ public class QueueActionBean extends CoreActionBean {
                     .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
         }
 
-        entityName = ColumnEntity.QUEUE_ENTITY.getEntityName();
+        entityName = ColumnEntity.LAB_VESSEL.getEntityName();
         configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-        SearchInstance.SearchValue userSelectedTerm = null;
+
         if (selectedSearchTermType != null) {
-            // If the selected term is container barcode, then we need to do a code search to find the vessels.
-            if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_BARCODE.getTerm()) == 0) {
 
-                RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(selectedSearchTermValues);
+            SearchInstance.SearchValue userSelectedTerm = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
+            userSelectedTerm.setOperator(SearchInstance.Operator.IN);
+            userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
 
-                if (rackOfTubes != null) {
-                    SortedMap<LabEvent, TubeFormation> rackEventsSortedByDate = rackOfTubes.getRackEventsSortedByDate();
+            // Check for vessels specifically in DNA Quant queue.
+            SearchInstance.SearchValue queue_type =
+                    searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
+            queue_type.setOperator(SearchInstance.Operator.EQUALS);
+            queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
+            queue_type.setIncludeInResults(false);
 
-                    TubeFormation tubeFormation = rackEventsSortedByDate.values().iterator().next();
+            // Check for vessels that are NOT active in a queue entity
+            SearchInstance.SearchValue queue_entity_status =
+                    searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
+            queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
+            queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
+            queue_entity_status.setIncludeInResults(false);
 
-                    VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+            searchInstance.getPredefinedViewColumns()
+                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
+            searchInstance.getPredefinedViewColumns()
+                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm());
+            searchInstance.getPredefinedViewColumns()
+                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
 
-                    Map<String, String> mapOfVesselToContainerBarcode = new HashMap<>();
-                    Map<String, String> mapOfVesselToPosition = new HashMap<>();
-
-                    for (BarcodedTube containedVessel : containerRole.getContainedVessels()) {
-                        mapOfVesselToContainerBarcode.put(containedVessel.getLabel(), selectedSearchTermValues);
-                        String vesselPosition = containedVessel.getVesselGeometry().getPositionNames().next();
-                        mapOfVesselToPosition.put(containedVessel.getLabel(), vesselPosition);
-
-                        TreeMap<String, String> sortedResults = new TreeMap<>();
-
-                        for (LabVessel container : containedVessel.getContainers()) {
-                            TubeFormation containerTubeFormation = (TubeFormation) container;
-
-                            TubeFormation vesselTubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
-
-                            String vesselPositionInContainer = vesselTubeFormation.getContainerRole().getPositionOfVessel(containedVessel).name();
-                            Date createdOn = containerTubeFormation.getCreatedOn();
-
-                            Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
-                            for (RackOfTubes vesselsRackOfTubes : racksOfTubes) {
-                                String formattedCreatedOn = ColumnValueType.DATE_TIME.format(createdOn, "");
-                                String containerInfo = "<b>" + vesselsRackOfTubes.getLabel() + "</b>/<b>" + vesselPositionInContainer + "</b>:" + formattedCreatedOn;
-                                sortedResults.put(formattedCreatedOn, containerInfo);
-                            }
-                        }
-//                        for (Map.Entry<String, String> containerInformation : sortedResults.entrySet()) {
-//                            results.add(containerInformation.getValue());
-//                        }
-                    }
-
-                    Set<String> values = mapOfVesselToContainerBarcode.keySet();
-                    List<String> manufacturerBarcodes = new ArrayList<>(values);
-
-                    userSelectedTerm = searchInstance.addTopLevelTerm(
-                            DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm(),
-                            configurableSearchDef);
-                    userSelectedTerm.setOperator(SearchInstance.Operator.IN);
-                    userSelectedTerm.setValues(manufacturerBarcodes);
-                } else {
-                    addGlobalValidationError("Unable to find the container id selected.");
-                }
-            } else {
-
-                userSelectedTerm = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
-                userSelectedTerm.setOperator(SearchInstance.Operator.IN);
-                userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
-            }
-
-            if (userSelectedTerm != null) {
-                // Check for vessels specifically in DNA Quant queue.
-                SearchInstance.SearchValue queue_type =
-                        searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
-                queue_type.setOperator(SearchInstance.Operator.EQUALS);
-                queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
-                queue_type.setIncludeInResults(false);
-
-                // Check for vessels that are NOT active in a queue entity
-                SearchInstance.SearchValue queue_entity_status =
-                        searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
-                queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
-                queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
-                queue_entity_status.setIncludeInResults(false);
-
-
-
-                searchInstance.getPredefinedViewColumns()
-                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.SAMPLE_ID.getTerm());
-                searchInstance.getPredefinedViewColumns()
-                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MANUFACTURER_BARCODE.getTerm());
-                searchInstance.getPredefinedViewColumns()
-                        .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
-
-                searchInstance.establishRelationships(configurableSearchDef);
-                ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
-                        searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
-                labSearchResultList = firstPageResults.getResultList();
-            }
+            searchInstance.establishRelationships(configurableSearchDef);
+            ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                    searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
+            labSearchResultList = firstPageResults.getResultList();
         } else {
             addGlobalValidationError("You must select a search term.");
         }

@@ -64,7 +64,7 @@
             .searchWrapper {
                 list-style: none;
                 width: 100%;
-                height: 100px;
+                height: auto;
                 margin: 0;
                 padding: 0;
                 overflow: hidden;
@@ -72,9 +72,18 @@
 
             .searchWrapper > li {
                 float: left;
-                width: 200px;
-                height: 100px;
-                padding: 15px;
+                width: auto;
+                height: auto;
+                padding-right: 10px;
+                padding-bottom: 10px;
+                display:block;
+            }
+
+            .searchWrapper > input,label {
+                float: left;
+                clear:none;
+                margin-top:3px;
+                margin-right:5px;
             }
         </style>
 
@@ -136,6 +145,8 @@
                         $j("#queueSearchForm").submit();
                     }
                 });
+
+                $j("#searchAccordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
             });
 
             let editGroupName = function (src) {
@@ -178,27 +189,33 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-
-        <form id="queueSearchForm" action="${ctxpath}/queue/Queue.action">
-            <input type="hidden" name="queueType" value="${actionBean.queueType}" />
-            <input type="hidden" name="searchQueue" />
-            <div>
-                <ul class="searchWrapper">
-                    <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
-                        <li style="width:70px;height:auto;">
-                            <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm}" type="radio" />
-                            <label for="selectedSearchTermType">${searchTerm}</label>
-                        </li>
-                    </c:forEach>
-                </ul>
-
-                <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
-                <br/>
-                <input type="button" id="searchQueue" name="searchQueue" value="Search" />
+        <div id="searchAccordion" style="margin-bottom: 10px;">
+            <div style="padding-left: 30px;padding-bottom: 2px">
+                <div id="headerId" class="fourcolumn" style="padding: 0"> Search For Samples In Queue</div>
             </div>
-        </form>
 
-        <div id="searchResults"></div>
+            <div id="searchPanel" style="display:none;" class="panel">
+                <form id="queueSearchForm" action="${ctxpath}/queue/Queue.action">
+                    <input type="hidden" name="queueType" value="${actionBean.queueType}" />
+                    <input type="hidden" name="searchQueue" />
+                    <div>
+                        <ul class="searchWrapper">
+                            <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
+                                <li>
+                                    <label for="selectedSearchTermType">${searchTerm}</label>
+                                    <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm}" type="radio" />
+                                </li>
+                            </c:forEach>
+                        </ul>
+                        <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
+                        <br/>
+                        <input type="button" id="searchQueue" name="searchQueue" value="Search" />
+                    </div>
+                </form>
+
+                <div id="searchResults"></div>
+            </div>
+        </div>
 
 
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean">
