@@ -442,6 +442,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return orderedListOfProducts;
     }
 
+    public boolean isAddOn(Product product) {
+        return getAddOns().stream().anyMatch(productOrderAddOn -> productOrderAddOn.getAddOn().equals(product));
+    }
+
     /**
      * helper method to see if at least one ledger entries across the collection of product order samples is marked
      * as having completed billing.

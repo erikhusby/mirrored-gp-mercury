@@ -12,13 +12,12 @@ import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This is a scheduled class that can generate ledger entries for product orders based on messages in the message
@@ -68,7 +67,7 @@ public class AutomatedBiller {
             // Since we may check on product orders one at a time per sample, this will keep us from
             // doing two queries every time within the following loop.
             Map<String, Boolean> orderLockoutCache = new HashMap<>();
-            Map<Long, Map<String, ArrayList<WorkCompleteMessage>>> messagesByUserIdAndPdo = new HashMap<>();
+            Map<Long, Set<String>> pdosByUser = new HashMap<>();
             List<WorkCompleteMessage> newMessages = workCompleteMessageDao.getNewMessages();
             for (WorkCompleteMessage message : newMessages) {
 
@@ -92,19 +91,15 @@ public class AutomatedBiller {
                     workCompleteMessageDao.markMessageProcessed(message);
                     Optional.of(message.getUserId()).ifPresent(userId -> {
                         Optional.of(message.getPdoName()).ifPresent(msg -> {
-                            messagesByUserIdAndPdo.computeIfAbsent(userId, x -> messagesByUserIdAndPdo
-                                .computeIfAbsent(x, y -> new HashMap<String, ArrayList<WorkCompleteMessage>>()))
-                                .computeIfAbsent(msg, k -> new ArrayList<>()).add(message);
+                            pdosByUser.computeIfAbsent(userId, k -> new HashSet<>()).add(message.getPdoName());
                         });
                     });
                 }
             }
             workCompleteMessageDao.persistAll(newMessages);
             workCompleteMessageDao.flush();
-            messagesByUserIdAndPdo.forEach((userId, billingMap)->{
-                Set<String> productOrders = billingMap.values().stream().flatMap(Collection::stream)
-                    .map(WorkCompleteMessage::getPdoName).collect(Collectors.toSet());
-                billingEjb.createAndBillSession(new ArrayList<>(productOrders), userId);
+            pdosByUser.forEach((user, productOrderIds)->{
+                billingEjb.createAndBillSession(new ArrayList<>(productOrderIds), user);
             });
         });
     }
