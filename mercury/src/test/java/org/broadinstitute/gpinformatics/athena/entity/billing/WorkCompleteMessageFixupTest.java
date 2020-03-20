@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -84,10 +85,6 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
         String pdoKey = "PDO-21885";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
 
-        Map<String, Object> dataMap = new HashMap<String, Object>() {{
-            put("CAN_BILL", 1L);
-        }};
-
         List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
         productOrder.getSamples().forEach(productOrderSample -> {
             Set<LedgerEntry> ledgerItems = productOrderSample.getLedgerItems();
@@ -110,7 +107,8 @@ public class WorkCompleteMessageFixupTest extends Arquillian {
 
                 // the primary product
                   workCompleteMessages
-                      .add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", userId, new Date(), dataMap));
+                      .add(new WorkCompleteMessage(pdoKey, sampleKey, "P-EX-0052", userId, new Date(),
+                          AutomatedBiller.WORK_COMPLETE_DATA));
             }
         });
 

@@ -59,17 +59,6 @@
             </table>
             <div class="form-horizontal span24">
                 <div class="control-group">
-                    <stripes:label for="billingTriggerMapping" name="Billing Trigger" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select multiple="true" id="billingTriggerMapping" name="billingTriggerMapping"
-                                        value="${actionBean.billingTrigger.billingTriggerAttribute.name()}">
-                            <stripes:options-enumeration label="displayName"
-                                                         enum="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.BillingTrigger"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
                 <div class="control-label">&#160;</div>
                 <div class="controls actionButtons">
                     <stripes:submit name="validate" value="Validate" title="Validates all values."/>

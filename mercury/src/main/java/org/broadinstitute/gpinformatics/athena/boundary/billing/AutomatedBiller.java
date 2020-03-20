@@ -33,6 +33,10 @@ public class AutomatedBiller {
     public static final int PROCESSING_START_HOUR = 0;
     public static final int PROCESSING_END_HOUR = 5;
     public static final String CAN_BILL = "CAN_BILL";
+    @SuppressWarnings("serial")
+    public static final Map<String, Object> WORK_COMPLETE_DATA = new HashMap<String, Object>() {{
+        put(CAN_BILL, 1L);
+    }};
 
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BillingEjb billingEjb;
