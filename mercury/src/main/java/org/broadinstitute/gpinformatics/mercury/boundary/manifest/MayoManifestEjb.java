@@ -13,14 +13,19 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderData;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -67,7 +72,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -169,6 +173,7 @@ public class MayoManifestEjb {
     private ResearchProjectDao researchProjectDao;
     private QueueEjb queueEjb;
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+    private WorkCompleteMessageDao workCompleteMessageDao;
 
     /**
      * CDI constructor.
@@ -183,7 +188,7 @@ public class MayoManifestEjb {
             QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment,
             ProductOrderEjb productOrderEjb, AttributeArchetypeDao attributeArchetypeDao, ProductDao productDao,
             BSPUserList bspUserList, ResearchProjectDao researchProjectDao, QueueEjb queueEjb,
-            DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
+            DnaQuantEnqueueOverride dnaQuantEnqueueOverride, WorkCompleteMessageDao workCompleteMessageDao) {
 
         this.manifestSessionDao = manifestSessionDao;
         this.googleBucketDao = googleBucketDao;
@@ -200,6 +205,7 @@ public class MayoManifestEjb {
         this.researchProjectDao = researchProjectDao;
         this.queueEjb = queueEjb;
         this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+        this.workCompleteMessageDao = workCompleteMessageDao;
 
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
@@ -1129,10 +1135,26 @@ public class MayoManifestEjb {
         if (productOrder != null && productOrder.getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
             messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
                     " samples.");
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
+                List<WorkCompleteMessage> workCompleteMessages =
+                    new ArrayList<>(buildWorkCompleteMessages(productOrder));
+                workCompleteMessageDao.persistAll(workCompleteMessages);
+            }
         } else {
             messages.addError("Failed to make a PDO for the accessioned samples.");
         }
         messages.addAll(pdoMessageCollection);
+    }
+
+    public List<WorkCompleteMessage> buildWorkCompleteMessages(ProductOrder productOrder) {
+        List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+        productOrder.getSamples().forEach(productOrderSample -> {
+            productOrder.getAddOns().stream().map(ProductOrderAddOn::getAddOn).map(
+                addOn -> new WorkCompleteMessage(productOrder.getJiraTicketKey(), productOrderSample.getAliquotId(),
+                    addOn.getPartNumber(), productOrder.getCreatedBy(), productOrder.getCreatedDate(),
+                    AutomatedBiller.WORK_COMPLETE_DATA)).collect(Collectors.toCollection(() -> workCompleteMessages));
+        });
+        return workCompleteMessages;
     }
 
     /**
