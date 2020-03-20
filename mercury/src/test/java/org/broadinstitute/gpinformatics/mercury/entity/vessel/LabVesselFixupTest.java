@@ -1857,6 +1857,7 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Test(enabled = false, groups = TestGroups.FIXUP)
     public void gplim_5743BackPopulateCrspPortalMetadataSource() throws IOException {
+        userBean.loginOSUser();
         List<String> sampleIds = IOUtils.readLines(VarioskanParserTest.getTestResource("crsp_metadata_source.txt"));
         List<LabVessel> crspPortalLabVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
         for (LabVessel labVessel : crspPortalLabVessels) {
@@ -1867,5 +1868,7 @@ public class LabVesselFixupTest extends Arquillian {
                 }
             }
         }
+        System.out.println("Set metadata for " + crspPortalLabVessels.size() + " vessels");
+        labVesselDao.flush();
     }
 }

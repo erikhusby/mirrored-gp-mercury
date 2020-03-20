@@ -375,8 +375,9 @@ public class MayoManifestEjb {
         JiraTicket jiraTicket = makeOrUpdatePackageRct(bean, manifestSession, rctTicketComments);
         if (jiraTicket != null) {
             // Puts RCT id metadata on each record.
-            manifestSession.getRecords().forEach(record ->
-                    record.addMetadata(Metadata.Key.RECEIPT_RECORD, jiraTicket.getTicketId()));
+            manifestSession.getRecords().stream().
+                    filter(record -> record.getValueByKey(Metadata.Key.RECEIPT_RECORD) == null).
+                    forEach(record -> record.addMetadata(Metadata.Key.RECEIPT_RECORD, jiraTicket.getTicketId()));
             manifestSessionDao.persist(jiraTicket);
             bean.setRctUrl(jiraTicket.getBrowserUrl());
             manifestSession.setReceiptTicket(jiraTicket.getTicketName());
