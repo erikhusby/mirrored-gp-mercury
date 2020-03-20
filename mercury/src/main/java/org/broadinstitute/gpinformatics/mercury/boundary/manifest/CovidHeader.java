@@ -10,12 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 public enum CovidHeader implements AccessioningColumnHeader {
-    PATIENT_ID("Patient ID",Metadata.Key.PATIENT_ID),
-    REQUESTING_PHYSICIAN("Requesting Physician", Metadata.Key.REQUESTING_PHYSICIAN),
-    DATE_COLLECTED("Date Collected", Metadata.Key.COLLECTION_DATE),
-    INSTITUTION_ID("Institution ID", Metadata.Key.INSTITUTE_ID),
-    // TODO validate this metadata key assignment.  Not sure about this
-    SAMPLE_ID("Sample ID", Metadata.Key.SAMPLE_ID),
+    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID),
+    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN),
+    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE),
+    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID),
+    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID),
     ;
 
     private final String columnName;

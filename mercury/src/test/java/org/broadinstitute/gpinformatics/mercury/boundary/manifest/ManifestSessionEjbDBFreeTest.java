@@ -251,8 +251,7 @@ public class ManifestSessionEjbDBFreeTest {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
-                false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+                ManifestSessionEjb.AccessioningProcessType.CRSP, false);
     }
 
     /**
@@ -382,7 +381,7 @@ public class ManifestSessionEjbDBFreeTest {
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
                 labVesselFactory);
         try {
-            ejb.uploadManifest(null, null, null, false, ManifestSessionEjb.AccessioningProcessType.CRSP);
+            ejb.uploadManifest(null, null, null, ManifestSessionEjb.AccessioningProcessType.CRSP, false);
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
         }
@@ -812,7 +811,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         try {
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, tubeBarcode, "");
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, tubeBarcode);
             if (!successExpected) {
                 Assert.fail();
             }
@@ -844,8 +843,8 @@ public class ManifestSessionEjbDBFreeTest {
             // Take an arbitrary one of the duplicated sample IDs.
             String duplicatedSampleId = DUPLICATED_SAMPLE_IDS.iterator().next();
 
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, duplicatedSampleId,
-                    "");
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, duplicatedSampleId
+            );
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -877,7 +876,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
                 manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID),
-                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), "");
+                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
@@ -888,12 +887,12 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = holder.ejb;
 
         String goodTubeBarcode = "SAMPLE_ID_11";
-        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode, "");
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
         // The results of this are checked in accessionScanGoodManifest
 
         try {
             // Should fail on a second scan.
-            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode, "");
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(),
@@ -1509,7 +1508,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(record.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE), is(nullValue()));
 
         holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, record.getMetadataByKey(
-                Metadata.Key.BROAD_SAMPLE_ID).getValue(), TEST_VESSEL_LABEL, "");
+                Metadata.Key.BROAD_SAMPLE_ID).getValue(), TEST_VESSEL_LABEL);
 
         assertThat(record.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE).getValue(), is(equalTo(TEST_VESSEL_LABEL)));
 

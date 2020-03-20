@@ -15,27 +15,13 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    if (!($j(this).val() == '' || $j("#accessionTubeText").val() == '')) {
+                    if (!($j(this).val() === '' || $j("#accessionTubeText").val() === '')) {
                         performAccessionScan();
                     }
                 });
 
                 $j("#accessionTubeText").blur(function () {
-                    if ($j(this).val() != '' &&
-                    <c:choose>
-                            <c:when test="${actionBean.covidProcess}">
-                        $j("#accessionPatientText").val() != ''
-                        </c:when>
-                            <c:otherwise>
-                        $j("#accessionSourceText").val() != ''
-                        </c:otherwise>
-                        </c:choose>
-                    ) {
-                        performAccessionScan();
-                    }
-                });
-                $j("#accessionPatientText").blur(function () {
-                    if ($j(this).val() != '' && $j("#accessionTubeText").val() != '') {
+                    if ($j(this).val() !== '' && $j("#accessionSourceText").val() !== '') {
                         performAccessionScan();
                     }
                 });
@@ -72,7 +58,7 @@
                 // blur out of the accession source field so an enter key press essentially behaves the
                 // same as a blurring tab.
                 $j('#accessionSourceText').keydown(function(event) {
-                    if (event.which == 13) {
+                    if (event.which === 13) {
                         event.preventDefault();
                         $j(this).blur();
                         return false;
@@ -82,17 +68,7 @@
                 // blur out of the accession source field so an enter key press essentially behaves the
                 // same as a blurring tab.
                 $j('#accessionTubeText').keydown(function(event) {
-                    if (event.which == 13) {
-                        event.preventDefault();
-                        $j(this).blur();
-                        return false;
-                    }
-                });
-                // Prevent posting the form for an enter key press in the accession source field.  Also
-                // blur out of the accession source field so an enter key press essentially behaves the
-                // same as a blurring tab.
-                $j('#accessionPatientText').keydown(function(event) {
-                    if (event.which == 13) {
+                    if (event.which === 13) {
                         event.preventDefault();
                         $j(this).blur();
                         return false;
@@ -106,41 +82,19 @@
                     data: {
                         '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
-                        <c:choose>
-                            <c:when test="${actionBean.covidProcess}">
-                                accessionPatient: $j("#accessionPatientText").val(),
-                                accessionTube: $j("#accessionTubeText").val()
-                            </c:when>
-                            <c:otherwise>
-                                accessionSource: $j("#accessionSourceText").val()
-                                <c:if test="${actionBean.selectedSession.fromSampleKit}">
-                                    , accessionTube: $j("#accessionTubeText").val()
-                                </c:if>
-                            </c:otherwise>
-                        </c:choose>
+                        accessionSource: $j("#accessionSourceText").val()
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                            , accessionTube: $j("#accessionTubeText").val()
+                        </c:if>
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
-                        <c:if test="${!actionBean.covidProcess}">
                         $j('#accessionSourceText').val('');
-                        </c:if>
-
                         <c:if test="${actionBean.selectedSession.fromSampleKit}">
                         $j('#accessionTubeText').val('');
-                        <c:if test="${actionBean.covidProcess}">
-                        $j('#accessionPatientText').val('');
                         </c:if>
-                        </c:if>
-                        <c:choose>
-                        <c:when test="${actionBean.covidProcess}">
-                        $j('#accessionPatientText').focus();
-                        </c:when>
-                        <c:otherwise>
                         $j('#accessionSourceText').focus();
-                        </c:otherwise>
-                        </c:choose>
-
                     }
                 });
             }
@@ -212,26 +166,6 @@
                         </div>
                     </div>
                 </c:if>
-                <c:choose>
-
-                <c:when test="${actionBean.covidProcess}">
-                    <div class="control-group">
-                        <label class="control-label" for="accessionPatientText">Scan or input Patient ID *</label>
-                        <div class="controls">
-                            <input type="text" class="input-xlarge" name="accessionPatient" maxlength="255"
-                                   placeholder="Enter the Patient ID" id="accessionPatientText" tabindex=1">
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="accessionSourceText">Scan or input tube barcode *</label>
-
-                        <div class="controls">
-                            <input type="text" class="input-xlarge" name="accessionTube" maxlength="255"
-                                   placeholder="Enter the 2d barcode" id="accessionTubeText" tabindex="2">
-                        </div>
-                    </div>
-                </c:when>
-                    <c:otherwise>
                         <div class="control-group">
                             <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                             <div class="controls">
@@ -239,6 +173,10 @@
                                 <c:if test="${actionBean.selectedSession.fromSampleKit}">
                                     <c:set var="sourcePlaceholderText" value="Enter the Broad sample ID"/>
                                 </c:if>
+                                <c:if test="${actionBean.selectedSession.covidSession}">
+                                    <c:set var="sourcePlaceholderText" value="Enter the Collaborator sample ID"/>
+                                </c:if>
+
 
                                 <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
                                        placeholder="${sourcePlaceholderText}" id="accessionSourceText" tabindex="1">
@@ -254,9 +192,6 @@
                                 </div>
                             </div>
                         </c:if>
-
-                    </c:otherwise>
-                </c:choose>
                 <div class="actionButtons">
                 <stripes:submit id="previewSessionClose"
                                     name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>"

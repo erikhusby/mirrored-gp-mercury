@@ -11,7 +11,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
@@ -97,11 +95,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
     private FileBean manifestFile;
 
+    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
 
     private String accessionTube;
-
-    private String accessionPatient;
 
     private List<ManifestSession> openSessions;
     private List<ManifestSession> closedSessions;
@@ -116,6 +113,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private String receiptDescription;
     private ManifestSessionEjb.AccessioningProcessType accessioningProcessType=
             ManifestSessionEjb.AccessioningProcessType.CRSP;
+    private String usesSampleKit = "false";
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
     public void init() {
@@ -152,19 +150,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         direction.addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
 
         return direction;
-    }
-
-    @ValidationMethod(on = SCAN_ACCESSION_SOURCE_ACTION)
-    public void  scanSourceValidation() {
-        if(!selectedSession.isCovidSession()) {
-            if(StringUtils.isBlank(accessionSource)) {
-                addGlobalValidationError("Source sample is required for accessioning");
-            }
-        } else {
-            if(StringUtils.isBlank(accessionPatient)) {
-                addGlobalValidationError("Patient ID is required for accessioning");
-            }
-        }
     }
 
     @HandlesEvent(VIEW_UPLOAD_ACTION)
@@ -236,10 +221,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
             selectedSession = manifestSessionEjb.uploadManifest(researchProjectBusinessKey,
                     manifestFile.getInputStream(), manifestFile.getFileName(),
-                    accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID,
-                    accessioningProcessType);
+                    accessioningProcessType, Boolean.parseBoolean(usesSampleKit));
 
         } catch (IOException | InformaticsServiceException e) {
+            logger.error(e);
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
             return getContext().getSourcePageResolution();
         }
@@ -256,6 +241,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
         } catch (TubeTransferException | InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
+            logger.error(e);
             result = getContext().getSourcePageResolution();
         }
 
@@ -275,10 +261,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                     manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
                 }
             }
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube, accessionPatient);
+            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
             scanMessages = String.format("Sample %s scanned successfully", accessionSource);
         } catch (Exception e) {
             scanErrors = e.getMessage();
+            logger.error(scanErrors);
         }
         statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
         return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
@@ -298,17 +285,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         }
 
         try {
-//            for (ManifestRecord record : selectedSession.getNonQuarantinedRecords()) {
-//                if (record.getStatus() == ManifestRecord.Status.SCANNED) {
-//                    if(selectedSession.isCovidSession()) {
-//                        manifestSessionEjb.createVesselAndSample(record.getSampleId(),record.getSampleId());
-//                    }
-//                }
-//            }
             manifestSessionEjb.closeSession(selectedSessionId);
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
+            logger.error(e);
             return getContext().getSourcePageResolution();
         }
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
@@ -336,8 +317,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             }
         } catch (WebApplicationException e) {
             scanErrors = String.format("Unable to access the specified record of receipt: %s", receiptKey);
-        } catch (RuntimeException e) {
-            scanErrors = e.getMessage();
+            logger.error(scanErrors);
         } catch (Exception e) {
             scanErrors = e.getMessage();
             logger.error(scanErrors);
@@ -452,11 +432,15 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID;
     }
 
-    public void setAccessionPatient(String accessionPatient) {
-        this.accessionPatient = accessionPatient;
-    }
-
     public ManifestSessionEjb.AccessioningProcessType getAccessioningProcessType() {
         return accessioningProcessType;
+    }
+
+    public String getUsesSampleKit() {
+        return usesSampleKit;
+    }
+
+    public void setUsesSampleKit(String usesSampleKit) {
+        this.usesSampleKit = usesSampleKit;
     }
 }

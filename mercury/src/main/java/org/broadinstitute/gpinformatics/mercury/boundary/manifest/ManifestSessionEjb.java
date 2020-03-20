@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -62,6 +63,7 @@ public class ManifestSessionEjb {
     public static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             "The sample found is not eligible for clinical work.";
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
+    static final String VESSEL_NOT_VALID = "The target vessel is not valid for accessioning.";
     public static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             "The target vessel has already been used for a tube transfer.";
     static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
@@ -125,14 +127,12 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
-     * @param fromSampleKit      whether or not the samples are in containers from a Broad sample kit
-     *
      * @param accessioningProcessType
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          boolean fromSampleKit,
-                                          AccessioningProcessType accessioningProcessType) {
+                                          AccessioningProcessType accessioningProcessType, boolean fromSampleKit) {
 
         ResearchProject researchProject = null;
         if(accessioningProcessType != AccessioningProcessType.COVID) {
@@ -251,10 +251,8 @@ public class ManifestSessionEjb {
      * @param manifestSessionId    Database ID of the session
      * @param referenceSampleId sample identifier for a source clinical sample
      * @param barcode 2d vessel barcode.  Expected only if accessioning a sample kit
-     * @param patientId
      */
-    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode,
-                              String patientId) {
+    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
         if (!manifestSession.isCovidSession()) {
@@ -266,17 +264,19 @@ public class ManifestSessionEjb {
                         .addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
             }
         } else {
-            manifestSession.accessionScan(patientId, Metadata.Key.PATIENT_ID);
+            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
-            final ManifestRecord recordWithMatchingValueForKey =
-                    manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.PATIENT_ID, patientId);
-            if(recordWithMatchingValueForKey == null) {
-                throw new InformaticsServiceException(
-                        ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                                Metadata.Key.PATIENT_ID, patientId));
+            ManifestRecord recordWithMatchingValueForKey =
+                    manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, referenceSampleId);
+            if(manifestSession.isFromSampleKit()) {
+                recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, barcode);
+                recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+                if (manifestSession.isCovidSession()) {
+                    createVesselAndSample(recordWithMatchingValueForKey.getSampleId(), recordWithMatchingValueForKey.getSampleId());
+                    findAndValidateTargetSampleAndVessel(recordWithMatchingValueForKey.getSampleId(),
+                            recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                }
             }
-            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, barcode);
-            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
         }
     }
 
@@ -295,20 +295,18 @@ public class ManifestSessionEjb {
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 LabVessel labVessel;
-                if(manifestSession.isCovidSession()) {
-                    createVesselAndSample(record.getSampleId(),record.getSampleId());
-                }
 
                 if (manifestSession.isFromSampleKit()) {
                     labVessel = findAndValidateTargetSampleAndVessel(record.getSampleId(),
                             record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
-                    if(manifestSession.isCovidSession()) {
-                        transferSample(manifestSessionId, null,
-                                record.getSampleId(), disambiguator++, labVessel);
-                    } else {
-                        transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
-                                record.getSampleId(), disambiguator++, labVessel);
+
+                    String sourceCollaboratorSample = null;
+                    if(!manifestSession.isCovidSession()) {
+                        sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
                     }
+
+                    transferSample(manifestSessionId, sourceCollaboratorSample, record.getSampleId(), disambiguator++,
+                            labVessel);
                 }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                     List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                     if (labVessels.size() != 1) {
@@ -342,10 +340,10 @@ public class ManifestSessionEjb {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void createVesselAndSample(String targetSampleKey, String targetVesselLabel) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
-        MercurySample foundSample = mercurySampleDao.findBySampleKey(targetSampleKey);
-        if(foundSample == null && foundVessel == null) {
-            ParentVesselBean parentVesselBean =new ParentVesselBean(targetVesselLabel, targetVesselLabel,
-                    "Matrix Tube [0.75mL]", new ArrayList<>());
+
+        if(foundVessel == null || foundVessel.getType() == LabVessel.ContainerType.TUBE) {
+            ParentVesselBean parentVesselBean = new ParentVesselBean(targetVesselLabel, targetVesselLabel,
+                    BarcodedTube.BarcodedTubeType.MatrixTube075.getDisplayName(), new ArrayList<>());
             final List<LabVessel> vessels = labVesselFactory
                     .buildLabVessels(Collections.singletonList(parentVesselBean), userBean.getLoginUserName(),
                             new Date(), null, MercurySample.MetadataSource.MERCURY).getLeft();
@@ -407,6 +405,9 @@ public class ManifestSessionEjb {
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
+        } else if(foundVessel.getType() != LabVessel.ContainerType.TUBE) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    targetVesselLabel, VESSEL_NOT_VALID);
         }
 
         MercurySample.AccessioningCheckResult canBeAccessioned = foundSample.canSampleBeAccessionedWithTargetVessel(foundVessel);

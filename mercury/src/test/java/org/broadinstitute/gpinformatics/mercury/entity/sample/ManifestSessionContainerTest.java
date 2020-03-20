@@ -385,8 +385,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
         uploadedSession =
-                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath, false,
-                        ManifestSessionEjb.AccessioningProcessType.CRSP);
+                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
+                        ManifestSessionEjb.AccessioningProcessType.CRSP, false);
         UpdateData updateData = uploadedSession.getUpdateData();
         assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
 
@@ -452,7 +452,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         for (String sourceSampleToTest : firstUploadedScannedSamples) {
 
             manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest,
-                    sourceSampleToTest, "");
+                    sourceSampleToTest);
             manifestSessionDao.flush();
             manifestSessionDao.clear();
 
@@ -602,8 +602,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
         uploadedSession2 =
-                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2, false,
-                        ManifestSessionEjb.AccessioningProcessType.CRSP);
+                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2,
+                        ManifestSessionEjb.AccessioningProcessType.CRSP, false);
 
         assertThat(uploadedSession2, is(notNullValue()));
         assertThat(uploadedSession2.getManifestSessionId(), is(notNullValue()));
@@ -684,8 +684,8 @@ public class ManifestSessionContainerTest extends Arquillian {
          * Mimic the user Scanning the tubes to complete accessioning
          */
         for (String sampleId : secondUploadedSamplesGood) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId,
-                    "");
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId
+            );
 
             manifestSessionDao.flush();
             manifestSessionDao.clear();
@@ -703,8 +703,8 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         for (String sampleId : secondUploadedSamplesDupes) {
             try {
-                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId,
-                        "");
+                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId
+                );
                 Assert.fail();
             } catch (Exception e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -717,8 +717,8 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
         for (String sampleId : secondUploadPatientsWithMismatchedGender) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId,
-                    "");
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId
+            );
 
             manifestSessionDao.flush();
             manifestSessionDao.clear();
@@ -1056,7 +1056,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(),
                     sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey(),
-                    sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel(), "");
+                    sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel());
             manifestSessionDao.flush();
             manifestSessionDao.clear();
 
@@ -1143,7 +1143,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionEjb.acceptManifestUpload(manifestSessionI.getManifestSessionId());
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
             manifestSessionEjb.accessionScan(manifestSessionI.getManifestSessionId(), manifestRecord.getSampleId(),
-                    manifestRecord.getSampleId(), "");
+                    manifestRecord.getSampleId());
         }
 
         manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId());
@@ -1184,8 +1184,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
         uploadedSession =
-                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath, false,
-                        ManifestSessionEjb.AccessioningProcessType.CRSP);
+                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
+                        ManifestSessionEjb.AccessioningProcessType.CRSP, false);
         manifestSessionEjb.acceptManifestUpload(uploadedSession.getManifestSessionId());
 
         manifestSessionDao.flush();
@@ -1194,7 +1194,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
         String sourceSampleToTest = firstUploadedScannedSamples.iterator().next();
         manifestSessionEjb.accessionScan(acceptedSession.getManifestSessionId(), sourceSampleToTest,
-                sourceSampleToTest, "");
+                sourceSampleToTest);
         manifestSessionDao.flush();
         manifestSessionDao.clear();
 
@@ -1253,16 +1253,16 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionDao.flush(); manifestSessionDao.clear();
 
         // Accession and complete session 1
-        manifestSessionEjb.accessionScan(acceptedSession1.getManifestSessionId(), sampleId1, sampleId1,
-                "");
+        manifestSessionEjb.accessionScan(acceptedSession1.getManifestSessionId(), sampleId1, sampleId1
+        );
         manifestSessionDao.flush(); manifestSessionDao.clear();
 
         manifestSessionEjb.closeSession(acceptedSession1.getManifestSessionId());
         manifestSessionDao.flush(); manifestSessionDao.clear();
 
         // Accession and complete session 2
-        manifestSessionEjb.accessionScan(acceptedSession2.getManifestSessionId(), sampleId2, sampleId2,
-                "");
+        manifestSessionEjb.accessionScan(acceptedSession2.getManifestSessionId(), sampleId2, sampleId2
+        );
         manifestSessionDao.flush(); manifestSessionDao.clear();
 
         manifestSessionEjb.closeSession(acceptedSession2.getManifestSessionId());
