@@ -143,7 +143,7 @@
         <modifyDataType tableName="PRODUCT_ORDER_AUD" columnName="count" newDataType="number(14,4)" schemaName="ATHENA" />
     </changeSet>
 
-    <changeSet id="GPLIM-6698_columns_to_suport_billing1" author="dryan">
+    <changeSet id="GPLIM-6698_columns_to_support_billing1" author="dryan">
         <preConditions onFail="MARK_RAN">
             <not>
                     <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE" columnName="PART_NUMBER"/>
@@ -153,8 +153,7 @@
             <column name="PART_NUMBER" type="VARCHAR2(40)"/>
         </addColumn>
     </changeSet>
-
-    <changeSet id="GPLIM-6698_columns_to_suport_billing2" author="dryan">
+    <changeSet id="GPLIM-6698_columns_to_support_billing2" author="dryan">
             <preConditions onFail="MARK_RAN">
                 <not>
                         <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE" columnName="USER_ID"/>
@@ -164,8 +163,7 @@
             <column name="USER_ID" type="VARCHAR2(15)"/>
         </addColumn>
     </changeSet>
-
-    <changeSet id="GPLIM-6698_columns_to_suport_billing_aud1" author="dryan">
+    <changeSet id="GPLIM-6698_columns_to_support_billing_aud1" author="dryan">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="PART_NUMBER"/>
@@ -175,7 +173,7 @@
             <column  name="PART_NUMBER" type="VARCHAR2(40)"/>
         </addColumn>
     </changeSet>
-    <changeSet id="GPLIM-6698_columns_to_suport_billing_aud2" author="dryan">
+    <changeSet id="GPLIM-6698_columns_to_support_billing_aud2" author="dryan">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists schemaName="ATHENA" tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="USER_ID"/>
@@ -208,11 +206,9 @@
             </not>
         </preConditions>
             <addForeignKeyConstraint constraintName="fk_rp_billing_trigger"
-                                     baseTableName="RP_BILLING_TRIGGERS" baseColumnNames="research_project_id"
-                                     referencedTableName="RESEARCH_PROJECT" referencedColumnNames="research_project_id"/>
-
+                              baseTableName="RP_BILLING_TRIGGERS" baseColumnNames="research_project_id"
+                              referencedTableName="RESEARCH_PROJECT" referencedColumnNames="research_project_id"/>
     </changeSet>
-
     <changeSet author="dryan" id="GPLIM-6698_rp_join_table_aud">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -241,7 +237,6 @@
             <column name="BILLING_TRIGGERS"/>
         </createIndex>
     </changeSet>
-
     <changeSet author="dryan" id="GPLIM-6698_pdo_join_table">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -268,9 +263,7 @@
             <addForeignKeyConstraint constraintName="fk_pdo_billing_trigger"
                                      baseTableName="PDO_BILLING_TRIGGERS" baseColumnNames="product_order_id"
                                      referencedTableName="PRODUCT_ORDER" referencedColumnNames="product_order_id"/>
-
     </changeSet>
-
     <changeSet author="dryan" id="GPLIM-6698_pdo_join_table_aud">
         <preConditions onFail="MARK_RAN">
             <not>

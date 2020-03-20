@@ -477,7 +477,6 @@
                         <c:forEach var="billiingTrigger" items="${actionBean.editResearchProject.billingTriggers}">
                             <div class="form-value">${billiingTrigger.displayName}</div>
                         </c:forEach>
-
                     </div>
                 </div>
             </fieldset>

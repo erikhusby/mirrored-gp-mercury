@@ -137,7 +137,7 @@ public class LedgerEntryDao extends GenericDao {
     public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull ProductOrder[] orders) {
         return findByOrderList(orders, BillingSessionInclusion.NO_SESSION_STARTED);
     }
-// this seems buggy. it searches for any matching pdo-key which has wever had a billing session
+
     public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys,
                                                                  @Nonnull List<String> errorMessages) {
         Set<LedgerEntry> byOrderList =

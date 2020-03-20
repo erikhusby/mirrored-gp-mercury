@@ -64,9 +64,7 @@ public class BillingEjb {
             "is in error, please contact the informatics group for assistance";
 
     public void createAndBillSession(List<String> productOrders, Long userId) {
-
         List<String> errorMessages = new ArrayList<>();
-
         Set<LedgerEntry> ledgerItems =
             ledgerEntryDao.findWithoutBillingSessionByOrderList(productOrders,errorMessages);
 
@@ -86,7 +84,6 @@ public class BillingEjb {
         } finally {
             billingSessionAccessEjb.saveAndUnlockSession(session);
         }
-
     }
 
     public boolean createBillingMessage(List<BillingEjb.BillingResult> billingResults) {
@@ -310,9 +307,10 @@ public class BillingEjb {
      * @param orderKey          business key of order to bill for
      * @param aliquotId         the sample aliquot ID
      * @param completedDate     the date completed to use when billing
-     * @param partNumber
+     * @param partNumber        the part number being billed
      * @param data              used to check and see if billing can occur
      * @param orderLockoutCache The cache by keys whether the order is locked out or not
+     *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
      * is currently locked out of billing.
      */

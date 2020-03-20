@@ -132,7 +132,7 @@ public class QueueEjb {
                                   @Nonnull MessageCollection messageCollection, QueueOrigin queueOrigin, QueueSpecialization queueSpecialization) {
 
         GenericQueue genericQueue = findQueueByType(queueType);
-// todo: billing in here somewhere?
+
         if (genericQueue.getQueueGroupings() == null) {
             genericQueue.setQueueGroupings(new TreeSet<>(QueueGrouping.BY_SORT_ORDER));
         }

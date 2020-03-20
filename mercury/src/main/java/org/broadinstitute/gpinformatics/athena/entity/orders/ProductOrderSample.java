@@ -194,17 +194,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Product getProductForPriceItem(PriceItem priceItem) {
         Product result = getProductOrder().getProduct();
-        if (Objects.equals(getProductOrder().getProduct().getPrimaryPriceItem(), priceItem)) {
+        if(Objects.equals(getProductOrder().getProduct().getPrimaryPriceItem(),priceItem)) {
             result = getProductOrder().getProduct();
         } else {
-            for (ProductOrderAddOn addOn : getProductOrder().getAddOns()) {
-                if (Objects.equals(addOn.getAddOn().getPrimaryPriceItem(), priceItem)) {
+            for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
+                if(Objects.equals(addOn.getAddOn().getPrimaryPriceItem(),priceItem)) {
                     result = addOn.getAddOn();
                     break;
                 }
             }
         }
-        if (result == null) {
+        if(result == null) {
             throw new RuntimeException("Unable to find a product associated with the given price item");
         }
         return result;
@@ -751,7 +751,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
      *
-     * @param product
+     * @param product       product to bill.
      * @param quantity      quantity for billing
      * @param completedDate completion date for billing
      */
@@ -766,7 +766,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if(nullablePriceItem.isPresent()) {
             priceItem = product.getPrimaryPriceItem();
         }
-        log.info(String.format("Auto-billing Sample %s for %s in %s", getSampleKey(), product.getPartNumber(),
+        log.debug(String.format("Auto-billing Sample %s for %s in %s", getSampleKey(), product.getPartNumber(),
             getProductOrder().getBusinessKey()));
         LedgerQuantities quantities = ledgerQuantitiesMap.get(ProductLedgerIndex.create(product, nullablePriceItem.orElse(null),
                 getProductOrder().hasSapQuote()));

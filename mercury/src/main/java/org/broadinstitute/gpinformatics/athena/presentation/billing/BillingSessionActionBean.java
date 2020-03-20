@@ -46,7 +46,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -131,7 +130,6 @@ public class BillingSessionActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         billingSessions = billingSessionDao.findAll();
-        billingSessions.sort(Comparator.comparing(BillingSession::getBillingSessionId).reversed());
     }
 
     @DefaultHandler

@@ -32,6 +32,7 @@ public class AutomatedBiller {
     // with the schedule, which is happening from midnight to 4:45.
     public static final int PROCESSING_START_HOUR = 0;
     public static final int PROCESSING_END_HOUR = 5;
+
     public static final String CAN_BILL = "CAN_BILL";
     @SuppressWarnings("serial")
     public static final Map<String, Object> WORK_COMPLETE_DATA = new HashMap<String, Object>() {{
@@ -41,6 +42,7 @@ public class AutomatedBiller {
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BillingEjb billingEjb;
     private final SessionContextUtility sessionContextUtility;
+
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
     @Inject
@@ -59,11 +61,9 @@ public class AutomatedBiller {
     }
 
     /**
-     * The schedule is every 30 minutes from 2 minutes after Midnight through 4:30 (before 5AM). It is offset
-     * by 2 minutes because the Quote server reboots at midnight (prod) and 3AM (dev).
+     * The schedule is hourly at the 30 minutes.
      */
-//    @Schedule(minute = "2/30", hour = "0,1,2,3,4", persistent = false)
-    @Schedule(minute = "*", hour = "*", persistent = false)
+    @Schedule(minute = "30", hour = "*", persistent = false)
     public void processMessages() {
         // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
         sessionContextUtility.executeInContext(() -> {

@@ -57,8 +57,8 @@
                 </c:forEach>
                 </tbody>
             </table>
-            <div class="form-horizontal span24">
-                <div class="control-group">
+
+            <div class="control-group">
                 <div class="control-label">&#160;</div>
                 <div class="controls actionButtons">
                     <stripes:submit name="validate" value="Validate" title="Validates all values."/>
@@ -66,7 +66,7 @@
                     &MediumSpace;<input type="checkbox" name="saveDespiteErrors"/>&MediumSpace;Ignore validation errors.
                 </div>
             </div>
-            </div>
+
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
