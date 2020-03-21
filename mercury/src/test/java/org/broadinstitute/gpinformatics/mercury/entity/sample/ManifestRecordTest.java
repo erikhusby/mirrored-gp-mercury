@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.testng.Assert;
@@ -35,7 +36,7 @@ public class ManifestRecordTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        testSession = buildTestSession();
+        testSession = buildTestSession(ManifestSessionEjb.AccessioningProcessType.CRSP);
 
         testRecord = buildManifestRecord(testSession, COLLABORATOR_SAMPLE_ID_1);
     }
@@ -83,7 +84,8 @@ public class ManifestRecordTest {
 
     public void validManifest() {
 
-        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),"COLLABORATOR_SAMPLE_ID_3");
+        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),
+                ManifestSessionEjb.AccessioningProcessType.CRSP,"COLLABORATOR_SAMPLE_ID_3");
 
         String COLLABORATOR_SAMPLE_ID_2 = "COLLABORATOR_SAMPLE_ID_2";
         ManifestRecord secondManifestRecord = buildManifestRecord(secondSession, COLLABORATOR_SAMPLE_ID_2);
@@ -138,7 +140,8 @@ public class ManifestRecordTest {
      */
     public void duplicateAcrossRP() throws Exception {
 
-        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(), COLLABORATOR_SAMPLE_ID_1);
+        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),
+                ManifestSessionEjb.AccessioningProcessType.CRSP, COLLABORATOR_SAMPLE_ID_1);
 
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(true));
@@ -164,8 +167,8 @@ public class ManifestRecordTest {
     public void duplicateAcrossRPHierarchy() throws Exception {
 
         ResearchProject parentResearchProject = ResearchProjectTestFactory.createTestResearchProject("RP-334SIS");
-        ManifestSession secondSession = buildTestSession(parentResearchProject, COLLABORATOR_SAMPLE_ID_1);
-        buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
+        ManifestSession secondSession = buildTestSession(parentResearchProject, ManifestSessionEjb.AccessioningProcessType.CRSP, COLLABORATOR_SAMPLE_ID_1);
+        buildTestSession(ManifestSessionEjb.AccessioningProcessType.CRSP).getResearchProject().setParentResearchProject(parentResearchProject);
 
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(false));
@@ -218,15 +221,21 @@ public class ManifestRecordTest {
         assertThat(genderMisMatch.getManifestEvents().size(), is(1));
     }
 
-    private ManifestSession buildTestSession() {
-        ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject("RP-334");
+    private ManifestSession buildTestSession(ManifestSessionEjb.AccessioningProcessType accessioningProcessType) {
+        ResearchProject testProject = null;
+        if(accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+            testProject = ResearchProjectTestFactory.createTestResearchProject("RP-334");
+        }
 
-        return buildTestSession(testProject);
+        return buildTestSession(testProject, accessioningProcessType);
     }
 
-    private ManifestSession buildTestSession(ResearchProject testProject, String... testRecords) {
+    private ManifestSession buildTestSession(ResearchProject testProject,
+                                             ManifestSessionEjb.AccessioningProcessType accessioningProcessType,
+                                             String... testRecords) {
         ManifestSession newTestSession =
-                new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L), false);
+                new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L), false,
+                        accessioningProcessType);
         for (String recordSampleId : testRecords) {
             buildManifestRecord(newTestSession, recordSampleId);
         }

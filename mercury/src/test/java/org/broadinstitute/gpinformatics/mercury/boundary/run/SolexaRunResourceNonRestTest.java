@@ -80,7 +80,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests the methods in the SolexaRunResource without any rest calls.
  * Squid is now read-only for sequencing runs, i.e. can no longer be created or updated.
  */
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.LONG_RUNNING)
 @Dependent
 public class SolexaRunResourceNonRestTest extends Arquillian {
 

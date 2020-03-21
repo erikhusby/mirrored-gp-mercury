@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTe
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -145,6 +146,7 @@ public class ManifestSessionEjbDBFreeTest {
     private final BSPUserList.QADudeUser testLabUser = new BSPUserList.QADudeUser("LU", 342L);
     private UserBean mockUserBean;
     private ManifestSessionEjb manifestSessionEjb;
+    private LabVesselFactory labVesselFactory;
     /**
      * How many instances of a particular collaborator barcode are seen in this manifest (anything more than 1 is
      * an error).
@@ -167,6 +169,7 @@ public class ManifestSessionEjbDBFreeTest {
         bspUserList = Mockito.mock(BSPUserList.class);
         queueEjb = Mockito.mock(QueueEjb.class);
         dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
+        labVesselFactory = Mockito.mock(LabVesselFactory.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
         Mockito.when(bspUserList.getByUsername(Mockito.anyString())).thenReturn(testLabUser);
@@ -233,7 +236,7 @@ public class ManifestSessionEjbDBFreeTest {
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride);
+                        mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
     }
 
     /**
@@ -248,8 +251,7 @@ public class ManifestSessionEjbDBFreeTest {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
-                false
-        );
+                ManifestSessionEjb.AccessioningProcessType.CRSP, false);
     }
 
     /**
@@ -266,7 +268,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
     }
 
     /**
@@ -324,7 +326,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
         holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
-                "BuickCloseGood", testLabUser, numberOfRecords, initialStatus, withSampleKit);
+                "BuickCloseGood", testLabUser, numberOfRecords, initialStatus, withSampleKit,
+                ManifestSessionEjb.AccessioningProcessType.CRSP);
 
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
@@ -364,7 +367,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
 
         return holder;
     }
@@ -375,9 +378,10 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride);
+                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
+                labVesselFactory);
         try {
-            ejb.uploadManifest(null, null, null, false);
+            ejb.uploadManifest(null, null, null, ManifestSessionEjb.AccessioningProcessType.CRSP, false);
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
         }
@@ -654,7 +658,8 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride);
+                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
+                labVesselFactory);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
@@ -838,7 +843,8 @@ public class ManifestSessionEjbDBFreeTest {
             // Take an arbitrary one of the duplicated sample IDs.
             String duplicatedSampleId = DUPLICATED_SAMPLE_IDS.iterator().next();
 
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, duplicatedSampleId);
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, duplicatedSampleId
+            );
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
