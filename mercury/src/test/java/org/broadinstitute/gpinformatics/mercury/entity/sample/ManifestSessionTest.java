@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
@@ -51,7 +52,8 @@ public class ManifestSessionTest {
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
-        session = new ManifestSession(testRp, sessionPrefix, testUser, false);
+        session = new ManifestSession(testRp, sessionPrefix, testUser, false,
+                ManifestSessionEjb.AccessioningProcessType.CRSP);
 
         for (String sampleId : SAMPLES_IN_MANIFEST) {
             ManifestRecord manifestRecord = buildManifestRecord(session, sampleId);

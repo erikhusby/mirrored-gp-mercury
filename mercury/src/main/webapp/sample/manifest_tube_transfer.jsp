@@ -107,11 +107,13 @@
          * Makes an Ajax call to the action bean in order to execute the validation on the entered target sample name
          */
         function validateSample() {
+            var activeSession = $j("input[name='activeSessionId']:checked").val();
 
             $j.ajax({
                 url: "${ctxpath}/sample/manifestTubeTransfer.action",
                 data: {
                     scanTargetSample: '',
+                    activeSessionId: activeSession,
                     targetSample: $j("#mercurySample").val()
                 },
                 dataType: 'text',
@@ -126,11 +128,13 @@
          * sample before the vessel, we should have both at this time.
          */
         function validateVessel() {
+            var activeSession = $j("input[name='activeSessionId']:checked").val();
 
             $j.ajax({
                 url: "${ctxpath}/sample/manifestTubeTransfer.action",
                 data: {
                     scanTargetVessel: '',
+                    activeSessionId: activeSession,
                     targetSample: $j("#mercurySample").val(),
                     targetVessel: $j("#mercuryLabVessel").val()
                 },

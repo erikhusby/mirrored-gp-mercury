@@ -67,7 +67,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -302,7 +301,7 @@ public class MayoManifestEjb {
         Set<String> previousRacks = new HashSet<>();
         if (manifestSession == null) {
             manifestSession = new ManifestSession(null, packageId, userBean.getBspUser(), false,
-                    Collections.emptyList());
+                    Collections.emptyList(), ManifestSessionEjb.AccessioningProcessType.CRSP);
             manifestSessionDao.persist(manifestSession);
         } else {
             previousRacks.addAll(manifestSession.getVesselLabels());
