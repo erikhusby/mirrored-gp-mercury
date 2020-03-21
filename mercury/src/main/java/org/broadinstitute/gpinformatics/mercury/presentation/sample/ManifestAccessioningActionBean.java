@@ -265,6 +265,12 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             logger.error(e);
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
             return getContext().getSourcePageResolution();
+        } finally {
+            try {
+                manifestFile.delete();
+            } catch (IOException e) {
+                logger.error("Failed to delete uploaded file", e);
+            }
         }
         return new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION).addParameter(
                 SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
