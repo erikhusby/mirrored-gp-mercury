@@ -118,6 +118,7 @@
 
         <div id="startNewSession">
             <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
+                <stripes:hidden name="accessioningProcessName" value="${actionBean.accessioningProcessType.name()}" />
                 <div class="form-horizontal span6">
                     <c:if test="${!actionBean.covidProcess}">
                         <div class="control-group">

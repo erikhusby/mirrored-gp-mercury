@@ -12,7 +12,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
@@ -43,17 +45,31 @@ public class ManifestImportProcessor extends TableProcessor {
     private ColumnHeader[] columnHeaders;
     private List<ManifestRecord> manifestRecords = new ArrayList<>();
     private ManifestSessionEjb.AccessioningProcessType accessioningProcess;
+    private String importFileName;
     List<String> errors = new ArrayList<>();
 
-    private ManifestImportProcessor() {
-        this(ManifestSessionEjb.AccessioningProcessType.CRSP);
+    private FileType uploadFileType = FileType.EXCEL;
+
+    public enum FileType {
+        EXCEL, CSV
     }
 
-    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType) {
+    private ManifestImportProcessor() {
+        this(ManifestSessionEjb.AccessioningProcessType.CRSP, "");
+    }
+
+    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType,
+                                   String importFileName) {
+        this(processType, importFileName, FileType.EXCEL);
+    }
+
+    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType,
+                                   String importFileName, FileType parserFileType) {
         super(null, IgnoreTrailingBlankLines.YES);
         accessioningProcess = processType;
+        this.importFileName = importFileName;
+        this.uploadFileType = parserFileType;
     }
-
     @Override
     public List<String> getHeaderNames() {
         return ColumnHeader.headerNames(columnHeaders);
@@ -181,6 +197,13 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     public List<String> processSingleWorksheet(InputStream inputStream)
             throws InvalidFormatException, IOException, ValidationException {
-        return PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+        List<String> strings = new ArrayList<>();
+        if(uploadFileType == FileType.CSV) {
+            final XSSFWorkbook convertedWorkbook = CommonUtils.csvToXLSX(inputStream, this.importFileName);
+            strings = PoiSpreadsheetParser.processSingleWorksheet(convertedWorkbook, this);
+        } else {
+            strings = PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+        }
+        return strings;
     }
 }

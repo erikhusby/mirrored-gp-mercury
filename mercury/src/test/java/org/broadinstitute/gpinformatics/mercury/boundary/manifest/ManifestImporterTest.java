@@ -68,7 +68,8 @@ public class ManifestImporterTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        manifestImportProcessor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP);
+        manifestImportProcessor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP,
+                "");
     }
 
     @DataProvider(name = "excelFileDataProvider")

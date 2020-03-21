@@ -582,6 +582,10 @@ public class ManifestSession implements Updatable {
         setStatus(SessionStatus.COMPLETED);
     }
 
+    public void cancelSession() {
+        setStatus(SessionStatus.CANCELLED);
+    }
+
     /**
      * Within the context of trying to transfer a source sample, find the corresponding record contained within the
      * session.  Given this context, the method should inform the caller of any issues with attempting to transfer
@@ -688,7 +692,8 @@ public class ManifestSession implements Updatable {
      */
     public enum SessionStatus implements Displayable {
         OPEN("Manifest Uploaded"), PENDING_SAMPLE_INFO("Awaiting manifest"),
-        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed");
+        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed"),
+        CANCELLED("Session Processing Cancelled");
 
         private final String displayName;
         SessionStatus(String displayName) {

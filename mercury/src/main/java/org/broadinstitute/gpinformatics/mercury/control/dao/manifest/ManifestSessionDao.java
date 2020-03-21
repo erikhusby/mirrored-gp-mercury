@@ -89,7 +89,9 @@ public class ManifestSessionDao extends GenericDao {
                     @Override
                     public void callback(CriteriaQuery<ManifestSession> criteriaQuery, Root<ManifestSession> root) {
                         criteriaQuery.where(getCriteriaBuilder().equal(root.get(ManifestSession_.status),
-                                ManifestSession.SessionStatus.COMPLETED));
+                                ManifestSession.SessionStatus.COMPLETED),
+                                getCriteriaBuilder().notEqual(root.get(ManifestSession_.ACCESSIONING_PROCESS_TYPE),
+                                        ManifestSessionEjb.AccessioningProcessType.COVID.name()));
                     }
                 });
     }

@@ -140,6 +140,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
+            <stripes:hidden name="accessioningProcessName" value="${actionBean.accessioningProcessType.name()}" />
             <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
             <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
             <div id="previewSessionCloseDialog" title="Preview Manifest Session Close" style="width:600px; display:none;">

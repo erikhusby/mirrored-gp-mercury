@@ -90,10 +90,12 @@
 
         <div id="acceptUpload">
             <stripes:form name="acceptUploadForm" id="acceptUploadForm" beanclass="${actionBean.class.name}">
+                <stripes:hidden name="accessioningProcessName" value="${actionBean.accessioningProcessType.name()}" />
                 <stripes:hidden name="selectedSessionId" value="${session.manifestSessionId}"/>
                 <div class="actionButtons">
                     <stripes:submit name="acceptUpload" value="Accept Upload" class="btn"/>
-                    <stripes:link beanclass="${actionBean.class.name}">
+                    <stripes:submit name="cancelSession" value="Cancel Upload" class="btn"/>
+                    <stripes:link beanclass="${actionBean.class.name}" event="startACovidSession">
                         Exit Session
                     </stripes:link>
                 </div>

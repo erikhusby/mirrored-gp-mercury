@@ -46,7 +46,7 @@ public class ManifestImportProcessorTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        processor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP);
+        processor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP, "importFileName");
         dataRow = makeDataRow();
     }
 
