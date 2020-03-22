@@ -215,6 +215,11 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
         public boolean isStringColumn() {
             return true;
         }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
     }
 
     public Map<String, List<UniqueMolecularIdentifierDto>> getMapBarcodeToReagentDto() {
