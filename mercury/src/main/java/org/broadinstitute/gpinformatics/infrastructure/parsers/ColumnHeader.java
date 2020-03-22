@@ -45,6 +45,7 @@ public interface ColumnHeader {
 
     boolean isDateColumn();
     boolean isStringColumn();
+    boolean isIgnoreColumn();
 
     /** Interface that extends the data presence indicators. */
     interface Ignorable {
