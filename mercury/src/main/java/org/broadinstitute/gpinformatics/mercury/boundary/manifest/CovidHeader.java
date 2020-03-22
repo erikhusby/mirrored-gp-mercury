@@ -40,7 +40,7 @@ public enum CovidHeader implements AccessioningColumnHeader {
 
     @Override
     public boolean isRequiredHeader() {
-        return true;
+        return this.required;
     }
 
     @Override
