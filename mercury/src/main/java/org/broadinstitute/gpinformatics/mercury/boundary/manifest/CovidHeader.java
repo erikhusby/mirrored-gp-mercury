@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.AccessioningColumnHeader;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import java.util.ArrayList;
@@ -10,21 +9,23 @@ import java.util.List;
 import java.util.Map;
 
 public enum CovidHeader implements AccessioningColumnHeader {
-    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID, false),
-    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN,false),
-    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE, true),
-    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID, true),
-    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID, true),
+    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID, false, true),
+    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN,false, false),
+    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE, true, false),
+    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID, true, false),
+    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID, true, false),
     ;
 
     private final String columnName;
     private final Metadata.Key metadataKey;
     private final boolean required;
+    private final boolean ignoreColumn;
 
-    CovidHeader(String columnName, Metadata.Key metadataKey, boolean required) {
+    CovidHeader(String columnName, Metadata.Key metadataKey, boolean required, boolean ignoreColumn) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
         this.required = required;
+        this.ignoreColumn = ignoreColumn;
     }
     public Metadata.Key getMetadataKey() {
         return metadataKey;
@@ -56,6 +57,11 @@ public enum CovidHeader implements AccessioningColumnHeader {
     @Override
     public boolean isStringColumn() {
         return true;
+    }
+
+    @Override
+    public boolean isIgnoreColumn() {
+        return ignoreColumn;
     }
 
     /**
@@ -128,7 +134,9 @@ public enum CovidHeader implements AccessioningColumnHeader {
         List<Metadata> metadata = new ArrayList<>(dataRow.size());
         for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
             CovidHeader header = CovidHeader.fromColumnName(columnEntry.getKey());
-            metadata.add(new Metadata(header.getMetadataKey(), columnEntry.getValue()));
+            if(!header.isIgnoreColumn()) {
+                metadata.add(new Metadata(header.getMetadataKey(), columnEntry.getValue()));
+            }
         }
         return metadata.toArray(new Metadata[metadata.size()]);
     }

@@ -239,6 +239,11 @@ public class PlateMetadataImportProcessor extends TableProcessor {
             return metadataKey == null || metadataKey.getDataType() == Metadata.DataType.STRING;
         }
 
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
+
         public Metadata.Key getMetadataKey() {
             return metadataKey;
         }
