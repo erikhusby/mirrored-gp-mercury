@@ -162,6 +162,11 @@ public class ExternalLibraryProcessor extends TableProcessor {
             return true;
         }
 
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
+
         public DataPresence getDataPresenceIndicator() {
             return dataPresence;
         }

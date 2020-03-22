@@ -135,11 +135,17 @@ public abstract class TableProcessor implements Serializable {
                     }
                 }
             }
+            if(!found && allowExtraHeaders()) {
+                unknownCellContents.remove(adjustedHeader);
+                if (!uniqueHeaders.add(adjustedHeader)) {
+                    validationMessages.add(String.format(DUPLICATE_HEADER, adjustedHeader));
+                }
+            }
             if (header.isRequiredHeader() && !found) {
                 validationMessages.add(String.format(REQUIRED_HEADER_IS_MISSING, adjustedHeader));
             }
         }
-        if (!unknownCellContents.isEmpty()) {
+        if (!unknownCellContents.isEmpty() && !allowExtraHeaders()) {
             addWarning(rowIndex + 1, UNKNOWN_HEADER, StringUtils.join(unknownCellContents, "\", \""));
         }
         validateHeaderRow(cellContents);
@@ -323,4 +329,6 @@ public abstract class TableProcessor implements Serializable {
     public boolean quitOnMatch(Collection<String> dataByHeader) {
         return false;
     }
+
+    public boolean allowExtraHeaders() {return false;}
 }
