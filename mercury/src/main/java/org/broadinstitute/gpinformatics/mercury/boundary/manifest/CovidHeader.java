@@ -10,19 +10,21 @@ import java.util.List;
 import java.util.Map;
 
 public enum CovidHeader implements AccessioningColumnHeader {
-    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID),
-    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN),
-    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE),
-    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID),
-    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID),
+    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID, false),
+    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN,false),
+    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE, true),
+    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID, true),
+    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID, true),
     ;
 
     private final String columnName;
     private final Metadata.Key metadataKey;
+    private final boolean required;
 
-    CovidHeader(String columnName, Metadata.Key metadataKey) {
+    CovidHeader(String columnName, Metadata.Key metadataKey, boolean required) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
+        this.required = required;
     }
     public Metadata.Key getMetadataKey() {
         return metadataKey;
@@ -43,7 +45,7 @@ public enum CovidHeader implements AccessioningColumnHeader {
 
     @Override
     public boolean isRequiredValue() {
-        return ColumnHeader.REQUIRED_VALUE;
+        return this.required;
     }
 
     @Override
