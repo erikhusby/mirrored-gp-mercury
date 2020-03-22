@@ -294,6 +294,8 @@ public class ManifestSessionEjb {
             ManifestRecord recordWithMatchingValueForKey =
                     manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, referenceSampleId);
 
+            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
+
             recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, barcode);
             recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
 
@@ -301,7 +303,6 @@ public class ManifestSessionEjb {
             findAndValidateTargetSampleAndVessel(recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
                     recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
 
-            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
         }
     }
 
