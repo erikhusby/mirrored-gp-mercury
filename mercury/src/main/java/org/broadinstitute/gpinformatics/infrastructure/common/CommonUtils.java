@@ -7,11 +7,12 @@ import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -37,35 +38,32 @@ public class CommonUtils {
     public static XSSFWorkbook csvToXLSX(InputStream csvFileInput, String fileName) {
         XSSFWorkbook workBook = new XSSFWorkbook();
         try {
-            final String[] fileNameSplit = StringUtils.split(fileName, ".");
-            String xlsxFileAddress = fileNameSplit[0]+".xlsx"; //xlsx file address
+            String[] fileNameSplit = StringUtils.split(fileName, ".");
+            String xlsxFileAddress = fileNameSplit[0] + ".xlsx";
             XSSFSheet sheet = workBook.createSheet("sheet1");
             XSSFDataFormat fmt = workBook.createDataFormat();
             CellStyle textStyle = workBook.createCellStyle();
             textStyle.setDataFormat(fmt.getFormat("@"));
             sheet.setDefaultColumnStyle(0, textStyle);
 
-            String currentLine=null;
-            int RowNum=0;
-            BufferedReader br = new BufferedReader(new InputStreamReader(csvFileInput));
-            while ((currentLine = br.readLine()) != null) {
-                // The start of the stream sometimes contains junk characters, perhaps added by the browser
-                // because it infers a MIME type of Excel
-                currentLine = NON_ASCII_PATTERN.matcher(currentLine).replaceAll("");
-                String str[] = currentLine.split(",");
-                XSSFRow currentRow=sheet.createRow(RowNum);
-                for(int i=0;i<str.length;i++){
-                    currentRow.createCell(i).setCellValue(str[i]);
+            int RowNum = 0;
+            List<String[]> rows = CsvParser.parseToCellGrid(csvFileInput);
+            for (String[] row : rows) {
+                XSSFRow currentRow = sheet.createRow(RowNum);
+                for (int i = 0; i < row.length; i++) {
+                    // The start of the stream sometimes contains junk characters, perhaps added by the browser
+                    // because it infers a MIME type of Excel
+                    currentRow.createCell(i).setCellValue(NON_ASCII_PATTERN.matcher(row[i]).replaceAll(""));
                 }
                 RowNum++;
             }
 
-            FileOutputStream fileOutputStream =  new FileOutputStream(xlsxFileAddress);
+            FileOutputStream fileOutputStream = new FileOutputStream(xlsxFileAddress);
             workBook.write(fileOutputStream);
             fileOutputStream.close();
 
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage()+"Exception in try");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return workBook;
     }
