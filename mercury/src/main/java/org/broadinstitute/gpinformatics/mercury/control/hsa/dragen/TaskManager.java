@@ -47,7 +47,10 @@ public class TaskManager {
     public void fireEvent(Task task, SchedulerContext schedulerContext) throws InterruptedException {
         task.setStatus(Status.QUEUED);
         task.setQueuedTime(new Date());
-        if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
+        if (OrmUtil.proxySafeIsInstance(task, FingerprintTask.class)) {
+            fingerprintTaskHandler.handleTask(OrmUtil.proxySafeCast(task, FingerprintTask.class), schedulerContext);
+        }
+        else if (OrmUtil.proxySafeIsInstance(task, ProcessTask.class)) {
             handleStartProcess(task, schedulerContext);
             Thread.sleep(1000L); // Slurm Docs recommend a slight delay between job creation
         } else if (OrmUtil.proxySafeIsInstance(task, DemultiplexMetricsTask.class)) {
@@ -60,8 +63,6 @@ public class TaskManager {
             } else {
                 alignmentMetricsTaskHandler.handleTask(OrmUtil.proxySafeCast(task, AlignmentMetricsTask.class), schedulerContext);
             }
-        } else if (OrmUtil.proxySafeIsInstance(task, FingerprintUploadTask.class)) {
-            fingerprintTaskHandler.handleTask(OrmUtil.proxySafeCast(task, FingerprintUploadTask.class), schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, CrosscheckFingerprintUploadTask.class)) {
             crosscheckFingerprintUploadTaskHandler.handleTask(task, schedulerContext);
         } else if (OrmUtil.proxySafeIsInstance(task, WaitForReviewTask.class)) {
@@ -123,5 +124,9 @@ public class TaskManager {
 
     public void setAlignmentMetricsTaskHandler(AlignmentMetricsTaskHandler alignmentMetricsTaskHandler) {
         this.alignmentMetricsTaskHandler = alignmentMetricsTaskHandler;
+    }
+
+    public void setFingerprintTaskHandler(FingerprintTaskHandler fingerprintTaskHandler) {
+        this.fingerprintTaskHandler = fingerprintTaskHandler;
     }
 }

@@ -9,34 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Audited
-public class AggregationTask extends ProcessTask {
-
-    @Transient
-    private File reference;
-
-    @Transient
-    private File fastQList;
-
-    @Transient
-    private String fastQSampleId;
-
-    @Transient
-    private File outputDir;
-
-    @Transient
-    private File intermediateResultsDir;
-
-    @Transient
-    private String outputFilePrefix;
-
-    @Transient
-    private String vcSampleName;
-
-    @Transient
-    private File qcContaminationFile;
-
-    @Transient
-    private File qcCoverageBedFile;
+public class AggregationTask extends AligntmentTaskBase {
 
     public AggregationTask() {
     }
@@ -156,49 +129,5 @@ public class AggregationTask extends ProcessTask {
         String cmd = dragenTaskBuilder.build();
 
         setCommandLineArgument(cmd);
-    }
-
-    public File getFastQList() {
-        if (fastQList == null) {
-            fastQList = new File(DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.FASTQ_LIST, getCommandLineArgument()));
-        }
-        return fastQList;
-    }
-
-    public File getOutputDir() {
-        if (outputDir == null) {
-            outputDir = new File(DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.OUTPUT_DIRECTORY, getCommandLineArgument()));
-        }
-        return outputDir;
-    }
-
-    public String getFastQSampleId() {
-        if (fastQSampleId == null) {
-            fastQSampleId = DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.FASTQ_LIST_SAMPLE_ID, getCommandLineArgument());
-        }
-        return fastQSampleId;
-    }
-
-    public String getOutputFilePrefix() {
-        if (outputFilePrefix == null) {
-            outputFilePrefix = DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.OUTPUT_FILE_PREFIX, getCommandLineArgument());
-        }
-        return outputFilePrefix;
-    }
-
-    public File getQcContaminationFile() {
-        if (qcContaminationFile == null) {
-            String contamFilePath = DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.QC_CROSS_CONT_VCF, getCommandLineArgument());
-            if (contamFilePath == null) {
-                return null;
-            }
-            qcContaminationFile = new File(contamFilePath);
-        }
-        return qcContaminationFile;
     }
 }

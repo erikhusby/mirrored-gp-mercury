@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
+import com.google.common.io.CharStreams;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -49,6 +51,33 @@ public class ConcordanceCalculator {
         }
     }
 
+    public double calculateAggregationLodScore(String sampleKey, Fingerprint fluidigmFingerprint, String vcfPath,
+                                                         String haplotypeDatabase, String fasta) {
+        // Spawn a separate process, so temp VCF files get deleted.
+        List<String> commands = new ArrayList<>();
+        commands.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+        commands.add("-cp");
+        commands.add(convertFilePaths(JAR_FILE));
+        commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.Main");
+        System.out.println("COMMAND BEGIN");
+        System.out.println(StringUtils.join(commands, " "));
+        System.out.println("COMMA");
+
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(commands);
+            Process process = processBuilder.start();
+            writeAggregationJson(new OutputStreamWriter(process.getOutputStream()), sampleKey, fluidigmFingerprint,
+                    vcfPath, haplotypeDatabase, fasta);
+            JSONTokener jsonTokener = new JSONTokener(new InputStreamReader(process.getInputStream()));
+            JSONObject jsonObject = new JSONObject(jsonTokener);
+            return jsonObject.getDouble("lodScore");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * For a list of observed fingerprints and a list of expected fingerprints, calculates LOD scores, one-to-one
      * or a matrix.
@@ -58,14 +87,13 @@ public class ConcordanceCalculator {
      * @return list of triples of observed sample ID, expected sample ID, LOD score
      */
     public List<Triple<String, String, Double>> calculateLodScores(List<Fingerprint> observedFps,
-            List<Fingerprint> expectedFps, Comparison comparison) {
+                                                                   List<Fingerprint> expectedFps, Comparison comparison) {
         // Spawn a separate process, so temp VCF files get deleted.
         List<String> commands = new ArrayList<>();
         commands.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
-//        commands.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5070");
         commands.add("-cp");
         commands.add(convertFilePaths(JAR_FILE));
-        commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.LodScoreCalculator");
+        commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.Main");
 
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
@@ -109,13 +137,14 @@ public class ConcordanceCalculator {
     /**
      * Write JSON of arrays of observed fingerprints and expected fingerprints.
      */
-    private void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps,
-            Comparison comparison) {
+    public void writeJson(Writer writer, List<Fingerprint> observedFps, List<Fingerprint> expectedFps,
+                           Comparison comparison) {
         try {
             JSONWriter jsonWriter = new JSONWriter(writer);
 
             jsonWriter.object();
             jsonWriter.key("comparison").value(comparison.getDisplayName());
+            jsonWriter.key("function").value("LodScoreCalculator");
 
             jsonWriter.key("observedFingerprints");
             jsonWriter.array();
@@ -130,6 +159,34 @@ public class ConcordanceCalculator {
                 writeFingerprint(jsonWriter, fingerprint);
             }
             jsonWriter.endArray();
+
+            jsonWriter.endObject();
+            writer.flush();
+        } catch (JSONException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Write JSON of arrays of observed fingerprints and expected fingerprints.
+     */
+    private void writeAggregationJson(Writer writer, String sampleKey, Fingerprint fluidigmFingerprint, String vcfPath,
+                           String haplotypePath, String fastaPath) {
+        try {
+            JSONWriter jsonWriter = new JSONWriter(writer);
+
+            jsonWriter.object();
+            jsonWriter.key("function").value("AggregationLodScoreCalculator");
+
+            jsonWriter.key("observedFingerprints");
+            jsonWriter.array();
+            writeFingerprint(jsonWriter, fluidigmFingerprint);
+            jsonWriter.endArray();
+
+            jsonWriter.key("genotypes").value(vcfPath);
+            jsonWriter.key("fasta").value(fastaPath);
+            jsonWriter.key("haplotype").value(haplotypePath);
+            jsonWriter.key("sampleKey").value(sampleKey);
 
             jsonWriter.endObject();
             writer.flush();

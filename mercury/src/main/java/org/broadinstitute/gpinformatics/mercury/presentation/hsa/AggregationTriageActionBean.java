@@ -22,7 +22,9 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.AlignmentMetricsDao;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.FingerprintScoreDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.AlignmentMetric;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.FingerprintScore;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.DashboardLink;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.WaitForReviewTaskDao;
@@ -81,6 +83,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     public static final double MAX_CONTAM = 0.01;
     public static final int MIN_COV_20 = 95;
+    public static final int MIN_LOD = -3;
 
     private List<TriageDto> passingTriageDtos = new ArrayList<>();
 
@@ -129,6 +132,9 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Inject
     private FiniteStateMachineEngine finiteStateMachineEngine;
 
+    @Inject
+    private FingerprintScoreDao fingerprintScoreDao;
+
     private TriageDto dto;
 
     private List<WaitForReviewTask> selectedTasks;
@@ -155,8 +161,12 @@ public class AggregationTriageActionBean extends CoreActionBean {
         Map<String, AlignmentMetric> mapAliasToMetric = alignmentMetrics.stream()
                 .collect(Collectors.toMap(AlignmentMetric::getReadGroup, Function.identity()));
 
+        List<FingerprintScore> sampleLodScores =
+                fingerprintScoreDao.findFingerprintScoresBySampleAlias(sampleIds);
+        Map<String, FingerprintScore> mapAliasToFpScore = sampleLodScores.stream()
+                .collect(Collectors.toMap(FingerprintScore::getSampleAlias, Function.identity()));
+
         List<TriageDto> dtos = new ArrayList<>();
-        // todo jmt optimize search column list
         Map<String, SampleData> mapIdToSampleData = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples,
                 PDO_SEARCH_COLUMNS);
 
@@ -171,7 +181,13 @@ public class AggregationTriageActionBean extends CoreActionBean {
                 continue;
             }
 
-            TriageDto dto = createTriageDto(sampleKey, mercurySample, alignmentMetric);
+            FingerprintScore fingerprintScore = mapAliasToFpScore.get(sampleKey);
+            if (fingerprintScore == null) {
+                log.debug("Failed to find fingerprint score for sample in 'triage' " + sampleKey);
+                continue;
+            }
+
+            TriageDto dto = createTriageDto(sampleKey, mercurySample, alignmentMetric, fingerprintScore);
             WaitForReviewTask task = mapSampleToTask.get(sampleKey);
             dto.setTaskId(task.getTaskId());
             if (task.getTaskDecision() != null) {
@@ -444,7 +460,8 @@ public class AggregationTriageActionBean extends CoreActionBean {
     }
 
     private TriageDto createTriageDto(String sampleKey, MercurySample mercurySample,
-                                      AlignmentMetric alignmentMetric) {
+                                      AlignmentMetric alignmentMetric,
+                                      FingerprintScore fingerprintScore) {
         SampleData sampleData = mercurySample.getSampleData();
         String gender = sampleData.getGender();
         ProductOrderSample productOrderSample = findProductOrderSample(mercurySample);
@@ -457,6 +474,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         String contamination = value == null ? "" : value.toString();
 
         TriageDto dto = new TriageDto();
+        dto.setLod(String.valueOf(fingerprintScore.getLodScore()));
         dto.setContamination(contamination);
         dto.setCoverage20x(pctCov20);
         dto.setGender(gender);
@@ -548,7 +566,8 @@ public class AggregationTriageActionBean extends CoreActionBean {
 
     private static Predicate<TriageDto> isAggregationInSpec(Set<String> sampleKeys) {
         return p -> sampleKeys.contains(p.getPdoSample()) || (compareLess(p.getContamination(), MAX_CONTAM) &&
-                                                              compareGreater(p.getCoverage20x(), MIN_COV_20));
+                                                              compareGreater(p.getCoverage20x(), MIN_COV_20) &&
+                                                              compareGreater(p.getLod(), MIN_LOD));
     }
 
     private static boolean compareGreater(String value, double min) {

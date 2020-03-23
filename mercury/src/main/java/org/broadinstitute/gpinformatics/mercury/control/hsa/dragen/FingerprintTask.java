@@ -80,8 +80,8 @@ public class FingerprintTask extends ComputeTask {
 
     public File getGenotypesFile() {
         if (genotypesFile == null) {
-            bamFile = new File(PicardTaskBuilder.parseCommandFromArgument(
-                    PicardTaskBuilder.INPUT, getCommandLineArgument()));
+            genotypesFile = new File(PicardTaskBuilder.parseCommandFromArgument(
+                    PicardTaskBuilder.GENOTYPES, getCommandLineArgument()));
         }
         return genotypesFile;
     }

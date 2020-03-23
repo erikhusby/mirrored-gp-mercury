@@ -16,34 +16,7 @@ import java.util.Objects;
 
 @Entity
 @Audited
-public class AlignmentTask extends ProcessTask {
-
-    @Transient
-    private File reference;
-
-    @Transient
-    private File fastQList;
-
-    @Transient
-    private String fastQSampleId;
-
-    @Transient
-    private File outputDir;
-
-    @Transient
-    private File intermediateResultsDir;
-
-    @Transient
-    private String outputFilePrefix;
-
-    @Transient
-    private String vcSampleName;
-
-    @Transient
-    private File qcContaminationFile;
-
-    @Transient
-    private File qcCoverageBedFile;
+public class AlignmentTask extends AligntmentTaskBase {
 
     /**
      * Syntax
@@ -107,63 +80,6 @@ public class AlignmentTask extends ProcessTask {
     }
 
     public AlignmentTask() {
-    }
-
-    public File getReference() {
-        if (reference == null) {
-            reference = new File(DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.REFERENCE, getCommandLineArgument(), true));
-        }
-        return reference;
-    }
-
-    public File getFastQList() {
-        if (fastQList == null) {
-            fastQList = new File(DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.FASTQ_LIST, getCommandLineArgument()));
-        }
-        return fastQList;
-    }
-
-    public String getFastQSampleId() {
-        if (fastQSampleId == null) {
-            fastQSampleId = DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.FASTQ_LIST_SAMPLE_ID, getCommandLineArgument());
-        }
-        return fastQSampleId;
-    }
-
-    public File getOutputDir() {
-        if (outputDir == null) {
-            outputDir = new File(DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.OUTPUT_DIRECTORY, getCommandLineArgument()));
-        }
-        return outputDir;
-    }
-
-    public File getIntermediateResultsDir() {
-        return intermediateResultsDir;
-    }
-
-    public String getOutputFilePrefix() {
-        return outputFilePrefix;
-    }
-
-    public String getVcSampleName() {
-        if (vcSampleName == null) {
-            vcSampleName = DragenTaskBuilder.parseCommandFromArgument(
-                    DragenTaskBuilder.VC_SAMPLE_NAME, getCommandLineArgument());
-        }
-        return vcSampleName;
-    }
-
-    public boolean isEnableVariantCaller() {
-        String arg = DragenTaskBuilder.parseCommandFromArgument(
-                DragenTaskBuilder.ENABLE_VARIANT_CALLER, getCommandLineArgument());
-        if (arg != null) {
-            return Boolean.valueOf(arg);
-        }
-        return false;
     }
 
     public AlignmentState getAlignmentState() {

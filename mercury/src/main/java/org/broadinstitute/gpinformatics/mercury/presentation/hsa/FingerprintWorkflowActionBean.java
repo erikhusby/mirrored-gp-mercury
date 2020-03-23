@@ -5,16 +5,17 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AggregationStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.AlignmentStateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AligntmentTaskBase;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMachine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @UrlBinding(FingerprintWorkflowActionBean.ACTION_BEAN_URL)
@@ -54,11 +56,15 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
     private AlignmentStateDao alignmentStateDao;
 
     @Inject
+    private AggregationStateDao aggregationStateDao;
+
+    @Inject
     private FiniteStateMachineFactory finiteStateMachineFactory;
 
     private List<AlignmentDirectoryDto> alignmentDirectoryDtos;
 
     private List<String> selectedDirectories;
+    private boolean searchAggregations;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -90,41 +96,53 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_ACTION)
     public Resolution search() {
-        List<AlignmentState> alignments =
-                alignmentStateDao.findCompletedAlignmentsForSample(mapIdToMercurySample.values());
+        List<AligntmentTaskBase> tasks = null;
+        if (searchAggregations) {
+            List<AggregationState> alignments =
+                    aggregationStateDao.findCompletedAggregationsForSample(mapIdToMercurySample.values());
+            tasks = alignments.stream().map(state -> state.getTasksOfType(AligntmentTaskBase.class))
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toList());
+        } else {
+            List<AlignmentState> alignments =
+                    alignmentStateDao.findCompletedAlignmentsForSample(mapIdToMercurySample.values());
+            tasks = alignments.stream().map(state -> state.getTasksOfType(AligntmentTaskBase.class))
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toList());
+        }
 
         alignmentDirectoryDtos = new ArrayList<>();
-        for (AlignmentState alignmentState: alignments) {
-            for (Task t: alignmentState.getTasks()) {
-                if (!OrmUtil.proxySafeIsInstance(t, AlignmentTask.class)) {
+        for (Task t: tasks) {
+            if (!OrmUtil.proxySafeIsInstance(t, AligntmentTaskBase.class)) {
+                continue;
+            }
+            AligntmentTaskBase alignmentTask = OrmUtil.proxySafeCast(t, AligntmentTaskBase.class);
+            if (!alignmentTask.isEnableVariantCaller()) {
+                continue;
+            }
+            String fastQSampleId = alignmentTask.getFastQSampleId();
+            String filePrefix = alignmentTask.getOutputFilePrefix();
+            if (mapIdToMercurySample.containsKey(fastQSampleId)) {
+                MercurySample sample = mapIdToMercurySample.get(fastQSampleId);
+                File outputDir = alignmentTask.getOutputDir();
+                String vcSampleName = alignmentTask.getVcSampleName();
+                File referenceSeq = alignmentTask.getReference();
+                AggregationActionBean.ReferenceGenome referenceGenome =
+                        AggregationActionBean.ReferenceGenome.getByDragenPath(referenceSeq.getPath());
+                if (referenceGenome == null) {
+                    log.error("Failed to find reference genome for " + referenceSeq.getPath());
                     continue;
                 }
-                AlignmentTask alignmentTask = OrmUtil.proxySafeCast(t, AlignmentTask.class);
-                if (!alignmentTask.isEnableVariantCaller()) {
-                    continue;
-                }
-                String fastQSampleId = alignmentTask.getFastQSampleId();
-                if (mapIdToMercurySample.containsKey(fastQSampleId)) {
-                    MercurySample sample = mapIdToMercurySample.get(fastQSampleId);
-                    File outputDir = alignmentTask.getOutputDir();
-                    String vcSampleName = alignmentTask.getVcSampleName();
-                    File referenceSeq = alignmentTask.getReference();
-                    AggregationActionBean.ReferenceGenome referenceGenome =
-                            AggregationActionBean.ReferenceGenome.getByDragenPath(referenceSeq.getPath());
-                    if (referenceGenome == null) {
-                        log.error("Failed to find reference genome for " + referenceSeq.getPath());
-                        continue;
-                    }
-                    if (validateBamAndVcfExist(outputDir, fastQSampleId, vcSampleName)) {
-                        AlignmentDirectoryDto dto = new AlignmentDirectoryDto();
-                        Pair<File, File> bamVcf = grabBamAndVcfFiles(outputDir, fastQSampleId, vcSampleName);
-                        dto.setSampleKey(sample.getSampleKey());
-                        dto.setBamFile(bamVcf.getLeft().getPath());
-                        dto.setVcfFile(bamVcf.getRight().getPath());
-                        dto.setHaplotypeDatabase(referenceGenome.getHaplotypeDatabase());
-                        dto.setOutputDirectory(outputDir.getPath());
-                        alignmentDirectoryDtos.add(dto);
-                    }
+                if (validateBamAndVcfExist(outputDir, filePrefix)) {
+                    AlignmentDirectoryDto dto = new AlignmentDirectoryDto();
+                    Pair<File, File> bamVcf = grabBamAndVcfFiles(outputDir, filePrefix);
+                    dto.setSampleKey(sample.getSampleKey());
+                    dto.setBamFile(bamVcf.getLeft().getPath());
+                    dto.setVcfFile(bamVcf.getRight().getPath());
+                    dto.setFasta(referenceGenome.getFasta());
+                    dto.setHaplotypeDatabase(referenceGenome.getHaplotypeDatabase());
+                    dto.setOutputDirectory(outputDir.getPath());
+                    alignmentDirectoryDtos.add(dto);
                 }
             }
         }
@@ -155,17 +173,17 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
         return new ForwardResolution(FP_CREATE_PAGE);
     }
 
-    private boolean validateBamAndVcfExist(File outputDir, String fastQSampleId, String vcSampleName) {
-        Pair<File, File> pair = grabBamAndVcfFiles(outputDir, fastQSampleId, vcSampleName);
+    private boolean validateBamAndVcfExist(File outputDir, String filePrefix) {
+        Pair<File, File> pair = grabBamAndVcfFiles(outputDir, filePrefix);
         return pair.getLeft().exists() && pair.getRight().exists();
     }
 
-    private Pair<File, File> grabBamAndVcfFiles(File outputDir, String fastQSampleId, String vcSampleName) {
-        File bam = new File(outputDir, fastQSampleId + ".bam");
+    private Pair<File, File> grabBamAndVcfFiles(File outputDir, String filePrefix) {
+        File bam = new File(outputDir, filePrefix + ".bam");
         if (!bam.exists()) {
-            bam = new File(outputDir, fastQSampleId + ".cram");
+            bam = new File(outputDir, filePrefix + ".cram");
         }
-        File vcf = new File(outputDir, fastQSampleId + ".vcf.gz");
+        File vcf = new File(outputDir, filePrefix + ".vcf.gz");
         return Pair.of(bam, vcf);
     }
 
@@ -194,6 +212,14 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
         this.alignmentDirectoryDtos = alignmentDirectoryDtos;
     }
 
+    public boolean getSearchAggregations() {
+        return searchAggregations;
+    }
+
+    public void setSearchAggregations(boolean searchAggregations) {
+        this.searchAggregations = searchAggregations;
+    }
+
     public static class AlignmentDirectoryDto {
 
         private String bamFile;
@@ -201,6 +227,7 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
         private String haplotypeDatabase;
         private String outputDirectory;
         private String sampleKey;
+        private String fasta;
 
         public AlignmentDirectoryDto() {
         }
@@ -243,6 +270,14 @@ public class FingerprintWorkflowActionBean extends CoreActionBean {
 
         public String getSampleKey() {
             return sampleKey;
+        }
+
+        public void setFasta(String fasta) {
+            this.fasta = fasta;
+        }
+
+        public String getFasta() {
+            return fasta;
         }
     }
 }
