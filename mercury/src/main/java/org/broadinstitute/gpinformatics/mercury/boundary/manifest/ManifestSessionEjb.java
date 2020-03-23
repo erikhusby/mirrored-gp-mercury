@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -34,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.ejb.EJBException;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -322,31 +324,38 @@ public class ManifestSessionEjb {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 LabVessel labVessel;
 
-                if (manifestSession.isFromSampleKit() || manifestSession.isCovidSession()) {
-                    String targetSampleKey = record.getSampleId();
-                    if(manifestSession.isCovidSession()) {
-                        targetSampleKey = record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID);
-                    }
-                    labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                try {
+                    if (manifestSession.isFromSampleKit() || manifestSession.isCovidSession()) {
+                        String targetSampleKey = record.getSampleId();
+                        if(manifestSession.isCovidSession()) {
+                            targetSampleKey = record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID);
+                        }
+                        labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
+                                record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
 
-                    String sourceCollaboratorSample = null;
-                    if (!manifestSession.isCovidSession()) {
-                        sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
-                    }
+                        String sourceCollaboratorSample = null;
+                        if (!manifestSession.isCovidSession()) {
+                            sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
+                        }
 
-                    transferSample(manifestSessionId, sourceCollaboratorSample, targetSampleKey, disambiguator++,
-                            labVessel);
-                }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
-                    List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
-                    if (labVessels.size() != 1) {
-                        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                                MERCURY_SAMPLE_KEY, record.getSampleId(), SAMPLE_NOT_FOUND_MESSAGE);
+                        transferSample(manifestSessionId, sourceCollaboratorSample, targetSampleKey, disambiguator++,
+                                labVessel);
+                    }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
+                        List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
+                        if (labVessels.size() != 1) {
+                            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                                    MERCURY_SAMPLE_KEY, record.getSampleId(), SAMPLE_NOT_FOUND_MESSAGE);
+                        }
+                        labVessel = labVessels.get(0);
                     }
-                    labVessel = labVessels.get(0);
+                    accessionedVessels.add(labVessel);*/
+                    accessionedSamples.add(record.getSampleId());
+                } catch (EJBException e) {
+                    final Exception causedByException = e.getCausedByException();
+                    record.addManifestEvent(
+                            new ManifestEvent(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
+                                    causedByException.getMessage(),record));
                 }
-                accessionedVessels.add(labVessel);*/
-                accessionedSamples.add(record.getSampleId());
             }
         }
 

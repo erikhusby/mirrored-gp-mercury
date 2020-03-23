@@ -52,6 +52,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -441,7 +442,14 @@ public class ManifestSession implements Updatable {
      */
     public List<ManifestRecord> findRecordsByKey(String value, Metadata.Key keyToFindRecordBy) {
         return records.stream().
-                filter(record -> record.getValueByKey(keyToFindRecordBy).equals(value)).
+                filter(record -> {
+                    boolean foundRecord = false;
+                    final Optional<String> valueByKey = Optional.ofNullable(record.getValueByKey(keyToFindRecordBy));
+                    if(valueByKey.isPresent()) {
+                        foundRecord =valueByKey.get().equals(value);
+                    }
+                    return foundRecord;
+                }).
                 collect(Collectors.toList());
     }
 
