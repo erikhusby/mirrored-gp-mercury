@@ -206,4 +206,13 @@ public class ManifestImportProcessor extends TableProcessor {
         }
         return strings;
     }
+
+    public ManifestSessionEjb.AccessioningProcessType getAccessioningProcess() {
+        return accessioningProcess;
+    }
+
+    @Override
+    public boolean allowExtraHeaders() {
+        return accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID;
+    }
 }

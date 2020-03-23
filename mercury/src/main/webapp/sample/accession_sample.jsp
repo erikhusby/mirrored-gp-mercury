@@ -83,7 +83,7 @@
                         '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
                         accessionSource: $j("#accessionSourceText").val()
-                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        <c:if test="${actionBean.selectedSession.fromSampleKit|| actionBean.covidProcess}">
                             , accessionTube: $j("#accessionTubeText").val()
                         </c:if>
                     },
@@ -91,7 +91,7 @@
                     success: function (html) {
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
-                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        <c:if test="${actionBean.selectedSession.fromSampleKit || actionBean.covidProcess}">
                         $j('#accessionTubeText').val('');
                         </c:if>
                         $j('#accessionSourceText').focus();
@@ -183,7 +183,7 @@
                                        placeholder="${sourcePlaceholderText}" id="accessionSourceText" tabindex="1">
                             </div>
                         </div>
-                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        <c:if test="${actionBean.selectedSession.fromSampleKit || actionBean.covidProcess}">
                             <div class="control-group">
                                 <label class="control-label" for="accessionTubeText">Scan or input tube barcode *</label>
 

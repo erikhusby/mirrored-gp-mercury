@@ -132,16 +132,14 @@
                             </div>
                         </div>
                     </c:if>
-                    <c:if test="${actionBean.covidProcess}">
-                        <div class="control-group">
-                            <stripes:label for="usesSampleKitId" class="control-label">
-                                Accession with Broad Sample Kit? *
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:checkbox name="usesSampleKit" id="usesSampleKit" value="true" />
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="usesSampleKitId" class="control-label">
+                            Accession with Broad Sample Kit? *
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:checkbox name="usesSampleKit" id="usesSampleKit" value="true" />
                         </div>
-                    </c:if>
+                    </div>
                     <div class="control-group">
                         <stripes:label for="manifestFile" class="control-label">Manifest File *</stripes:label>
 
