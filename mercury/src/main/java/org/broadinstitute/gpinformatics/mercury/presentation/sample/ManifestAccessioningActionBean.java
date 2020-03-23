@@ -334,7 +334,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             logger.error(e);
-            return getContext().getSourcePageResolution();
+            return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
         }
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
