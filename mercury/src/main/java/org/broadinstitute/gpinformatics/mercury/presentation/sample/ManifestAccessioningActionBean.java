@@ -283,7 +283,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
         try {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
-        } catch (TubeTransferException | InformaticsServiceException e) {
+        } catch (InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
             logger.error(e);
             result = getContext().getSourcePageResolution();

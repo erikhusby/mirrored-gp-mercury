@@ -110,15 +110,22 @@ public class CovidHeader implements AccessioningColumnHeader {
      */
     public static CovidHeader fromColumnName(String columnHeader) {
         CovidHeader searchResult = null;
-        for (CovidHeader manifestHeader : CovidHeader.values()) {
-            if (manifestHeader.getColumnName().equals(columnHeader)) {
-                searchResult = manifestHeader;
+        if (columnHeader != null) {
+            for (CovidHeader manifestHeader : CovidHeader.values()) {
+                if (manifestHeader.getColumnName().equals(columnHeader)) {
+                    searchResult = manifestHeader;
+                }
+            }
+            if (searchResult==null) {
+                searchResult = new CovidHeader(columnHeader, Metadata.Key.NA, false, true);
             }
         }
-        if (searchResult==null) {
-            return new CovidHeader(columnHeader, Metadata.Key.NA, false, true);
+
+        if (searchResult == null) {
+            throw new IllegalArgumentException(AccessioningColumnHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
+        } else {
+            return searchResult;
         }
-        return searchResult;
     }
 
     /**
