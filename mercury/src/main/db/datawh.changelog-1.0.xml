@@ -226,10 +226,10 @@
                 <constraints nullable="false"/>
             </column>
             <column name="FLOWCELL" type="VARCHAR2(255)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="LANE" type="number(2,0)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="RUN_DATE" type="timestamp">
                 <constraints nullable="false"/>

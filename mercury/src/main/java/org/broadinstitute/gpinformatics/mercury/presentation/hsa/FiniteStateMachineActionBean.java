@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.hsa.TaskDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
+import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.taskhandlers.FingerprintTaskHandlerSimulator;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineEngine;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.engine.FiniteStateMachineFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.metrics.GsUtilLogReader;
@@ -293,6 +294,7 @@ public class FiniteStateMachineActionBean extends CoreActionBean {
         finiteStateMachineEngine.setContext(new SchedulerContext(new SchedulerControllerStub()));
         Long selectedId = getSelectedIds().iterator().next();
         FiniteStateMachine stateMachine = stateMachineDao.findById(FiniteStateMachine.class, selectedId);
+        finiteStateMachineEngine.getTaskManager().setFingerprintTaskHandler(new FingerprintTaskHandlerSimulator());
         finiteStateMachineEngine.resumeMachine(stateMachine);
         return new ForwardResolution(DRAGEN_LIST_PAGE);
     }

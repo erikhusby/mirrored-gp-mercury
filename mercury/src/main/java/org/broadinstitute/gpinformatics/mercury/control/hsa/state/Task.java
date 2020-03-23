@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.presentation.hsa.TaskDecision;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;

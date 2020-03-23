@@ -52,6 +52,14 @@
             </div>
 
             <div class="control-group">
+                <stripes:label for="searchAggregations" class="control-label"/>
+                <div class="controls">
+                    <stripes:checkbox name="searchAggregations" id="searchAggregations"
+                                      checked="${actionBean.searchAggregations}"/>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <div class="controls">
                     <stripes:submit name="search" class="btn btn-primary" value="Search"/>
                 </div>
@@ -84,6 +92,7 @@
                                 <stripes:hidden name="alignmentDirectoryDtos[${idx.index}].vcfFile" value="${dto.vcfFile}"/>
                                 <stripes:hidden name="alignmentDirectoryDtos[${idx.index}].haplotypeDatabase" value="${dto.haplotypeDatabase}"/>
                                 <stripes:hidden name="alignmentDirectoryDtos[${idx.index}].sampleKey" value="${dto.sampleKey}"/>
+                                <stripes:hidden name="alignmentDirectoryDtos[${idx.index}].fasta" value="${dto.fasta}"/>
                             </td>
                             <td>${dto.sampleKey}
                             </td>

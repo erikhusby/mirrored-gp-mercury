@@ -16,6 +16,7 @@ public class DragenTaskBuilder {
     public static final String BCL_INPUT_DIRECTORY = "bcl-input-directory";
     public static final String SAMPLE_SHEET = "sample-sheet";
     public static final String QC_CROSS_CONT_VCF = "qc-cross-cont-vcf";
+    public static final String CONFIG_FILE = "config-file";
 
     private final StringBuilder commandBuilder;
 
@@ -125,7 +126,7 @@ public class DragenTaskBuilder {
     }
 
     public DragenTaskBuilder configFile(File file) {
-        appendCommand(String.format("--config-file %s", file.getPath()));
+        appendCommand(String.format("--" + CONFIG_FILE + " %s", file.getPath()));
         return this;
     }
 

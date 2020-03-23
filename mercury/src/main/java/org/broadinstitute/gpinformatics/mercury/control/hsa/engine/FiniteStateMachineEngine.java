@@ -245,4 +245,8 @@ public class FiniteStateMachineEngine implements Serializable {
     public void setStateManager(StateManager stateManager) {
         this.stateManager = stateManager;
     }
+
+    public TaskManager getTaskManager() {
+        return taskManager;
+    }
 }
