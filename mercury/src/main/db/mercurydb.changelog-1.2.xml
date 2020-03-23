@@ -3473,4 +3473,21 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-6242-JT-1" author="thompson">
+        <dropNotNullConstraint schemaName="MERCURY" tableName="STATE_AUD" columnName="ALIVE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="STATE_AUD" columnName="FINITE_STATE_MACHINE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="STATE_AUD" columnName="START_STATE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="STATE_AUD" columnName="STATE_NAME"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-JT-2" author="thompson">
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TASK_AUD" columnName="STATUS"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TASK_AUD" columnName="TASK_NAME"/>
+    </changeSet>
+    <changeSet id="GPLIM-6242-JT-3" author="thompson">
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TRANSITION_AUD" columnName="FINITE_STATE_MACHINE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TRANSITION_AUD" columnName="FROM_STATE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TRANSITION_AUD" columnName="TO_STATE"/>
+        <dropNotNullConstraint schemaName="MERCURY" tableName="TRANSITION_AUD" columnName="TRANSITION_NAME"/>
+    </changeSet>
+
 </databaseChangeLog>
