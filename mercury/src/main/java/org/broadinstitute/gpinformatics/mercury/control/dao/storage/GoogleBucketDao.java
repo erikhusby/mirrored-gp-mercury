@@ -17,6 +17,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -120,7 +121,7 @@ public class GoogleBucketDao {
     }
 
     /**
-     * Writes a file to the bucket for Arquillian testing.
+     * Writes a file to the bucket.
      */
     public void upload(String filename, byte[] content, MessageCollection messageCollection) {
         if (makeCredential(true, messageCollection)) {
@@ -134,6 +135,25 @@ public class GoogleBucketDao {
                 storage.create(blobInfo, content);
             } catch (Exception e) {
                 String msg = "Error writing " + filename + " from Google bucket. ";
+                messageCollection.addError(msg + e.toString());
+                logger.error(msg, e);
+            }
+        }
+    }
+
+    /**
+     * Deletes a file from the bucket.
+     */
+    public void delete(String filename, MessageCollection messageCollection) {
+        if (makeCredential(true, messageCollection)) {
+            try {
+                Storage storage = StorageOptions.newBuilder().setCredentials(writerCredentials)
+                        .setProjectId(writerCredentials.getProjectId()).build().getService();
+                BlobInfo blobInfo = BlobInfo.newBuilder(googleStorageConfig.getBucketName(), filename).
+                        setContentType("text/plain").build();
+                storage.delete(blobInfo.getBlobId());
+            } catch (Exception e) {
+                String msg = "Error deleting " + filename + " from Google bucket. ";
                 messageCollection.addError(msg + e.toString());
                 logger.error(msg, e);
             }
@@ -157,11 +177,12 @@ public class GoogleBucketDao {
                     ServiceAccountCredentials serviceAccountCredentials =
                             ServiceAccountCredentials.fromStream(new FileInputStream(file));
                     // Tests that the credential works. It's valid if no exception is thrown.
-                    if (serviceAccountCredentials != null && StringUtils.isNotBlank(StorageOptions.newBuilder().
+                    String noSuchFile = RandomStringUtils.random(15, true, true);
+                    if (serviceAccountCredentials != null && StorageOptions.newBuilder().
                             setCredentials(serviceAccountCredentials).
                             setProjectId(serviceAccountCredentials.getProjectId()).
                             build().getService().
-                            getServiceAccount(serviceAccountCredentials.getProjectId()).toString())) {
+                            get(BlobId.of(googleStorageConfig.getBucketName(), noSuchFile)) == null) {
                         if (forWriting) {
                             writerCredentials = serviceAccountCredentials;
                         } else {
