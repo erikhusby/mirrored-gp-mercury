@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 
@@ -41,6 +43,7 @@ public class AutomatedBiller {
 
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BillingEjb billingEjb;
+    private final ProductOrderDao productOrderDao;
     private final SessionContextUtility sessionContextUtility;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
@@ -48,16 +51,18 @@ public class AutomatedBiller {
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
                     BillingEjb billingEjb,
+                    ProductOrderDao productOrderDao,
                     SessionContextUtility sessionContextUtility) {
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.billingEjb = billingEjb;
+        this.productOrderDao = productOrderDao;
         this.sessionContextUtility = sessionContextUtility;
     }
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public AutomatedBiller() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     /**
@@ -72,6 +77,7 @@ public class AutomatedBiller {
             // doing two queries every time within the following loop.
             Map<String, Boolean> orderLockoutCache = new HashMap<>();
             Map<Long, Set<String>> pdosByUser = new HashMap<>();
+            Map<String, ProductOrder> pdoCache = new HashMap<>();
             List<WorkCompleteMessage> newMessages = workCompleteMessageDao.getNewMessages();
             for (WorkCompleteMessage message : newMessages) {
 
@@ -91,20 +97,27 @@ public class AutomatedBiller {
                     ));
                 }
                 if (processed) {
+                    if (message.getUserId() == null) {
+                        ProductOrder pdo =
+                            pdoCache.computeIfAbsent(message.getPdoName(), k -> productOrderDao.findByBusinessKey(k));
+                        if (pdo != null) {
+                            message.setUserId(pdo.getCreatedBy());
+                        }
+                    }
                     // Once a message is processed, mark it to avoid processing it again.
                     workCompleteMessageDao.markMessageProcessed(message);
-                    Optional.of(message.getUserId()).ifPresent(userId -> {
-                        Optional.of(message.getPdoName()).ifPresent(msg -> {
-                            pdosByUser.computeIfAbsent(userId, k -> new HashSet<>()).add(message.getPdoName());
-                        });
-                    });
+                    Optional.ofNullable(message.getUserId())
+                        .ifPresent(userId -> Optional.of(message.getPdoName())
+                            .ifPresent(pdo -> pdosByUser.computeIfAbsent(userId, k -> new HashSet<>()).add(pdo)));
                 }
             }
             workCompleteMessageDao.persistAll(newMessages);
             workCompleteMessageDao.flush();
-            pdosByUser.forEach((user, productOrderIds)->{
-                billingEjb.createAndBillSession(new ArrayList<>(productOrderIds), user);
-            });
+            if (!pdosByUser.isEmpty()) {
+                pdosByUser.forEach((user, productOrderIds) -> {
+                    billingEjb.createAndBillSession(new ArrayList<>(productOrderIds), user);
+                });
+            }
         });
     }
 }

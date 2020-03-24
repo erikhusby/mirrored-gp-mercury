@@ -96,7 +96,7 @@ public class AutomatedBillerTest {
         billingEjb.setBillingAdaptor(billingAdaptor);
         billingEjb.setBillingSessionAccessEjb(billingSessionAccessEjb);
 
-        automatedBiller = new AutomatedBiller(workCompleteMessageDao, billingEjb, sessionContextUtility);
+        automatedBiller = new AutomatedBiller(workCompleteMessageDao, billingEjb, productOrderDao, sessionContextUtility);
     }
 
     private SapQuote buildSapQuote(ProductOrder productOrder) throws SAPIntegrationException {

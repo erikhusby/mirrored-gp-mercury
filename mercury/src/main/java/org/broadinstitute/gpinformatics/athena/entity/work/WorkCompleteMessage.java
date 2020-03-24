@@ -140,6 +140,10 @@ public class WorkCompleteMessage  implements Serializable {
         return userId;
     }
 
+    public void setUserId(@Nullable Long userId) {
+        this.userId = userId;
+    }
+
     private BigInteger getBigIntegerPropertyValue(Properties property) {
         MessageDataValue messageDataValue = data.get(property.name());
         if (messageDataValue != null) {
