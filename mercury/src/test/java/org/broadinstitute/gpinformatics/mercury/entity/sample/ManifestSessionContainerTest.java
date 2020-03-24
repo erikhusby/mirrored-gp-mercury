@@ -1340,19 +1340,28 @@ public class ManifestSessionContainerTest extends Arquillian {
     /** Tests writing a xlsx file to the Google bucket (as a csv file). */
     @Test
     public void testXlsxToGoogleBucket() throws IOException {
-        String filename = "test_1584995285.xlsx";
-        byte[] upload = IOUtils.toByteArray(VarioskanParserTest.getTestResource(filename));
-        manifestSessionEjb.copyToGoogleBucket(filename, upload);
+        String resourceFilename = "test_1584995285.xlsx";
+        byte[] upload = IOUtils.toByteArray(VarioskanParserTest.getTestResource(resourceFilename));
+        String xlsxFilename = "test-" + System.currentTimeMillis() + ".xlsx";
+        String csvFilename = xlsxFilename.replaceAll(".xlsx", ".csv");
+        manifestSessionEjb.copyToGoogleBucket("/make/a/test/path/" + xlsxFilename, upload);
         // Reads the file back from the Google Bucket. There should be no errors and identical file content,
         // after removing the csv field quotes added by OpenCsv
         MessageCollection messageCollection = new MessageCollection();
-        byte[] download = googleBucketDao.download(filename, messageCollection);
+        byte[] download = googleBucketDao.download(csvFilename, messageCollection);
         String downloadErrors = StringUtils.join(messageCollection.getErrors(), "; ");
+        // The xlsx should not be in the bucket.
+        messageCollection.clearAll();
+        boolean xlsInBucket = googleBucketDao.exists(xlsxFilename, messageCollection);
+        String existErrors = StringUtils.join(messageCollection.getErrors(), "; ");
         // Removes the test file from the bucket.
-        googleBucketDao.delete(filename, messageCollection);
+        messageCollection.clearAll();
+        googleBucketDao.delete(csvFilename, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
 
         Assert.assertEquals(downloadErrors, "");
+        Assert.assertEquals(existErrors, "");
+        Assert.assertFalse(xlsInBucket);
         Assert.assertEquals(new String(download).replaceAll("\"", ""),
                 "header 1,header 2,header 3\n1-1,1-2,1-3\n2-1,2-2,2-3\n");
     }
