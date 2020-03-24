@@ -60,13 +60,14 @@ public class CovidHeaderTest {
         dataRow.put(CovidHeader.DATE_COLLECTED.getColumnName(), "3/19/2000");
         dataRow.put(CovidHeader.INSTITUTION_ID.getColumnName(), "Broad");
         dataRow.put(CovidHeader.SAMPLE_ID.getColumnName(), "2894384297423723");
+        dataRow.put(CovidHeader.MATRIX_ID.getColumnName(), "11173773838");
         dataRow.put("Test Column", "Nothing much");
         dataRow.put("nothing to find", "empty");
         dataRow.put("", "empty");
 
         try {
             final Metadata[] metadataResult = CovidHeader.toMetadata(dataRow);
-            assertThat(metadataResult.length, is(equalTo(4)));
+            assertThat(metadataResult.length, is(equalTo(5)));
         } catch (Exception e) {
             Assert.fail();
         }

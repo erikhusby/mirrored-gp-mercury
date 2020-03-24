@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.ejb.EJBException;
@@ -50,7 +52,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequestScoped
 @Stateful
@@ -276,12 +280,12 @@ public class ManifestSessionEjb {
 
     /**
      * Scan the sample specified by collaborator barcode for the specified manifest session.
-     *
-     * @param manifestSessionId Database ID of the session
+     *  @param manifestSessionId Database ID of the session
      * @param referenceSampleId sample identifier for a source clinical sample
      * @param barcode           2d vessel barcode.  Expected only if accessioning a sample kit
+     * @return
      */
-    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
+    public ManifestSession accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
         if (!manifestSession.isCovidSession()) {
@@ -296,16 +300,41 @@ public class ManifestSessionEjb {
             ManifestRecord recordWithMatchingValueForKey =
                     manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, referenceSampleId);
 
+            if(manifestSession.populatedInAllRecords(Metadata.Key.BROAD_2D_BARCODE)) {
+                manifestSession.validateMatrixId(recordWithMatchingValueForKey, barcode);
+            }
+
+            Optional<Metadata> matrixMetadata = Optional.ofNullable(recordWithMatchingValueForKey.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE));
+            if(!matrixMetadata.isPresent() || StringUtils.isBlank(matrixMetadata.get().getValue())) {
+                recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+            }
+
+            final LabVessel vesselAndSample = createVesselAndSample(barcode, barcode);
+            final String mercurySample;
+            if (vesselAndSample == null) {
+                mercurySample = barcode;
+            } else {
+                mercurySample = vesselAndSample.getMercurySamples().stream().collect(CommonUtils.toSingleton()).getSampleKey();
+            }
+            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, mercurySample);
+
+            final LabVessel labVessel =
+                    findAndValidateTargetSampleAndVessel(mercurySample,
+                            recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+
             manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
-            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_SAMPLE_ID, barcode);
-            recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
-
-            createVesselAndSample(barcode, barcode);
-            findAndValidateTargetSampleAndVessel(recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                    recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
-
+            transferSample(manifestSessionId, null, barcode, 1L, labVessel);
         }
+        final List<ManifestRecord> scannedRecords = manifestSession.getRecords().stream()
+                .filter(manifestRecord -> manifestRecord.getStatus() == ManifestRecord.Status.SCANNED)
+                .collect(Collectors.toList());
+
+        if (scannedRecords.size() == manifestSession.getRecords().size()) {
+            closeSession(manifestSession);
+        }
+
+        return manifestSession;
     }
 
     /**
@@ -315,6 +344,10 @@ public class ManifestSessionEjb {
      */
     public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
+        closeSession(manifestSession);
+    }
+
+    private void closeSession(ManifestSession manifestSession) {
         manifestSession.completeSession();
         Set<String> accessionedSamples = new HashSet<>();
         long disambiguator = 1L;
@@ -333,13 +366,13 @@ public class ManifestSessionEjb {
                         labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
                                 record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
 
-                        String sourceCollaboratorSample = null;
                         if (!manifestSession.isCovidSession()) {
+                            String sourceCollaboratorSample = null;
                             sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
-                        }
 
-                        transferSample(manifestSessionId, sourceCollaboratorSample, targetSampleKey, disambiguator++,
-                                labVessel);
+                            transferSample(manifestSession.getManifestSessionId(), sourceCollaboratorSample, targetSampleKey, disambiguator++,
+                                    labVessel);
+                        }
                     }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                         List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                         if (labVessels.size() != 1) {
@@ -377,11 +410,11 @@ public class ManifestSessionEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public void createVesselAndSample(String targetSampleKey, String targetVesselLabel) {
+    public LabVessel createVesselAndSample(String targetSampleKey, String targetVesselLabel) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
 
         if (foundVessel == null || foundVessel.getType() == LabVessel.ContainerType.TUBE) {
-            ParentVesselBean parentVesselBean = new ParentVesselBean(targetVesselLabel, targetVesselLabel,
+            ParentVesselBean parentVesselBean = new ParentVesselBean(targetVesselLabel, targetSampleKey,
                     BarcodedTube.BarcodedTubeType.MatrixTube075.getDisplayName(), new ArrayList<>());
             final List<LabVessel> vessels = labVesselFactory
                     .buildLabVessels(Collections.singletonList(parentVesselBean), userBean.getLoginUserName(),
@@ -389,6 +422,7 @@ public class ManifestSessionEjb {
             labVesselDao.persistAll(vessels);
             labVesselDao.flush();
         }
+        return foundVessel;
     }
 
     /**
@@ -440,8 +474,25 @@ public class ManifestSessionEjb {
      * @return the referenced lab vessel if it is both found and eligible
      */
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
+        LabVessel foundVessel = findAndValidateTargetVessel(targetVesselLabel);
+
+        return findAndValidateTargetSample(targetSampleKey, foundVessel);
+    }
+
+    public LabVessel findAndValidateTargetSampleAndVessel(String targetVesselLabel) {
+        LabVessel foundVessel = findAndValidateTargetVessel(targetVesselLabel);
+
+        String targetSampleKey = targetVesselLabel;
+        if(foundVessel.getMercurySamples().size() == 1) {
+            targetSampleKey = foundVessel.getMercurySamples().iterator().next().getSampleKey();
+        }
+
+        return findAndValidateTargetSample(targetSampleKey, foundVessel);
+    }
+
+    @NotNull
+    private LabVessel findAndValidateTargetVessel(String targetVesselLabel) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
-        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
@@ -449,7 +500,12 @@ public class ManifestSessionEjb {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_VALID);
         }
+        return foundVessel;
+    }
 
+    @NotNull
+    private LabVessel findAndValidateTargetSample(String targetSampleKey, LabVessel foundVessel) {
+        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         MercurySample.AccessioningCheckResult canBeAccessioned =
                 foundSample.canSampleBeAccessionedWithTargetVessel(foundVessel);
         if (canBeAccessioned != MercurySample.AccessioningCheckResult.CAN_BE_ACCESSIONED) {

@@ -295,6 +295,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(SCAN_ACCESSION_SOURCE_ACTION)
     public Resolution scanAccessionSource() {
 
+        ManifestSession manifestSession = null;
         try {
             if(!selectedSession.isCovidSession()) {
                 if (selectedSession.isFromSampleKit()) {
@@ -305,14 +306,20 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                     manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
                 }
             }
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
-            scanMessages = String.format("Sample %s scanned successfully", accessionSource);
+            manifestSession = manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
+            scanMessages = String.format("Sample %s and destination tube %s scanned successfully", accessionSource, accessionTube);
         } catch (Exception e) {
             scanErrors = e.getMessage();
             logger.error(scanErrors);
         }
         statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-        return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        ForwardResolution forwardResolution = new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE);
+        if(manifestSession != null && manifestSession.getStatus() == ManifestSession.SessionStatus.COMPLETED) {
+            forwardResolution = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
+        } else {
+            forwardResolution.addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        }
+        return forwardResolution;
     }
 
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
