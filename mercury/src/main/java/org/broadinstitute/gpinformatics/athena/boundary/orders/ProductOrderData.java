@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -22,6 +23,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -63,6 +66,11 @@ public class ProductOrderData {
      */
     private List<String> samples = new ArrayList<>();
     private List<String> addOnPartNumbers = new ArrayList<>();
+
+    /**
+     * Billing Triggers For this PDO
+     */
+    private List<String> billingTriggers = new ArrayList<>();
 
     /** Also required by JAXB. */
     public ProductOrderData() {
@@ -346,6 +354,11 @@ public class ProductOrderData {
             productOrder.setResearchProject(researchProject);
         }
 
+        Set<BillingTrigger> triggers = billingTriggers.stream().map(BillingTrigger::valueOf).collect(Collectors.toSet());
+        if (!billingTriggers.isEmpty()) {
+            productOrder.setBillingTriggers(triggers);
+        }
+
         // Find and add the product order samples.
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(samples.size());
         for (String sample : samples) {
@@ -414,5 +427,9 @@ public class ProductOrderData {
 
     public void setAddOnPartNumbers(List<String> addOnPartNumbers) {
         this.addOnPartNumbers = addOnPartNumbers;
+    }
+
+    public void setBillingTriggers(List<String> billingTriggers) {
+        this.billingTriggers = billingTriggers;
     }
 }
