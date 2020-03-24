@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import com.opencsv.CSVWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequestScoped
 @Stateful
@@ -707,9 +709,11 @@ public class ManifestSessionEjb {
         String filename = FilenameUtils.getName(path);
         StringWriter stringWriter = new StringWriter();
 
-        // A csv file as used as-is. An xls or xlst is parsed into a generic cell grid, then to csv.
+        // A csv file is cleaned up but not converted. An xls or xlst is parsed into a generic cell grid, then to csv.
         if (filename.toLowerCase().endsWith(".csv")) {
-            stringWriter.write(new String(content));
+            Stream.of(StringUtils.split(new String(content), CharUtils.LF)).
+                    map(line -> MercuryStringUtils.cleanupValue(line)).
+                    forEach(line -> stringWriter.write(line + CharUtils.LF));
         } else {
             List<List<String>> cellGrid = new ArrayList<>();
             try {
