@@ -324,7 +324,7 @@ public class ManifestSessionEjb {
 
             manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
-            transferSample(manifestSessionId, null, barcode, 1L, labVessel);
+            transferSample(manifestSession, null, barcode, 1L, labVessel);
         }
         final List<ManifestRecord> scannedRecords = manifestSession.getRecords().stream()
                 .filter(manifestRecord -> manifestRecord.getStatus() == ManifestRecord.Status.SCANNED)
@@ -370,7 +370,7 @@ public class ManifestSessionEjb {
                             String sourceCollaboratorSample = null;
                             sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
 
-                            transferSample(manifestSession.getManifestSessionId(), sourceCollaboratorSample, targetSampleKey, disambiguator++,
+                            transferSample(manifestSession, sourceCollaboratorSample, targetSampleKey, disambiguator++,
                                     labVessel);
                         }
                     }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
@@ -529,7 +529,8 @@ public class ManifestSessionEjb {
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
-        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, 1L,
+        final ManifestSession manifestSession = findManifestSession(manifestSessionId);
+        transferSample(manifestSession, sourceCollaboratorSample, sampleKey, 1L,
                 findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel));
     }
 
@@ -537,15 +538,14 @@ public class ManifestSessionEjb {
      * Encapsulates the logic necessary to informatically mark all relevant entities as having completed the tube
      * transfer process.
      *
-     * @param manifestSessionId        Database ID of the session which is affiliated with this transfer
+     * @param session                   The session which is affiliated with this transfer
      * @param sourceCollaboratorSample sample identifier for a source clinical sample
      * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
      * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
      * @param targetVessel             Target LabVessel being transferred into.
      */
-    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
+    public void transferSample(ManifestSession session, String sourceCollaboratorSample, String sampleKey,
                                long disambiguator, LabVessel targetVessel) {
-        ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
