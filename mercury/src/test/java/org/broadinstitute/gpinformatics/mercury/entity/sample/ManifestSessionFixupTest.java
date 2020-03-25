@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -311,6 +313,27 @@ public class ManifestSessionFixupTest extends Arquillian {
 
         manifestSessionDao.persist(new FixupCommentary(fixupComment));
         manifestSessionDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupCovidStateMa7576() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        final ManifestSession manifestSession = manifestSessionDao.find(238256);
+        manifestSession.getRecords().stream().filter(manifestRecord -> Arrays.asList("75", "76").contains(manifestRecord.getSampleId()))
+                .forEach(manifestRecord -> {
+                    if(manifestRecord.getStatus() == ManifestRecord.Status.SCANNED &&
+                       StringUtils.equals(manifestRecord.getSampleId(), "76")) {
+                        manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).setStringValue("75");
+                    } else if(manifestRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED &&
+                              StringUtils.equals(manifestRecord.getSampleId(), "75")) {
+                        manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).setStringValue("76");
+                    }
+                });
+
+        utx.commit();
+
     }
 
 }

@@ -671,7 +671,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 productOrderSample.getLedgerItems().stream()
                         .filter(ledgerEntry -> !ledgerEntry.isBilled() || !productOrderSample.isToBeBilled())
                         .sorted((ledger1, ledger2) -> {
-                            return ledger1.getSapDeliveryDocumentId().compareTo(ledger2.getSapDeliveryDocumentId());
+                            Optional<String> deliveryDocument1 = Optional.ofNullable(ledger1.getSapDeliveryDocumentId());
+                            Optional<String> deliveryDocument2 = Optional.ofNullable(ledger2.getSapDeliveryDocumentId());
+                            return deliveryDocument1.orElse("").compareTo(deliveryDocument2.orElse(""));
                         }).forEach(ledgerEntry -> {
                     ProductLedgerIndex key = ProductLedgerIndex
                             .create(ledgerEntry.getProduct(), ledgerEntry.getPriceItem(),

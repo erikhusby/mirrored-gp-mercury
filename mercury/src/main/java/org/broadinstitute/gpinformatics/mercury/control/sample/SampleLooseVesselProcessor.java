@@ -94,6 +94,11 @@ public class SampleLooseVesselProcessor extends SampleVesselProcessor {
         public boolean isStringColumn() {
             return false;
         }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
     }
 
     @Override
