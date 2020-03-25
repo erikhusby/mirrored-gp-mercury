@@ -59,9 +59,6 @@ public class ConcordanceCalculator {
         commands.add("-cp");
         commands.add(convertFilePaths(JAR_FILE));
         commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.Main");
-        System.out.println("COMMAND BEGIN");
-        System.out.println(StringUtils.join(commands, " "));
-        System.out.println("COMMA");
 
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
