@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
@@ -1742,6 +1743,11 @@ public class ProductOrderEjb {
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
             }
+            // Adds valid product add-ons from productOrderData.addOnPartNumbers to this order.
+            productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
+                    filter(product -> productOrderData.getAddOnPartNumbers().contains(product.getPartNumber())).
+                    map(product -> new ProductOrderAddOn(product, productOrder)).
+                    collect(Collectors.toList()));
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
             // is only one IRB on the RP.
@@ -1749,23 +1755,6 @@ public class ProductOrderEjb {
 
             productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers, owner, jiraLink);
 
-            List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
-            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
-                productOrder.getSamples().forEach(pdoSample -> {
-                    pdoSample.getProductOrder().getAddOns().stream().map(ProductOrderAddOn::getAddOn).forEach(product -> {
-                        workCompleteMessages.add(new WorkCompleteMessage(pdoSample.getProductOrder().getJiraTicketKey(),
-                            pdoSample.getAliquotId(), product.getPartNumber(), user.getUserId(), pdoSample.getReceiptDate(),
-                            new HashMap<>()));
-                    });
-                });
-            } else {
-                productOrder.getSamples().forEach(pdoSample -> {
-                    workCompleteMessages.add(new WorkCompleteMessage(pdoSample.getProductOrder().getJiraTicketKey(),
-                        pdoSample.getAliquotId(), pdoSample.getProductOrder().getProduct().getPartNumber(),user.getUserId(),
-                        pdoSample.getWorkCompleteDate(), new HashMap<>()));
-                });
-            }
-            workCompleteMessageDao.persistAll(workCompleteMessages);
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);
@@ -1811,6 +1800,23 @@ public class ProductOrderEjb {
                         forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
                                 " samples added to " + mapEntry.getKey()));
             }
+
+            List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
+                productOrder.getSamples().forEach(pdoSample -> {
+                    ProductOrder productOrder1 = pdoSample.getProductOrder();
+                    productOrder1.getAddOns().stream().map(ProductOrderAddOn::getAddOn).forEach(product -> {
+                        String aliquotId = pdoSample.getAliquotId();
+                        if (StringUtils.isBlank(aliquotId)) {
+                            aliquotId = pdoSample.getSampleKey();
+                        }
+                        workCompleteMessages.add(new WorkCompleteMessage(productOrder1.getJiraTicketKey(),
+                            aliquotId, product.getPartNumber(), productOrder1.getCreatedBy(),
+                            pdoSample.getReceiptDate(), AutomatedBiller.WORK_COMPLETE_DATA));
+                    });
+                });
+            }
+            workCompleteMessageDao.persistAll(workCompleteMessages);
         } catch (Exception e) {
             log.error(e);
             messageCollection.addWarning(e.toString());
