@@ -399,5 +399,18 @@ public class Metadata {
             }
             return foundKey;
         }
+        public static Key fromName(String Name) {
+
+            // todo jmt improve
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.name().equals(Name)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
+        }
     }
 }
