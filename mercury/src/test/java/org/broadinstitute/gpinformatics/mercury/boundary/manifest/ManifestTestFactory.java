@@ -41,8 +41,8 @@ public class ManifestTestFactory {
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
                 createdBy, fromSampleKit, accessioningProcessType);
 
-        EnumSet<Metadata.Key> excludeKeys = EnumSet.of(Metadata.Key.BROAD_2D_BARCODE);
-        if(fromSampleKit){
+        EnumSet<Metadata.Key> excludeKeys = EnumSet.of(Metadata.Key.BROAD_2D_BARCODE, Metadata.Key.BROAD_SAMPLE_ID);
+        if(fromSampleKit && accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID){
             excludeKeys.add(Metadata.Key.SAMPLE_ID);
         }
 

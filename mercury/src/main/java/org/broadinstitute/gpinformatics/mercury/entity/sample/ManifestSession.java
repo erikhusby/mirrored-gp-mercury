@@ -24,6 +24,7 @@ import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
@@ -246,11 +247,66 @@ public class ManifestSession implements Updatable {
      * context records from other manifests in the same Research Project) that have not already been validated.
      */
     public void validateManifest() {
-        List<ManifestRecord> allManifestRecordsAcrossThisResearchProject = researchProject != null ?
-                researchProject.collectNonQuarantinedManifestRecords() : Collections.emptyList();
+        List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
+                (researchProject != null ||
+                 accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID) ?
+                        collectNonQuarantinedManifestRecords() : Collections.emptyList();
 
         validateDuplicateCollaboratorSampleIDs(allManifestRecordsAcrossThisResearchProject);
-        validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
+        if(accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+            validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
+        }
+        if(accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            validateInconsistentMatrixIds(allManifestRecordsAcrossThisResearchProject);
+        }
+    }
+
+    private List<ManifestRecord> collectNonQuarantinedManifestRecords() {
+        List<ManifestRecord> manifestRecords;
+        if(researchProject == null) {
+            manifestRecords = new ArrayList<>(getNonQuarantinedRecords());
+        } else {
+            manifestRecords = new ArrayList<>(researchProject.collectNonQuarantinedManifestRecords());
+        }
+        return manifestRecords;
+    }
+
+    private void validateInconsistentMatrixIds(List<ManifestRecord> manifestRecords) {
+        Multimap<String, ManifestRecord> recordsByMatrixId = buildMultimapByKey(
+                manifestRecords, Metadata.Key.BROAD_2D_BARCODE);
+
+        Iterable<Map.Entry<String, Collection<ManifestRecord>>> recordsWithInconsistentMatrixIDs =
+                filterForRecordsWithInconsistentMatrixIDs(recordsByMatrixId);
+
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsWithInconsistentMatrixIDs) {
+            for (ManifestRecord record : entry.getValue()) {
+                // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
+                // this logic.
+                if (this.equals(record.getManifestSession())) {
+                    String message = record.buildMessageForDuplicateMatrixIds(entry.getValue());
+                    addManifestEvent(new ManifestEvent(
+                            ManifestRecord.ErrorStatus.DUPLICATE_MATRIX_ID, message, record));
+                }
+            }
+        }
+    }
+
+    private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForRecordsWithInconsistentMatrixIDs(
+            Multimap<String, ManifestRecord> recordsByMatrixId) {
+        return recordsByMatrixId.asMap().entrySet().stream().filter(entry -> {
+            final Set<String> allCollaboratorSamples = new HashSet<>();
+            boolean result = false;
+            if(StringUtils.isNotBlank(entry.getKey())) {
+                for (ManifestRecord manifestRecord : entry.getValue()) {
+                    allCollaboratorSamples.add(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
+                    if (allCollaboratorSamples.size() > 1) {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -477,7 +533,8 @@ public class ManifestSession implements Updatable {
         Set<String> manifestMessages = new HashSet<>();
 
         for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
-            if (manifestRecord.getStatus() != ManifestRecord.Status.SCANNED) {
+            if (!EnumSet.of( ManifestRecord.Status.SCANNED,  ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)
+                    .contains(manifestRecord.getStatus())) {
                 manifestMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
                         .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
             }
@@ -485,7 +542,8 @@ public class ManifestSession implements Updatable {
         int eligibleSize = eligibleRecordsBasedOnStatus(nonQuarantinedRecords, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         return new ManifestStatus(getRecords().size(), eligibleSize,
-                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages,
+                getRecordsByStatus(EnumSet.of(ManifestRecord.Status.SCANNED,
+                        ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)).size(), manifestMessages,
                 getQuarantinedRecords().size());
     }
 
@@ -531,12 +589,12 @@ public class ManifestSession implements Updatable {
      *
      * @return A collection of records filtered by the given status
      */
-    private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
+    private Collection<ManifestRecord> getRecordsByStatus(EnumSet<ManifestRecord.Status> statuses) {
 
         List<ManifestRecord> foundRecords = new ArrayList<>();
 
         for (ManifestRecord record : records) {
-            if (record.getStatus() == status) {
+            if (statuses.contains(record.getStatus())) {
                 foundRecords.add(record);
             }
         }
@@ -574,7 +632,8 @@ public class ManifestSession implements Updatable {
     public void completeSession() {
 
         for (ManifestRecord record : getNonQuarantinedRecords()) {
-            if (record.getStatus() != ManifestRecord.Status.SCANNED) {
+            if ((getAccessioningProcessType() != ManifestSessionEjb.AccessioningProcessType.COVID && record.getStatus() != ManifestRecord.Status.SCANNED)
+            || (getAccessioningProcessType() == ManifestSessionEjb.AccessioningProcessType.COVID && record.getStatus() != ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)) {
 
                 String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(Metadata.Key.SAMPLE_ID,
@@ -584,7 +643,9 @@ public class ManifestSession implements Updatable {
                         message, record);
                 addManifestEvent(manifestEvent);
             } else {
-                record.setStatus(ManifestRecord.Status.ACCESSIONED);
+                if(getAccessioningProcessType() != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                    record.setStatus(ManifestRecord.Status.ACCESSIONED);
+                }
             }
         }
         setStatus(SessionStatus.COMPLETED);
@@ -672,6 +733,14 @@ public class ManifestSession implements Updatable {
      * @param recordSampleKey
      */
     public void accessionScan(String recordReferenceValue, Metadata.Key recordSampleKey) {
+        ManifestRecord manifestRecord =
+                getAndValidateRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
+        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
+    }
+
+    @NotNull
+    public ManifestRecord getAndValidateRecordWithMatchingValueForKey(Metadata.Key recordSampleKey,
+                                                                      String recordReferenceValue) {
         ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
 
         if (manifestRecord == null) {
@@ -679,7 +748,7 @@ public class ManifestSession implements Updatable {
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
                             recordSampleKey, recordReferenceValue));
         }
-        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
+        return manifestRecord;
     }
 
     public boolean canSessionExcludeReceiptTicket() {
@@ -691,6 +760,27 @@ public class ManifestSession implements Updatable {
             result = false;
         }
         return result;
+    }
+
+    public void validateMatrixId(ManifestRecord record, String barcode) {
+        Optional<Metadata> matrixID = Optional.ofNullable(record.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE));
+        final Metadata matrixMetadata = matrixID.orElseThrow(
+                () -> new TubeTransferException(ManifestRecord.ErrorStatus.MISSING_MATRIX_ID, Metadata.Key.BROAD_2D_BARCODE,
+                        barcode));
+
+        if(!StringUtils.equals(matrixMetadata.getValue(), barcode)) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.MISMATCHED_TARGET, Metadata.Key.BROAD_2D_BARCODE,
+                    barcode);
+        }
+    }
+
+    public boolean populatedInAllRecords(Metadata.Key broad2dBarcode) {
+        final Set<ManifestRecord> collectedRecordsWithKey =
+                getRecords().stream().filter(manifestRecord -> manifestRecord.getMetadataByKey(broad2dBarcode) != null &&
+                        StringUtils.isNotBlank(manifestRecord.getMetadataByKey(broad2dBarcode).getValue()))
+                        .collect(
+                                Collectors.toSet());
+        return collectedRecordsWithKey.size() != 0 && collectedRecordsWithKey.size() == getRecords().size();
     }
 
 
