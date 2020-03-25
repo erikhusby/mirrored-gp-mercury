@@ -32,10 +32,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -233,7 +233,8 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
     }
 
     /**
-     * Add or remove SRS batch vessels
+     * Add or remove SRS batch vessels <br/>
+     * Ajax call - return JSON, status of danger means no check-in happened (UI will let location be used in next attempt)
      */
     @HandlesEvent(EVT_CHECK_IN)
     public Resolution eventCheckIn(){
@@ -264,7 +265,7 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                 statusMessage = Pair.of("success", "Vessel barcode " + barcode
                         + " checked into 'loose' location " + locationTrail + ".");
             } else {
-                statusMessage = Pair.of("warning", "Storage location " + locationTrail + " is not configured to store loose vessels - ignoring.");
+                return buildAjaxOutcome(Pair.of("danger", "Storage location " + locationTrail + " is not configured to store loose vessels - ignoring."));
             }
         } else if( OrmUtil.proxySafeIsInstance( vessel, StaticPlate.class ) ) {
             StaticPlate plate = OrmUtil.proxySafeCast( vessel, StaticPlate.class );
@@ -421,24 +422,23 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
         // Prefix a warning to status message
         String warningMessage = null;
 
-        TreeSet<LabEvent> sortedEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
-        LabVessel tubeFormation = null;
-        LabEvent latestRackEvent = null;
-
         // Find the latest event
-        sortedEvents.addAll(rack.getInPlaceLabEvents());
-        for (TubeFormation formation : rack.getTubeFormations()) {
-            sortedEvents.addAll(formation.getContainerRole().getTransfersTo());
-            sortedEvents.addAll(formation.getContainerRole().getTransfersFrom());
-        }
-        for (Iterator<LabEvent> iter = sortedEvents.descendingIterator(); iter.hasNext(); ) {
-            latestRackEvent = iter.next();
-            break;
+        SortedMap<LabEvent, TubeFormation> sortedEvents = rack.getRackEventsSortedByDate();
+        LabEvent latestRackEvent = null;
+        if (!sortedEvents.isEmpty()) {
+            latestRackEvent = sortedEvents.lastKey();
         }
 
         if (latestRackEvent == null) {
             return Pair.of("danger", "Rack barcode " + barcode
                     + " has no lab event activity.");
+        }
+
+        LabVessel tubeFormation = sortedEvents.get(latestRackEvent);
+
+        if (tubeFormation == null) {
+            return Pair.of("danger", "Latest event for rack " + barcode
+                    + " (" + latestRackEvent.getLabEventType().getName() + " on " + DateUtils.formatISO8601Date(latestRackEvent.getEventDate()) + ") has no tube layout.");
         }
 
         switch (latestRackEvent.getLabEventType()) {
@@ -451,23 +451,18 @@ public class BulkStorageOpsActionBean extends CoreActionBean {
                     warningMessage = "Scan date (" + DateUtils.formatISO8601Date(eventDate) + ") for rack " + barcode
                             + " is over " + MAX_WORKDAYS_FOR_PICK_EVENT + " working days ago.";
                 }
-                // Trust tube formation of the (very recent) scan
-                tubeFormation = latestRackEvent.getInPlaceLabVessel();
                 break;
             case STORAGE_CHECK_IN:
                 warningMessage = "Using layout at storage check-in date (" + DateUtils.formatISO8601Date(latestRackEvent.getEventDate())
                         + ") for rack " + barcode + ".";
-                tubeFormation = latestRackEvent.getInPlaceLabVessel();
                 break;
             case STORAGE_CHECK_OUT:
                 // Checked out and now checking back in?
                 warningMessage = "Last event for rack " + barcode + " was a check-out, assuming the layout hasn't changed.";
-                tubeFormation = latestRackEvent.getInPlaceLabVessel();
                 break;
             default:
-                // Checked out and now checking back in?
+                // Use latest event layout
                 warningMessage = "Using layout of last event for rack " + barcode + ":  " + latestRackEvent.getLabEventType().getName() + " on " + DateUtils.formatISO8601Date(latestRackEvent.getEventDate());
-                tubeFormation = latestRackEvent.getInPlaceLabVessel();
         }
 
         LabEvent checkInEvent = storageEjb.createStorageEvent(LabEventType.STORAGE_CHECK_IN, tubeFormation, storageLocation, rack, userId);

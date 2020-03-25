@@ -12,6 +12,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -159,7 +160,7 @@ public class StorageLocationActionBean extends CoreActionBean {
 
         ArrayNode arrayNode = mapper.createArrayNode();
         if (storageLocation == null) {
-            throw new RuntimeException("Failed to find storage location with barcode: " + storageId);
+            throw new RuntimeException("Failed to find storage location with barcode: " + searchTerm);
         } else {
             //Add all other top level locations as well
             List<StorageLocation> rootStorageLocations = storageLocationDao.findRootLocations();
@@ -311,32 +312,37 @@ public class StorageLocationActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_BARCODES_ACTION)
     public Resolution saveBarcodesAction() {
+
+        // Check submitted duplicates
         Set<String> uniqueBarcodes = new HashSet<>();
-        if (mapIdToStorageLocation != null) {
-            for (Map.Entry<Long, StorageLocation> entry : mapIdToStorageLocation.entrySet()) {
-                StorageLocation storageLocation = entry.getValue();
-                String barcode = storageLocation.getBarcode();
-                if (!StringUtils.isEmpty(barcode)) {
-                    if (!uniqueBarcodes.add(barcode)) {
-                        addGlobalValidationError("All barcodes must be unique.");
-                        return new ForwardResolution(EDIT_STORAGE_PAGE).addParameter(STORAGE_ID_PARAM, storageId);
-                    }
+        for (Map.Entry<Long, String> entry : mapIdToBarcode.entrySet()) {
+            String barcode = entry.getValue();
+            if (!StringUtils.isEmpty(barcode)) {
+                if (!uniqueBarcodes.add(barcode)) {
+                    addGlobalValidationError("All barcodes must be unique.");
                 }
             }
         }
+        if (getValidationErrors().get(ValidationErrors.GLOBAL_ERROR) != null) {
+            return new ForwardResolution(EDIT_STORAGE_PAGE).addParameter(STORAGE_ID_PARAM, storageId);
+        }
 
+        // Check database duplicates
         List<StorageLocation> storageLocationList = storageLocationDao.findByListBarcodes(
                 new ArrayList<>(uniqueBarcodes));
-
-        for (StorageLocation storageLocation: storageLocationList) {
-            if (!mapIdToStorageLocation.containsKey(storageLocation.getStorageLocationId())) {
+        for (StorageLocation storageLocation : storageLocationList) {
+            if (!mapIdToBarcode.containsKey(storageLocation.getStorageLocationId())) {
                 messageCollection.addError("Barcode is already in use: " + storageLocation.getBarcode());
             }
         }
-
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
             return new ForwardResolution(EDIT_STORAGE_PAGE).addParameter(STORAGE_ID_PARAM, storageId);
+        }
+
+        for (Map.Entry<Long, StorageLocation> locEntry : mapIdToStorageLocation.entrySet()) {
+            Long locId = locEntry.getValue().getStorageLocationId();
+            mapIdToStorageLocation.get(locId).setBarcode(mapIdToBarcode.get(locId));
         }
 
         storageLocationDao.persistAll(mapIdToStorageLocation.values());

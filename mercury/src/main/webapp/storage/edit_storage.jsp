@@ -11,12 +11,12 @@
                 <stripes:hidden name="storageId" value="${actionBean.storageId}"/>
                 <c:forEach items="${actionBean.mapIdToStorageLocation}" var="entry" varStatus="rowStatus">
                     <div class="control-group">
-                        <stripes:label for="${entry.value.label}" class="control-label" >
+                        <stripes:label for="${entry.value.label}" class="control-label">
                             ${entry.value.label}
                         </stripes:label>
                         <div class="controls">
                             <input type="text" id="${entry.value.label}"
-                                   name="mapIdToStorageLocation[${entry.key}].barcode" placeholder="barcode"
+                                   name="mapIdToBarcode[${entry.key}]" placeholder="barcode"
                                    value="${entry.value.barcode}"/>
                         </div>
                     </div>

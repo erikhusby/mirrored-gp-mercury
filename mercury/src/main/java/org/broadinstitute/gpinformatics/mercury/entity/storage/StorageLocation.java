@@ -246,10 +246,10 @@ public class StorageLocation implements Comparable<StorageLocation> {
     private String locationTrail = null;
 
     /**
-     * Avoid sorting problems and regex replacements of single digit rack and slot locations
+     * Avoid sorting problems and regex replacements of single digit rack and slot locations.  Prefix 0 to single digits, leave triples as is
      */
     @Transient
-    private static Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("([A-Za-z]+ *)(\\d+)");
+    private static Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("([A-Za-z]+ *)(\\d)$");
 
     public StorageLocation() {
     }

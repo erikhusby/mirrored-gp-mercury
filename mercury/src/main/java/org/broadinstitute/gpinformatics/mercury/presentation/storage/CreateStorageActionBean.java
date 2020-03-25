@@ -163,7 +163,7 @@ public class CreateStorageActionBean extends CoreActionBean {
             }
         } else {
             for (int j = 0; j < getShelves(); j++) {
-                String shelfName = " " + buildShelfName(j + 1, getShelves());
+                String shelfName = buildShelfName(j + 1, getShelves());
                 StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, freezer);
                 freezer.getChildrenStorageLocation().add(shelf);
             }

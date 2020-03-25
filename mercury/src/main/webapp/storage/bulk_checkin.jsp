@@ -154,32 +154,32 @@
                 formData.push({name: "checkIn", value: ""});
                 formData.push({name: "barcode", value: barcode});
                 formData.push({name: "storageLocationId", value: storageLocationId});
-                formData.push({name: "<csrf:tokenname/>", value: "<csrf:tokenvalue/>" });
+                formData.push({name: "<csrf:tokenname/>", value: "<csrf:tokenvalue/>"});
 
                 var feedbackRow = addBarcodeFeedbackElement(barcode);
 
                 // Row is null if pre-validation fails
-                if( feedbackRow != null ) {
+                if (feedbackRow != null) {
                     $j.ajax("/Mercury/storage/bulkStorageOps.action", {
                         context: feedbackRow,
                         dataType: "html",
                         data: formData,
-                        complete: function (response, status) {
-                            if (status != "success") {
-                                this.data().status = "danger";
-                                this.data().feedbackMsg = "An error occurred: " + response.responseText;
-                            } else {
-                                var obj = JSON.parse( response.responseText );
-                                this.data(obj);
-                                if( obj.status == 'success') {
-                                    locElement.remove();
-                                }
+                        success: function (response, status) {
+                            let obj = JSON.parse(response);
+                            this.data(obj);
+                            if (obj.status != "danger") {
+                                locElement.remove();
                             }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            showAlertDialog("Error", "Server error: " + errorThrown);
                         }
                     });
                 }
                 // Think it's stupid?  Then you're welcome to remove the timeout.
-                window.setTimeout(function () { txtInput.focus(); }, 0);
+                window.setTimeout(function () {
+                    txtInput.focus();
+                }, 0);
                 return true;
             };
 

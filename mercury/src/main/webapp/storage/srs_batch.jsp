@@ -134,11 +134,14 @@
                 Batches: <select id="lbBatches" name="batchId">
                 <option value="">Choose An SRS Batch</option>
                 <c:forEach items="${actionBean.batchSelectionList}" var="item" varStatus="row">
+                    <c:set var="selected" scope="page" value=""/>
+                    <c:if test="${ item.batchId eq actionBean.batchId }"><c:set var="selected" scope="page"
+                                                                                value=" selected "/></c:if>
                     <c:if test="${item.active}">
-                        <option value="${item.batchId}">${item.batchName}</option>
+                        <option value="${item.batchId}" ${selected}>${item.batchName}</option>
                     </c:if>
                     <c:if test="${not item.active}">
-                        <option value="${item.batchId}"
+                        <option value="${item.batchId}" ${selected}
                                 style="background-color: #f8b9b7;font-style: italic">${item.batchName}</option>
                     </c:if>
                 </c:forEach></select> <stripes:submit id="btnViewBatch" name="view" value="View SRS Batch"/> <input
