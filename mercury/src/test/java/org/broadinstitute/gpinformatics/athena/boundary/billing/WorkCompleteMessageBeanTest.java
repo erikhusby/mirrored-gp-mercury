@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
@@ -43,6 +44,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
     @Inject
     BillingEjb billingEjb;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @Inject
     SessionContextUtility sessionContextUtility;
@@ -126,7 +130,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     public void testOnMessageReadBack() throws Exception {
         deliverMessage();
         AutomatedBiller automatedBiller =
-                new AutomatedBiller(workCompleteMessageDao, billingEjb, sessionContextUtility);
+                new AutomatedBiller(workCompleteMessageDao, billingEjb, productOrderDao, sessionContextUtility);
         automatedBiller.processMessages();
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();

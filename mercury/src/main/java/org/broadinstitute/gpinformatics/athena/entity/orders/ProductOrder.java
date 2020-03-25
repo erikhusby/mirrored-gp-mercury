@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -59,7 +60,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -157,6 +160,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedSapQuote;
     }
 
+    @Nullable
+    public Product findProduct(String partNumber) {
+        Product foundProduct;
+        if (partNumber == null || getProduct().getPartNumber().equals(partNumber)) {
+            foundProduct = getProduct();
+        } else {
+            foundProduct = getAddOns().stream().map(ProductOrderAddOn::getAddOn).findFirst().orElse(null);
+        }
+        return foundProduct;
+    }
+
+    public boolean hasBillingTriggerSelected() {
+        return CollectionUtils.isNotEmpty(billingTriggers);
+    }
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -216,6 +234,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Enumerated(EnumType.STRING)
     private Product.AggregationParticle defaultAggregationParticle;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(schema = "athena", name = "PDO_BILLING_TRIGGERS",
+        joinColumns = {@JoinColumn(name = "PRODUCT_ORDER_ID")})
+    @Enumerated(EnumType.STRING)
+    private Set<BillingTrigger> billingTriggers;
+
     /**
      * Alphanumeric Id
      */
@@ -415,6 +440,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         Collections.sort(orderedListOfProducts);
         return orderedListOfProducts;
+    }
+
+    public boolean isAddOn(Product product) {
+        return getAddOns().stream().anyMatch(productOrderAddOn -> productOrderAddOn.getAddOn().equals(product));
     }
 
     /**
@@ -888,6 +917,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             displayValue = defaultAggregationParticle.getDisplayName();
         }
         return displayValue;
+    }
+
+    private Set<BillingTrigger> getDefaultBillingTrigger() {
+        return getResearchProject() != null ? getResearchProject().getBillingTriggers() :
+            BillingTrigger.defaultValues();
+    }
+
+    public Set<BillingTrigger> getBillingTriggerOrDefault() {
+        return Optional.ofNullable(billingTriggers).orElse(getDefaultBillingTrigger());
+    }
+
+    public Set<BillingTrigger> getBillingTriggers() {
+        return billingTriggers;
+    }
+
+    public void setBillingTriggers(Set<BillingTrigger> billingTriggers) {
+        this.billingTriggers = billingTriggers;
     }
 
     public Product.AggregationParticle getDefaultAggregationParticle() {
@@ -2667,6 +2713,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }

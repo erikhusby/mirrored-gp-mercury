@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -32,7 +33,9 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -290,6 +293,44 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AddSampleMetadata.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 and subsequent are SampleId\tMetadata.Key\tNew value.
+     * Note: currently, each sample can appear only once in the file; if there are multiple lines for the same sample,
+     * all but the last are ignored.
+     * Example contents of the file are:
+     * GPLIM-5856
+     * 1194526016	CLIENT	MAYO
+     * 1194526031	CLIENT	MAYO
+     */
+    @Test(enabled = false)
+    public void gplim5856AddMetadata() throws IOException {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("AddSampleMetadata.txt"));
+        String fixupComment = lines.get(0);
+
+        List<String> sampleIds = new ArrayList<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three tab separated fields in " + line);
+            }
+            sampleIds.add(fields[0]);
+        }
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (String line : lines.subList(1, lines.size())) {
+            String[] fields = TAB_PATTERN.split(line);
+            MercurySample mercurySample = mapIdToMercurySample.get(fields[0]);
+            Assert.assertNotNull(mercurySample, "Failed to find " + fields[0]);
+            MetaDataFixupItem fixupItem =
+                    new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.valueOf(fields[1]), "", fields[2]);
+            fixupItems.put(mercurySample, fixupItem);
+        }
+        addMetadataAndValidate(fixupItems, fixupComment);
+        mercurySampleDao.flush();
+    }
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
@@ -329,7 +370,7 @@ public class SampleMetadataFixupTest extends Arquillian {
      * Perform actual fixup and validate.
      */
     private void addMetadataAndValidate(@Nonnull Map<MercurySample, MetaDataFixupItem> fixupItems,
-                                        @Nonnull String fixupComment) {
+                                        String fixupComment) {
         userBean.loginOSUser();
         String originalValueDontMatchError =
                 "Original value of sample metadata is not what was expected. Key: %s, Expected: %s, Found: %s";
@@ -358,7 +399,9 @@ public class SampleMetadataFixupTest extends Arquillian {
                     fixupItem.validateUpdatedValue(sample), is(Collections.EMPTY_MAP));
         }
 
-        mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        if (!StringUtils.isEmpty(fixupComment)) {
+            mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        }
     }
 
     private String getSampleMetadataValue(Metadata.Key metadataKey, MercurySample sample) {

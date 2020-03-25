@@ -225,10 +225,14 @@ public class QuoteImportItem {
      * @param sapDeliveryId
      */
     public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId) {
+        LedgerEntry.PriceItemType priceItemType = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
+        if (productOrder.isAddOn(product)) {
+            priceItemType = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+        }
 
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
-            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setPriceItemType(priceItemType);
             ledgerEntry.setBillingMessage(billingMessage);
             ledgerEntry.setWorkItem(quoteServerWorkItem);
             if (StringUtils.isNotBlank(sapDeliveryId)) {
@@ -407,8 +411,16 @@ public class QuoteImportItem {
         Optional<String> reduce = Optional.empty();
 
         if(productOrder.hasSapQuote()) {
-            replacementResult = ledgerItems.stream().map(LedgerEntry::getSapReplacement)
-                    .reduce((a, b) -> null).map(DeliveryCondition::fromConditionName).orElse(null);
+            replacementResult = null;
+            for(LedgerEntry entry:ledgerItems) {
+                if(StringUtils.isNotBlank(entry.getSapReplacement())) {
+                    // The aggregation that creates the Quote Import Items includes SAP Replacement so all ledger
+                    // entries in the Quote Inport Item should have the same sap Replacement.  Therefore, we only need
+                    // to grab the first one that we find.
+                    replacementResult = DeliveryCondition.fromConditionName(entry.getSapReplacement());
+                    break;
+                }
+            }
         }
 
         return replacementResult;

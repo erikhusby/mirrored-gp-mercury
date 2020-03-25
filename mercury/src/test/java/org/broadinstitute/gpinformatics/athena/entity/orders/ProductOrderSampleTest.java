@@ -280,7 +280,7 @@ public class ProductOrderSampleTest {
 
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
-        sample.autoBillSample(completedDate, BigDecimal.ONE);
+        sample.autoBillSample(sample.getProductOrder().getProduct(), BigDecimal.ONE, completedDate);
         assertThat(sample.getBillableLedgerItems(), is(ledgerEntries));
     }
 

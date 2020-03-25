@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.After;

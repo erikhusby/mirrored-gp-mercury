@@ -5,7 +5,9 @@ import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,21 +19,24 @@ import java.util.Map;
 @Entity
 @Audited
 @Table(name= "WORK_COMPLETE_MESSAGE", schema = "athena")
-public class WorkCompleteMessage {
+public class WorkCompleteMessage  implements Serializable {
+    private static final long serialVersionUID = 9210151556903945304L;
+
     public enum Properties {
         PDO_NAME, ALIQUOT_ID, COMPLETED_TIME, PF_READS, PF_ALIGNED_GB, PF_READS_ALIGNED_IN_PAIRS,
-        PCT_TARGET_BASES_20X, PCT_TARGET_BASES_100X,
+        PCT_TARGET_BASES_20X, PCT_TARGET_BASES_100X,PART_NUMBER,USER_ID, FORCE_AUTOBILL
     }
 
     protected WorkCompleteMessage() {
     }
 
     public WorkCompleteMessage(
-            @Nonnull String pdoName, @Nonnull String aliquotId, @Nonnull Date completedDate,
-            @Nonnull Map<String, Object> dataMap) {
-
+        @Nonnull String pdoName, @Nonnull String aliquotId, @Nullable String partNumber, @Nullable Long userId,
+        @Nonnull Date completedDate, @Nonnull Map<String, Object> dataMap) {
         this.pdoName = pdoName;
         this.aliquotId = aliquotId;
+        this.partNumber = partNumber;
+        this.userId = userId;
         this.completedDate = completedDate;
 
         data = new HashMap<>();
@@ -56,6 +61,14 @@ public class WorkCompleteMessage {
     @Column(name = "COMPLETED_DATE", nullable = false)
     @Nonnull
     private Date completedDate;
+
+    @Column(name = "PART_NUMBER", nullable = true)
+    @Nullable
+    private String partNumber;
+
+    @Column(name = "USER_ID", nullable = true)
+    @Nullable
+    private Long userId;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     @MapKeyColumn(name="KEY")
@@ -115,6 +128,20 @@ public class WorkCompleteMessage {
 
     public Double getPercentCoverageAt100X() {
         return getDoublePropertyValue(Properties.PCT_TARGET_BASES_100X);
+    }
+
+    @Nullable
+    public String getPartNumber() {
+        return partNumber;
+    }
+
+    @Nullable
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(@Nullable Long userId) {
+        this.userId = userId;
     }
 
     private BigInteger getBigIntegerPropertyValue(Properties property) {

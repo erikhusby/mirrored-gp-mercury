@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -24,7 +25,9 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -239,6 +242,12 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(schema = "athena", name = "RP_BILLING_TRIGGERS",
+        joinColumns = {@JoinColumn(name = "RESEARCH_PROJECT_ID")})
+    @Enumerated(EnumType.STRING)
+    private Set<BillingTrigger> billingTriggers = BillingTrigger.defaultValues();
+
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
@@ -448,6 +457,17 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public String getRegulatoryDesignationDescription() {
         return getRegulatoryDesignation().getDescription();
+    }
+
+    public Set<BillingTrigger> getBillingTriggers() {
+        if (CollectionUtils.isEmpty(billingTriggers)) {
+            billingTriggers = BillingTrigger.defaultValues();
+        }
+        return billingTriggers;
+    }
+
+    public void setBillingTriggers(Set<BillingTrigger> defaultBillingTriggers) {
+        this.billingTriggers = defaultBillingTriggers;
     }
 
     /**

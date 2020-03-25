@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -30,6 +31,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -151,6 +154,9 @@ public class ProductOrderEjb {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private WorkCompleteMessageDao workCompleteMessageDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -1743,6 +1749,23 @@ public class ProductOrderEjb {
 
             productOrderJiraUtil.createIssueForOrder(productOrder, jiraWatchers, owner, jiraLink);
 
+            List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
+                productOrder.getSamples().forEach(pdoSample -> {
+                    pdoSample.getProductOrder().getAddOns().stream().map(ProductOrderAddOn::getAddOn).forEach(product -> {
+                        workCompleteMessages.add(new WorkCompleteMessage(pdoSample.getProductOrder().getJiraTicketKey(),
+                            pdoSample.getAliquotId(), product.getPartNumber(), user.getUserId(), pdoSample.getReceiptDate(),
+                            new HashMap<>()));
+                    });
+                });
+            } else {
+                productOrder.getSamples().forEach(pdoSample -> {
+                    workCompleteMessages.add(new WorkCompleteMessage(pdoSample.getProductOrder().getJiraTicketKey(),
+                        pdoSample.getAliquotId(), pdoSample.getProductOrder().getProduct().getPartNumber(),user.getUserId(),
+                        pdoSample.getWorkCompleteDate(), new HashMap<>()));
+                });
+            }
+            workCompleteMessageDao.persistAll(workCompleteMessages);
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);

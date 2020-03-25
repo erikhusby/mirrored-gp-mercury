@@ -469,6 +469,17 @@
                     </div>
                 </div>
             </fieldset>
+            <fieldset>
+                <legend><h4>Default Billing Triggers</h4></legend>
+                <div class="view-control-group control-group">
+                    <label title="What can trigger billing." class="control-label label-form">Billing Triggers</label>
+                    <div class="controls">
+                        <c:forEach var="billiingTrigger" items="${actionBean.editResearchProject.billingTriggers}">
+                            <div class="form-value">${billiingTrigger.displayName}</div>
+                        </c:forEach>
+                    </div>
+                </div>
+            </fieldset>
         </div>
 
         <stripes:layout-render name="/projects/regulatory_info_dialog.jsp"
