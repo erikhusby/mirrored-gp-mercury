@@ -226,10 +226,10 @@
                 <constraints nullable="false"/>
             </column>
             <column name="FLOWCELL" type="VARCHAR2(255)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="LANE" type="number(2,0)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="RUN_DATE" type="timestamp">
                 <constraints nullable="false"/>
@@ -245,11 +245,6 @@
             </column>
         </createTable>
         <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="1"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-6242-42a" author="jowalsh">
-        <dropNotNullConstraint schemaName="mercurydw" tableName="FINGERPRINT_SCORE" columnName="FLOWCELL"/>
-        <dropNotNullConstraint schemaName="mercurydw" tableName="FINGERPRINT_SCORE" columnName="LANE"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-43" author="jowalsh">
