@@ -1742,6 +1742,11 @@ public class ProductOrderEjb {
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
             }
+            // Adds valid product add-ons from productOrderData.addOnPartNumbers to this order.
+            productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
+                    filter(product -> productOrderData.getAddOnPartNumbers().contains(product.getPartNumber())).
+                    map(product -> new ProductOrderAddOn(product, productOrder)).
+                    collect(Collectors.toList()));
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
             // is only one IRB on the RP.
