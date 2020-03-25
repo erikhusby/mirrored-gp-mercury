@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 
-import javax.ejb.TransactionManagement;
+import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -25,10 +25,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static javax.ejb.TransactionManagementType.BEAN;
-
+@Stateful
 @RequestScoped
-@TransactionManagement(BEAN)
 public class FiniteStateMachineEngine implements Serializable {
     private static final Log log = LogFactory.getLog(FiniteStateMachineEngine.class);
 
@@ -64,7 +62,7 @@ public class FiniteStateMachineEngine implements Serializable {
         }
 
         try {
-            executeProcessDaoFree(stateMachine);
+            executeProcessDaoFree(stateMachine, stateManager, taskManager, context);
             stateMachineDao.persist(stateMachine);
             stateMachineDao.flush();
         } catch (Exception e) {
@@ -73,7 +71,8 @@ public class FiniteStateMachineEngine implements Serializable {
     }
 
     @DaoFree
-    public void executeProcessDaoFree(FiniteStateMachine stateMachine) {
+    public static void executeProcessDaoFree(FiniteStateMachine stateMachine, StateManager stateManager,
+            TaskManager taskManager, SchedulerContext context) {
         for (State state : stateMachine.getActiveStates()) {
 
             if (state.isStartState() && stateMachine.getDateStarted() == null) {

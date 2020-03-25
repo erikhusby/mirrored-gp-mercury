@@ -249,7 +249,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         engine.setTaskManager(taskManager);
 
         // File not created, state will still be in WaitForFile
-        engine.executeProcessDaoFree(finiteStateMachine);
+        engine.executeProcessDaoFree(finiteStateMachine, stateHandler, taskManager, schedulerContext);
         Assert.assertEquals(1, finiteStateMachine.getActiveStates().size());
         for (State state: finiteStateMachine.getActiveStates()) {
             assertThat(state, instanceOf(GenericState.class));
@@ -260,7 +260,7 @@ public class DragenSimulatorTest extends BaseEventTest {
         rtaFile.createNewFile();
 
         // Second execution will now see the file and transition to demultiplexing
-        engine.executeProcessDaoFree(finiteStateMachine);
+        engine.executeProcessDaoFree(finiteStateMachine, stateHandler, taskManager, schedulerContext);
         Assert.assertEquals(1, finiteStateMachine.getActiveStates().size());
         for (State state: finiteStateMachine.getActiveStates()) {
             assertThat(state, instanceOf(DemultiplexState.class));
@@ -270,7 +270,7 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         // Third execution will 'check' the pid's of the running demultiplexing tasks which won't exist. It'll assume
         // they are complete and move on to alignment.
-        engine.executeProcessDaoFree(finiteStateMachine);
+        engine.executeProcessDaoFree(finiteStateMachine, stateHandler, taskManager, schedulerContext);
         Assert.assertEquals(1, finiteStateMachine.getActiveStates().size());
         for (State state: finiteStateMachine.getActiveStates()) {
             assertThat(state, instanceOf(AlignmentState.class));
@@ -282,8 +282,8 @@ public class DragenSimulatorTest extends BaseEventTest {
         Assert.assertNotNull(demultiplexStats);
 
         // Alignment ran so state machine should now be complete
-        engine.executeProcessDaoFree(finiteStateMachine);
-        engine.executeProcessDaoFree(finiteStateMachine);
+        engine.executeProcessDaoFree(finiteStateMachine, stateHandler, taskManager, schedulerContext);
+        engine.executeProcessDaoFree(finiteStateMachine, stateHandler, taskManager, schedulerContext);
         Assert.assertEquals(true, finiteStateMachine.isComplete());
     }
 
