@@ -19,6 +19,7 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -138,6 +139,10 @@ public class AouPdoConfigActionBean extends CoreActionBean {
 
         public void setArrayValue(String arrayValue) {
             this.arrayValue = arrayValue;
+        }
+
+        public String cleanInput(String arrayValue) {
+            return String.join(",", StringUtils.split(arrayValue, ','));
         }
 
         @Override

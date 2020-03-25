@@ -13,14 +13,19 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderData;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -130,8 +135,9 @@ public class MayoManifestEjb {
     private static final String PRODUCT_PARAM = "Product Part Number";
     private static final String QUOTE_PARAM = "Quote Id";
     private static final String TEST_NAME = "manifest test_name";
+    public static final String BILLING_TRIGGERS = "Billing Triggers";
     private static final List<String> EXPECTED_PDO_PARAMS = ImmutableList.of(OWNER_PARAM, WATCHERS_PARAM,
-            RESEARCH_PROJECT_PARAM, PRODUCT_PARAM, QUOTE_PARAM, TEST_NAME);
+            RESEARCH_PROJECT_PARAM, PRODUCT_PARAM, QUOTE_PARAM, TEST_NAME, BILLING_TRIGGERS);
 
     public static final String AOU_GENOME = "aou_wgs";
     public static final String AOU_ARRAY = "aou_array";
@@ -168,6 +174,7 @@ public class MayoManifestEjb {
     private ResearchProjectDao researchProjectDao;
     private QueueEjb queueEjb;
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+    private WorkCompleteMessageDao workCompleteMessageDao;
 
     /**
      * CDI constructor.
@@ -182,7 +189,7 @@ public class MayoManifestEjb {
             QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment,
             ProductOrderEjb productOrderEjb, AttributeArchetypeDao attributeArchetypeDao, ProductDao productDao,
             BSPUserList bspUserList, ResearchProjectDao researchProjectDao, QueueEjb queueEjb,
-            DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
+            DnaQuantEnqueueOverride dnaQuantEnqueueOverride, WorkCompleteMessageDao workCompleteMessageDao) {
 
         this.manifestSessionDao = manifestSessionDao;
         this.googleBucketDao = googleBucketDao;
@@ -199,6 +206,7 @@ public class MayoManifestEjb {
         this.researchProjectDao = researchProjectDao;
         this.queueEjb = queueEjb;
         this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+        this.workCompleteMessageDao = workCompleteMessageDao;
 
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
@@ -1102,6 +1110,7 @@ public class MayoManifestEjb {
         String quoteId = params.get(QUOTE_PARAM);
         Pair<Product, List<String>> pair = parseAndValidatePartNumbers(params.get(PRODUCT_PARAM), mappingName,
                 true, messages);
+        List<String> billingTriggers = Arrays.asList(StringUtils.split(params.get(BILLING_TRIGGERS), ','));
         Product product = pair.getLeft();
         List<String> addOns = pair.getRight();
 
@@ -1122,7 +1131,7 @@ public class MayoManifestEjb {
         // For Mayo the tube barcode is also used as the Broad sample name.
         productOrderData.setSamples(accessionedTubes);
         productOrderData.setTitle(title);
-
+        productOrderData.setBillingTriggers(billingTriggers);
         // Creates the PDO with samples, places the PDO, then publishes it to SAP.
         MessageCollection pdoMessageCollection = new MessageCollection();
         ProductOrder productOrder = productOrderEjb.createPlaceAndPublish(productOrderData, watchers,
@@ -1130,10 +1139,33 @@ public class MayoManifestEjb {
         if (productOrder != null && productOrder.getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
             messages.addInfo("Created " + productOrder.getBusinessKey() + " for " + accessionedTubes.size() +
                     " samples.");
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
+                logger.info("Creating WorkCompleteMessages for billing Add-Ons");
+                List<WorkCompleteMessage> workCompleteMessages =
+                    new ArrayList<>(buildWorkCompleteMessages(productOrder));
+                workCompleteMessageDao.persistAll(workCompleteMessages);
+            }
         } else {
             messages.addError("Failed to make a PDO for the accessioned samples.");
         }
         messages.addAll(pdoMessageCollection);
+    }
+
+    public List<WorkCompleteMessage> buildWorkCompleteMessages(ProductOrder productOrder) {
+        List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+        productOrder.getSamples().forEach(productOrderSample -> {
+            productOrder.getAddOns().stream().map(ProductOrderAddOn::getAddOn).map(
+                addOn -> {
+                    String aliquotId = productOrderSample.getAliquotId();
+                    if (StringUtils.isBlank(aliquotId)) {
+                        aliquotId = productOrderSample.getSampleKey();
+                    }
+                    return new WorkCompleteMessage(productOrder.getJiraTicketKey(), aliquotId,
+                        addOn.getPartNumber(), productOrder.getCreatedBy(), productOrder.getCreatedDate(),
+                        AutomatedBiller.WORK_COMPLETE_DATA);
+                }).collect(Collectors.toCollection(() -> workCompleteMessages));
+        });
+        return workCompleteMessages;
     }
 
     /**
@@ -1193,6 +1225,12 @@ public class MayoManifestEjb {
                         messageCollection.addError("Array test_name is blank.");
                     }
                     break;
+                case BILLING_TRIGGERS:
+                    dto.setWgsValue(dto.cleanInput(dto.getWgsValue()));
+                    validateBillingTrigger(Arrays.asList(StringUtils.split(dto.getWgsValue(), ',')), messageCollection);
+                    dto.setArrayValue(dto.cleanInput(dto.getArrayValue()));
+                    validateBillingTrigger(Arrays.asList(StringUtils.split(dto.getArrayValue(), ',')), messageCollection);
+                    break;
                 default:
                     throw new RuntimeException("Unknown AoU PDO parameter '" + dto.getParamName() + "'.");
                 }
@@ -1203,6 +1241,19 @@ public class MayoManifestEjb {
         } else {
             messageCollection.addError("Parameter names must contain " + StringUtils.join(EXPECTED_PDO_PARAMS, ", "));
         }
+    }
+
+    public void validateBillingTrigger(List<String> values, MessageCollection messageCollection) {
+        if (values.size() > 1 && values.contains(BillingTrigger.NONE.name())) {
+            messageCollection.addError("If using multiple triggers, value can't contain %s",BillingTrigger.NONE.name());
+        }
+        values.forEach(stringValue -> {
+            try {
+                BillingTrigger.valueOf(stringValue);
+            } catch (IllegalArgumentException e) {
+                messageCollection.addError("Billing trigger is invalid: %s", e.getLocalizedMessage());
+            }
+        });
     }
 
     private Pair<Product, List<String>> parseAndValidatePartNumbers(String delimitedValues, String prefix,
