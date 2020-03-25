@@ -427,7 +427,12 @@ public class ManifestSession implements Updatable {
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
-                        return manifestRecord.getValueByKey(key);
+                        Optional<Metadata> keyMetadata = Optional.ofNullable(manifestRecord.getMetadataByKey(key));
+                        String result = "";
+                        if(keyMetadata.isPresent()) {
+                            result = keyMetadata.get().getValue();
+                        }
+                        return result;
                     }
                 });
     }
