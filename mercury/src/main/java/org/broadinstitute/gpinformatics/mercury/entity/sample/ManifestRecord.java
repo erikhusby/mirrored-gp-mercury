@@ -346,8 +346,7 @@ public class ManifestRecord implements Updatable {
         String duplicateMatrixIdMessage =
                 ErrorStatus.DUPLICATE_MATRIX_ID.formatMessage(Metadata.Key.BROAD_2D_BARCODE, getValueByKey(
                         Metadata.Key.BROAD_2D_BARCODE));
-        String sessionsWithDuplicateMatrixIds = describeOtherManifestSessionsWithMatchingRecords(value);
-        return buildSpreadsheetRowMessage() + duplicateMatrixIdMessage + "  " + sessionsWithDuplicateMatrixIds;
+        return buildSpreadsheetRowMessage() + duplicateMatrixIdMessage;
     }
 
     /**
@@ -395,7 +394,7 @@ public class ManifestRecord implements Updatable {
          * Another record in the uploaded manifest has the same 2d Matrix Barcode.
          */
         DUPLICATE_MATRIX_ID("The specified matrix ID is duplicated within this manifest.",
-                ManifestEvent.Severity.QUARANTINED),
+                ManifestEvent.Severity.ERROR),
         /**
          * Another record in the uploaded manifest has the same 2d Matrix Barcode.
          */

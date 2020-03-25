@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -26,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -96,14 +98,21 @@ public class ManifestSessionEjbDBFreeTest {
     private static final int NUM_RECORDS_IN_GOOD_MANIFEST = 23;
 
     private static final String MANIFEST_FILE_DUPLICATES_SAME_SESSION = "manifest-upload/manifest-with-duplicates.xlsx";
+    private static final String MANIFEST_FILE_COVID_DUPLICATES_SAME_SESSION = "manifest-import/PHS_manifest_03232020_duplicate_sample_ids.xlsx";
 
     private static final int NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION = 7;
 
     private static final String MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION =
             "manifest-upload/gender-mismatches-within-session/good-manifest.xlsx";
 
+    private static final String MANIFEST_FILE_DUPLICATE_MATRIX_IDS_SAME_SESSION =
+            "manifest-import/PHS_manifest_03232020_duplicate_ids.xlsx";
+
     private static final Set<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
             ImmutableSet.of("004-002", "003-009", "005-012");
+
+    private static final Set<String> SAMPE_IDS_FOR_SAME_DUPLICATE_MATRIX_IDS =
+            ImmutableSet.of("G3270000944", "G3270000947", "G3270000951", "G3270000955");
 
     private static final Set<String> DUPLICATED_SAMPLE_IDS =
             ImmutableSet.of("03101231193", "03101411324", "03101254356");
@@ -173,6 +182,7 @@ public class ManifestSessionEjbDBFreeTest {
         labVesselFactory = Mockito.mock(LabVesselFactory.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
+        Mockito.when(mockUserBean.getLoginUserName()).thenReturn(testLabUser.getUsername());
         Mockito.when(bspUserList.getByUsername(Mockito.anyString())).thenReturn(testLabUser);
         Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
             @Override
@@ -235,6 +245,12 @@ public class ManifestSessionEjbDBFreeTest {
                 new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         testVesselAlreadyTransferred = new BarcodedTube(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED,
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+
+        Mockito.when(labVesselFactory.buildLabVessels(Mockito.anyListOf(ParentVesselBean.class), Mockito.anyString(),
+                Mockito.any(Date.class),Mockito.any(LabEventType.class),
+                Mockito.any(MercurySample.MetadataSource.class))).thenReturn(Pair.of(Collections.singletonList(testVessel),
+                Collections.singletonList(testVessel)));
+
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
@@ -397,6 +413,21 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    public void covidResearchProjectNotFound() throws Exception {
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
+                labVesselFactory);
+        try {
+            String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/PHS_manifest_03232020.csv");
+            InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
+
+            ejb.uploadManifest(null, inputStream, "PHS_manifest_03232020.csv",
+                    ManifestSessionEjb.AccessioningProcessType.COVID, false);
+        } catch (InformaticsServiceException ignored) {
+            Assert.fail();
+        }
+    }
+
     /********************************************************************/
     /**  =======  upload manifest tests ============================== **/
     /********************************************************************/
@@ -524,6 +555,35 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    public void uploadCOVIDManifestThatDuplicatesSampleIdInSameManifest() throws Exception {
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_COVID_DUPLICATES_SAME_SESSION,
+                ManifestSessionEjb.AccessioningProcessType.COVID);
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(8));
+        assertThat(manifestSession.hasErrors(), is(true));
+
+        ImmutableListMultimap<String, ManifestRecord> sampleIdToRecordMultimap =
+                buildSampleIdToRecordMultimap(manifestSession);
+        List<ManifestRecord> quarantinedRecords = new ArrayList<>();
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            if (manifestRecord.isQuarantined()) {
+                quarantinedRecords.add(manifestRecord);
+            }
+        }
+        // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
+        assertThat(quarantinedRecords, hasSize(5));
+
+        for (ManifestRecord record : quarantinedRecords) {
+            assertThat(record.getManifestEvents(), hasSize(1));
+            ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
+            Collection<ManifestRecord> duplicates = filterThisRecord(record,
+                    sampleIdToRecordMultimap.get(record.getValueByKey(Metadata.Key.SAMPLE_ID)));
+            assertThat(manifestEvent.getMessage(),
+                    containsString(record.buildMessageForConflictingRecords(duplicates)));
+        }
+    }
+
     private Collection<ManifestRecord> filterThisRecord(final ManifestRecord record,
                                                         ImmutableList<ManifestRecord> manifestRecords) {
         return Collections2.filter(manifestRecords, new Predicate<ManifestRecord>() {
@@ -581,6 +641,16 @@ public class ManifestSessionEjbDBFreeTest {
         });
     }
 
+    private ImmutableListMultimap<String, ManifestRecord> buildMatrixIdToRecordMultimap(
+            ManifestSession manifestSession) {
+        return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
+            @Override
+            public String apply(ManifestRecord manifestRecord) {
+                return manifestRecord.getValueByKey(Metadata.Key.BROAD_2D_BARCODE);
+            }
+        });
+    }
+
     private ResearchProject createTestResearchProject() {
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
@@ -612,6 +682,33 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
                 assertThat(manifestEvent.getMessage(), containsString(manifestRecord
                         .buildMessageForConflictingRecords(allMatchingPatientIdRecordsExceptThisOne)));
+            }
+        }
+    }
+
+     public void uploadManifestThatDuplicatesMatrixIDInSameManifest() throws Exception {
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATE_MATRIX_IDS_SAME_SESSION,
+                ManifestSessionEjb.AccessioningProcessType.COVID);
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(8));
+
+        ImmutableListMultimap<String, ManifestRecord> matrixIdToManifestRecords =
+                buildMatrixIdToRecordMultimap(manifestSession);
+
+        // The assert below is for size * 2 since all manifest records in question are in this manifest session.
+        assertThat(manifestSession.getManifestEvents(),
+                hasSize(SAMPE_IDS_FOR_SAME_DUPLICATE_MATRIX_IDS.size()));
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID);
+            if (SAMPE_IDS_FOR_SAME_DUPLICATE_MATRIX_IDS.contains(patientIdMetadata.getValue())) {
+                Collection<ManifestRecord> allMatchingPatientIdRecordsExceptThisOne =
+                        filterThisRecord(manifestRecord, matrixIdToManifestRecords.get(manifestRecord.getValueByKey(
+                                Metadata.Key.SAMPLE_ID)));
+                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+                ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
+                assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+                assertThat(manifestEvent.getMessage(), containsString(manifestRecord
+                        .buildMessageForDuplicateMatrixIds(allMatchingPatientIdRecordsExceptThisOne)));
             }
         }
     }
@@ -840,9 +937,13 @@ public class ManifestSessionEjbDBFreeTest {
     public Object[][] goodManifestAccessionScanProvider() {
         return new Object[][]{
                 // Good tube barcode should succeed.
-                {GOOD_TUBE_BARCODE, true},
+                {GOOD_TUBE_BARCODE, true, ManifestSessionEjb.AccessioningProcessType.CRSP},
+                // Good tube barcode should succeed.
+                {GOOD_TUBE_BARCODE, true, ManifestSessionEjb.AccessioningProcessType.COVID},
                 // Bad tube barcode should fail.
-                {BAD_TUBE_BARCODE, false}};
+                {BAD_TUBE_BARCODE, false, ManifestSessionEjb.AccessioningProcessType.CRSP},
+                // Bad tube barcode should fail.
+                {BAD_TUBE_BARCODE, false, ManifestSessionEjb.AccessioningProcessType.COVID}};
     }
 
     /********************************************************************/
@@ -852,11 +953,16 @@ public class ManifestSessionEjbDBFreeTest {
      */
 
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
-    public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
+    public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected,
+                                          ManifestSessionEjb.AccessioningProcessType processType) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+                processType);
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
+                EnumSet.of(Metadata.Key.BROAD_2D_BARCODE,Metadata.Key.BROAD_SAMPLE_ID));
+
+        Mockito.when(labVesselDao.findByIdentifier(Mockito.anyString())).thenReturn(testVessel);
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.anyString())).thenReturn(testVessel.getMercurySamples().iterator().next());
 
         try {
             holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, tubeBarcode);
@@ -876,7 +982,12 @@ public class ManifestSessionEjbDBFreeTest {
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             String collaboratorSampleId = manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
             if (collaboratorSampleId.equals(tubeBarcode)) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+                if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
+                } else {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+                }
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
             }
@@ -1580,7 +1691,7 @@ public class ManifestSessionEjbDBFreeTest {
         holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
 
         Map<Metadata.Key, String> initialData = new HashMap<>();
-        initialData .put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
+        initialData.put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
                 initialData, EnumSet.of(Metadata.Key.BROAD_2D_BARCODE).of(Metadata.Key.SAMPLE_ID));
 

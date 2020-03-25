@@ -24,6 +24,7 @@ import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
@@ -732,6 +733,14 @@ public class ManifestSession implements Updatable {
      * @param recordSampleKey
      */
     public void accessionScan(String recordReferenceValue, Metadata.Key recordSampleKey) {
+        ManifestRecord manifestRecord =
+                getAndValidateRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
+        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
+    }
+
+    @NotNull
+    public ManifestRecord getAndValidateRecordWithMatchingValueForKey(Metadata.Key recordSampleKey,
+                                                                      String recordReferenceValue) {
         ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
 
         if (manifestRecord == null) {
@@ -739,7 +748,7 @@ public class ManifestSession implements Updatable {
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
                             recordSampleKey, recordReferenceValue));
         }
-        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
+        return manifestRecord;
     }
 
     public boolean canSessionExcludeReceiptTicket() {
