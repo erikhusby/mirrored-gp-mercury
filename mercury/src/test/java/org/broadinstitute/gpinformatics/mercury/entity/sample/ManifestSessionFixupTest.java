@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventFixup;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.checkerframework.dataflow.qual.TerminatesExecution;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -354,6 +355,7 @@ public class ManifestSessionFixupTest extends Arquillian {
      *
      * @throws Exception
      */
+    @Test(enabled = false)
     public void genericManifestFixup() throws Exception {
         userBean.loginOSUser();
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("accessioningManifestFixup.txt"));
