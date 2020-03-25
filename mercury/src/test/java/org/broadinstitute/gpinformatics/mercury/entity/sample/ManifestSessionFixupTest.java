@@ -373,10 +373,13 @@ public class ManifestSessionFixupTest extends Arquillian {
             ManifestRecord manifestRecord = manifestSession.getRecords().stream()
                     .filter(manifestRecord1 -> manifestRecord1.getManifestRecordIndex().equals(Integer.parseInt(fields[1])))
                     .collect(CommonUtils.toSingleton());
-            System.out.println(String.format(""));
             if (manifestRecord == null) {
                 throw new RuntimeException(String.format("The manifest record with index %s is not found", fields[1]));
             }
+            manifestRecord.getMetadataByKey(Metadata.Key.fromName(fields[2].trim())).setStringValue(fields[3].trim());
+            System.out.println(String.format("Record %s in session %s has had the meta %s updated to %s",
+                    manifestRecord.getManifestRecordIndex(), manifestSession.getSessionName(),
+                    fields[2], fields[3]));
         }
 
         manifestSessionDao.persist(new FixupCommentary(fixupComment));
