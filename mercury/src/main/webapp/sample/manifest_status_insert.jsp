@@ -13,7 +13,10 @@
     <c:otherwise>
         <c:if test="${actionBean.scanMessages != null}">
             <div id="scanMessagesBlock" class="alert alert-success">
-                    ${actionBean.scanMessages}
+                <c:forEach items="${actionBean.scanMessages}" var="message">
+                    * ${message}<BR>
+                </c:forEach>
+
             </div>
         </c:if>
     </c:otherwise>

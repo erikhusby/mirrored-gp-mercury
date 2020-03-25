@@ -298,14 +298,13 @@ public class ManifestSessionEjb {
             }
         } else {
             ManifestRecord recordWithMatchingValueForKey =
-                    manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, referenceSampleId);
-
-            if(manifestSession.populatedInAllRecords(Metadata.Key.BROAD_2D_BARCODE)) {
-                manifestSession.validateMatrixId(recordWithMatchingValueForKey, barcode);
-            }
+                    manifestSession.getAndValidateRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID,
+                            referenceSampleId);
 
             Optional<Metadata> matrixMetadata = Optional.ofNullable(recordWithMatchingValueForKey.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE));
-            if(!matrixMetadata.isPresent() || StringUtils.isBlank(matrixMetadata.get().getValue())) {
+            if(matrixMetadata.isPresent()) {
+                matrixMetadata.get().setStringValue(barcode);
+            } else {
                 recordWithMatchingValueForKey.addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
             }
 
@@ -324,10 +323,10 @@ public class ManifestSessionEjb {
 
             manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
-            transferSample(manifestSession, null, barcode, 1L, labVessel);
+            transferSample(manifestSession, referenceSampleId, barcode, 1L, labVessel);
         }
         final List<ManifestRecord> scannedRecords = manifestSession.getRecords().stream()
-                .filter(manifestRecord -> manifestRecord.getStatus() == ManifestRecord.Status.SCANNED)
+                .filter(manifestRecord -> manifestRecord.getStatus() == ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)
                 .collect(Collectors.toList());
 
         if (scannedRecords.size() == manifestSession.getRecords().size()) {
