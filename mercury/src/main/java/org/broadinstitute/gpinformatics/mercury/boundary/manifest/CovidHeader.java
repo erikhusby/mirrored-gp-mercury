@@ -1,14 +1,3 @@
-/*
- * The Broad Institute
- * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2014 by the
- * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
- *
- * This software is supplied without any warranty or guaranteed support
- * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
- * use, misuse, or functionality.
- */
-
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.AccessioningColumnHeader;
@@ -20,27 +9,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * This enum holds header information for sample metadata manifests.
- */
-public enum ManifestHeader implements AccessioningColumnHeader {
-    SPECIMEN_NUMBER("Specimen_Number", Metadata.Key.SAMPLE_ID),
-    SEX("Sex", Metadata.Key.GENDER),
-    PATIENT_ID("Patient_ID", Metadata.Key.PATIENT_ID),
-    COLLECTION_DATE("Collection_Date", Metadata.Key.BUICK_COLLECTION_DATE),
-    VISIT("Visit", Metadata.Key.BUICK_VISIT),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", Metadata.Key.TUMOR_NORMAL),
-    MATERIAL_TYPE("Material Type", Metadata.Key.MATERIAL_TYPE);
+public enum CovidHeader implements AccessioningColumnHeader {
+    PATIENT_ID("patient_id",Metadata.Key.PATIENT_ID, false),
+    REQUESTING_PHYSICIAN("physician", Metadata.Key.REQUESTING_PHYSICIAN,false),
+    DATE_COLLECTED("time_collected", Metadata.Key.COLLECTION_DATE, true),
+    INSTITUTION_ID("institution_id", Metadata.Key.INSTITUTE_ID, true),
+    SAMPLE_ID("sample_id", Metadata.Key.SAMPLE_ID, true),
+    ;
 
     private final String columnName;
     private final Metadata.Key metadataKey;
+    private final boolean required;
 
-    ManifestHeader(String columnName, Metadata.Key metadataKey) {
+    CovidHeader(String columnName, Metadata.Key metadataKey, boolean required) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
+        this.required = required;
     }
-
-    @Override
     public Metadata.Key getMetadataKey() {
         return metadataKey;
     }
@@ -49,33 +34,25 @@ public enum ManifestHeader implements AccessioningColumnHeader {
     public String getText() {
         return getColumnName();
     }
-
-    @Override
     public String getColumnName() {
         return columnName;
     }
 
     @Override
     public boolean isRequiredHeader() {
-        return true;
+        return this.required;
     }
 
     @Override
     public boolean isRequiredValue() {
-        return ColumnHeader.REQUIRED_VALUE;
+        return this.required;
     }
 
-    /**
-     * We only hold string values, even for dates.
-     */
     @Override
     public boolean isDateColumn() {
         return false;
     }
 
-    /**
-     * Since we only hold string values of data, always return true.
-     */
     @Override
     public boolean isStringColumn() {
         return true;
@@ -88,11 +65,11 @@ public enum ManifestHeader implements AccessioningColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<ManifestHeader> fromColumnName(List<String> errors, String... columnNames) {
-        List<ManifestHeader> matches = new ArrayList<>();
+    static Collection<CovidHeader> fromColumnName(List<String> errors, String... columnNames) {
+        List<CovidHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
             try {
-                matches.add(ManifestHeader.fromColumnName(columnName));
+                matches.add(CovidHeader.fromColumnName(columnName));
             } catch (IllegalArgumentException e) {
 
                 // If a header cell is not blank.
@@ -113,8 +90,8 @@ public enum ManifestHeader implements AccessioningColumnHeader {
      *
      * @throws IllegalArgumentException if enum does not exist for columnHeader.
      */
-    public static ManifestHeader fromColumnName(String columnHeader) {
-        for (ManifestHeader manifestHeader : ManifestHeader.values()) {
+    public static CovidHeader fromColumnName(String columnHeader) {
+        for (CovidHeader manifestHeader : CovidHeader.values()) {
             if (manifestHeader.getColumnName().equals(columnHeader)) {
                 return manifestHeader;
             }
@@ -123,23 +100,24 @@ public enum ManifestHeader implements AccessioningColumnHeader {
     }
 
     /**
-     * Look up the ManifestHeader for given Metadata.Key.
+     * Look up the CovidHeader for given Metadata.Key.
      *
      * @param key Metadata.Key to search for.
      *
-     * @return ManifestHeader with Metadata.Key matching key
+     * @return CovidHeader with Metadata.Key matching key
      *
      * @throws EnumConstantNotPresentException if enum does not exist for key.
      */
 
-    public static ManifestHeader fromMetadataKey(Metadata.Key key) {
-        for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            if (manifestHeader.getMetadataKey() == key) {
-                return manifestHeader;
+    public static CovidHeader fromMetadataKey(Metadata.Key key) {
+        for (CovidHeader CovidHeader : CovidHeader.values()) {
+            if (CovidHeader.getMetadataKey() == key) {
+                return CovidHeader;
             }
         }
-        throw new EnumConstantNotPresentException(ManifestHeader.class, key.name());
+        throw new EnumConstantNotPresentException(CovidHeader.class, key.name());
     }
+
 
     /**
      * Create an array of Metadata for the the data row.
@@ -149,7 +127,7 @@ public enum ManifestHeader implements AccessioningColumnHeader {
     public static Metadata[] toMetadata(Map<String, String> dataRow) {
         List<Metadata> metadata = new ArrayList<>(dataRow.size());
         for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
-            ManifestHeader header = ManifestHeader.fromColumnName(columnEntry.getKey());
+            CovidHeader header = CovidHeader.fromColumnName(columnEntry.getKey());
             metadata.add(new Metadata(header.getMetadataKey(), columnEntry.getValue()));
         }
         return metadata.toArray(new Metadata[metadata.size()]);

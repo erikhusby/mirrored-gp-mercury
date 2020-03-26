@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -21,6 +23,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
 import java.util.Date;
 
@@ -35,6 +38,7 @@ public class ExtractTransformLongRuningTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private String datafileDir;
     public final long MSEC_IN_SEC = 1000L;
+    private final String barcode = "TEST" + System.currentTimeMillis();
     private Long[] longLabEventIds = null;
     private Long[] longPdoSampleIds = null;
     private Long[] longBackfillPdoSampleIds = null;
@@ -43,6 +47,9 @@ public class ExtractTransformLongRuningTest extends Arquillian {
     private ExtractTransform extractTransform;
     @Inject
     private LabVesselDao labVesselDao;
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -151,4 +158,74 @@ public class ExtractTransformLongRuningTest extends Arquillian {
                 longPdoSampleIds[0]));
     }
 
+    @Test
+    public void testEtl() throws Exception {
+        final BarcodedTube labVessel = new BarcodedTube(barcode);
+        final String datFileEnding = "_lab_vessel.dat";
+
+        // Writes and commits an entity to the db.  Envers requires the transaction to commit.
+        final long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
+        final long startMSec = startSec * MSEC_IN_SEC;
+        final String startEtl = ExtractTransform.formatTimestamp(new Date(startMSec));
+        final String distantEnd = ExtractTransform.formatTimestamp(new Date(startMSec + 600000));
+        Assert.assertNotNull(utx);
+        utx.begin();
+        labVesselDao.persist(labVessel);
+        labVesselDao.flush();
+        utx.commit();
+
+        // Pick up the ID
+        final long entityId = labVessel.getLabVesselId();
+
+        // Wait since incremental etl won't pick up entities within the last transaction timeout ( TRANSACTION_COMPLETION_GUARDBAND ).
+        Thread.sleep((ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND + 1) * MSEC_IN_SEC);
+
+        ExtractTransform.writeLastEtlRun(startSec - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND);
+        // Runs incremental etl from last_etl_run (i.e. startSec) to now.
+        int recordCount = extractTransform.incrementalEtl("0", "0");
+        final long endEtlMSec = ExtractTransform.readLastEtlRun() * MSEC_IN_SEC;
+        Assert.assertTrue(recordCount > 0);
+
+        // Finds the entity in a data file (may be more than one data file if another commit
+        // hit in the small time window between startMsec and the incrementalEtl start).
+        boolean found = ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", entityId);
+        Assert.assertTrue(found);
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+
+        // Runs an incremental etl that starts after the entity was created.
+        // Entity create should not be in the etl file, if any was created.
+        String endEtl = ExtractTransform.formatTimestamp(new Date(endEtlMSec));
+        extractTransform.incrementalEtl(endEtl, distantEnd);
+        Assert.assertFalse(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", entityId));
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+
+        // Runs backfill ETL on a range of entity ids that includes the known entity id.
+        // Checks that the new data file contains the known entity id.
+
+        Response response = extractTransform.backfillEtl(LabVessel.class.getName(), entityId, entityId);
+        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", entityId));
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+
+        String adjustedStartEtl = ExtractTransform.formatTimestamp(new Date());
+        // Deletes the entity.
+        utx.begin();
+        // Gets the entity.
+        LabVessel entity = labVesselDao.findByIdentifier(barcode);
+        Assert.assertNotNull(entity);
+        labVesselDao.remove(entity);
+        labVesselDao.flush();
+        utx.commit();
+
+        Thread.sleep(2000);
+        String adjustedEndEtl = ExtractTransform.formatTimestamp(new Date());
+
+        // Less than a second ?
+        // Incremental etl starting at transaction timeout advance + 599 seconds should pick up the delete and not the earlier create.
+        recordCount = extractTransform.incrementalEtl(adjustedStartEtl, adjustedEndEtl);
+        Assert.assertTrue(recordCount > 0);
+        Assert.assertFalse(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "F", entityId));
+        Assert.assertTrue(ExtractTransformTest.searchEtlFile(datafileDir, datFileEnding, "T", entityId));
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+    }
 }
