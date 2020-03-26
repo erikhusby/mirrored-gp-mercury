@@ -193,6 +193,7 @@
                                 </div>
                             </div>
                         </c:if>
+                <c:if test="${actionBean.selectedSession.sessionComplete}">
                 <div class="actionButtons">
                 <stripes:submit id="previewSessionClose"
                                     name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>"
@@ -206,6 +207,7 @@
                         Exit Session
                     </stripes:link>
                 </div>
+                </c:if>
             </div>
 
         </stripes:form>

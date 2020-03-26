@@ -848,6 +848,10 @@ public class ManifestSession implements Updatable {
         return accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID;
     }
 
+    public boolean isSessionComplete() {
+        return status == SessionStatus.COMPLETED;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

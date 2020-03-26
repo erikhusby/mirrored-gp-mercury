@@ -218,7 +218,7 @@ public class ManifestRecord implements Updatable {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(key, value));
         }
-        if (status == Status.SCANNED) {
+        if (status == Status.SCANNED || status == Status.SAMPLE_TRANSFERRED_TO_TUBE) {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(key, value));
         }
