@@ -650,6 +650,11 @@ public class ManifestSession implements Updatable {
             } else {
                 if(getAccessioningProcessType() != ManifestSessionEjb.AccessioningProcessType.COVID) {
                     record.setStatus(ManifestRecord.Status.ACCESSIONED);
+                } else {
+                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.NO_TRANSFER_ACTION_FOUND,
+                            ManifestRecord.ErrorStatus.NO_TRANSFER_ACTION_FOUND.formatMessage(Metadata.Key.SAMPLE_ID,record.getValueByKey(
+                                    Metadata.Key.SAMPLE_ID)),
+                            record));
                 }
             }
         }
