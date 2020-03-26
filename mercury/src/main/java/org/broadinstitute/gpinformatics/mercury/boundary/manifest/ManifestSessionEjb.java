@@ -301,6 +301,8 @@ public class ManifestSessionEjb {
                     manifestSession.getAndValidateRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID,
                             referenceSampleId);
 
+            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
+
             Optional<Metadata> matrixMetadata = Optional.ofNullable(recordWithMatchingValueForKey.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE));
             if(matrixMetadata.isPresent()) {
                 matrixMetadata.get().setStringValue(barcode);
@@ -320,8 +322,6 @@ public class ManifestSessionEjb {
             final LabVessel labVessel =
                     findAndValidateTargetSampleAndVessel(mercurySample,
                             recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
-
-            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
             transferSample(manifestSession, referenceSampleId, barcode, 1L, labVessel);
         }

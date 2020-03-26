@@ -584,8 +584,8 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    @DataProvider(name = "processTypeAndSampleKitInput")
-    public Object[][] processTypeAndSampleKitInput() {
+    @DataProvider(name = "covidProcessTypeAndSampleKitInput")
+    public Object[][] covidProcessTypeAndSampleKitInput() {
         // @formatter:off
         return new Object[][]{
                 {ManifestSessionEjb.AccessioningProcessType.COVID, false},
@@ -593,7 +593,7 @@ public class ManifestSessionEjbDBFreeTest {
         };
     }
 
-    @Test(dataProvider = "processTypeAndSampleKitInput")
+    @Test(dataProvider = "covidProcessTypeAndSampleKitInput")
     public void uploadCOVIDManifestThatDuplicatesSampleIdInSameManifest(
             ManifestSessionEjb.AccessioningProcessType accessioningProcessType, boolean fromSampleKit) throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_COVID_DUPLICATES_SAME_SESSION,
@@ -726,7 +726,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    @Test(dataProvider = "processTypeAndSampleKitInput")
+    @Test(dataProvider = "covidProcessTypeAndSampleKitInput")
      public void uploadManifestThatDuplicatesMatrixIDInSameManifest(
             ManifestSessionEjb.AccessioningProcessType accessioningProcessType, boolean fromSampleKit) throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATE_MATRIX_IDS_SAME_SESSION,
@@ -863,35 +863,44 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptUploadSuccessful() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void acceptUploadSuccessful(String filePath, ManifestSessionEjb.AccessioningProcessType processType,
+                                       boolean withSampleKit, int numberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20, withSampleKit,
+                processType);
         holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
     }
 
-    private ManifestSessionAndEjbHolder buildSessionWithDuplicates(ManifestRecord.Status initialStatus)
+    private ManifestSessionAndEjbHolder buildSessionWithDuplicates(ManifestRecord.Status initialStatus,
+                                                                   ManifestSessionEjb.AccessioningProcessType processType,
+                                                                   boolean withSampleKit)
             throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20, withSampleKit,
+                processType);
 
         for (Map.Entry<String, Integer> entry : SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.entrySet()) {
             Integer numberOfCopies = entry.getValue();
             for (int i = 0; i < numberOfCopies; i++) {
                 String collaboratorBarcode = entry.getKey();
                 addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, initialStatus,
-                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, collaboratorBarcode),
+                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, collaboratorBarcode,Metadata.Key.BROAD_SAMPLE_ID, collaboratorBarcode),
                         EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
+//                (!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID )?EnumSet.of(Metadata.Key.BROAD_2D_BARCODE):EnumSet.noneOf(Metadata.Key.class));
             }
         }
 
         return holder;
     }
 
-    public void acceptSessionWithDuplicatesInThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOADED);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void acceptSessionWithDuplicatesInThisSession(String uploadFilePath,
+                                                         ManifestSessionEjb.AccessioningProcessType processType,
+                                                         boolean withSampleKit, int numberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOADED,
+                processType, withSampleKit);
 
         ManifestSession manifestSession = holder.manifestSession;
 
@@ -924,11 +933,13 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public ManifestSessionAndEjbHolder buildMismatchedGenderSession(ManifestRecord.Status initialStatus)
+    private ManifestSessionAndEjbHolder buildMismatchedGenderSession(ManifestRecord.Status initialStatus,
+                                                                     ManifestSessionEjb.AccessioningProcessType processType,
+                                                                     boolean withSampleKit)
             throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20, withSampleKit,
+                processType);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus, Metadata.Key.SAMPLE_ID,
                 "03101947686", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, FEMALE);
@@ -946,8 +957,11 @@ public class ManifestSessionEjbDBFreeTest {
         return holder;
     }
 
-    public void acceptSessionWithMismatchedGendersThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOADED);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void acceptSessionWithMismatchedGendersThisSession(ManifestSessionEjb.AccessioningProcessType processType,
+                                                              boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOADED,
+                processType, withSampleKit);
         ManifestSession manifestSession = holder.manifestSession;
 
         List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
@@ -1062,8 +1076,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void accessionScanManifestWithDuplicates() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOAD_ACCEPTED);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void accessionScanManifestWithDuplicates(String uploadFile,ManifestSessionEjb.AccessioningProcessType processType,
+                                                    boolean withSampleKit, int numnberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOAD_ACCEPTED,
+                processType, withSampleKit);
 
         try {
             // Take an arbitrary one of the duplicated sample IDs.
@@ -1077,8 +1094,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void accessionScanGenderMismatches() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOAD_ACCEPTED);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void accessionScanGenderMismatches(ManifestSessionEjb.AccessioningProcessType processType,
+                                              boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOAD_ACCEPTED,
+                processType, withSampleKit);
         ManifestSession manifestSession = holder.manifestSession;
 
         // There should be twice as many manifest events as there are patient IDs with mismatched genders as all the
@@ -1100,30 +1120,57 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage()));
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
-        holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
-                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID),
-                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
+        try {
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
+                    manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID),
+                    manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail();
+            }
+        } catch (Exception e) {
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail();
+            }
+        }
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
-        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+        if (withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+        } else {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+        }
     }
 
-    public void accessionScanDoubleScan() throws Exception {
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void accessionScanDoubleScan(String fileUploadPath,ManifestSessionEjb.AccessioningProcessType processType,
+                                        boolean withSampleKit, int numberOfRecords) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20,
-                false, ManifestSessionEjb.AccessioningProcessType.CRSP);
+                withSampleKit, processType);
         ManifestSessionEjb ejb = holder.ejb;
 
         String goodTubeBarcode = "SAMPLE_ID_11";
-        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
+
+        String targetTubeBarcode = goodTubeBarcode;
+        String sourceBarcode = goodTubeBarcode;
+        if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+            sourceBarcode = "BROAD_SAMPLE_ID_11";
+            targetTubeBarcode = "BROAD_2D_BARCODE_11";
+        } else if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            sourceBarcode = "SAMPLE_ID_11";
+            targetTubeBarcode = "BROAD_2D_BARCODE_11";
+        }
+        Mockito.when(labVesselDao.findByIdentifier(Mockito.anyString())).thenReturn(testVessel);
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.anyString())).thenReturn(testVessel.getMercurySamples().iterator().next());
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, sourceBarcode, targetTubeBarcode);
         // The results of this are checked in accessionScanGoodManifest
 
         try {
             // Should fail on a second scan.
-            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, sourceBarcode, targetTubeBarcode);
             Assert.fail();
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(),
-                    containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
+                assertThat(e.getMessage(),
+                        containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
         }
     }
 
@@ -1406,7 +1453,6 @@ public class ManifestSessionEjbDBFreeTest {
             if(!withSampleKit ||processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
                 Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
             }
-
         }
     }
 
@@ -1648,10 +1694,12 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void validateTargetTubeNotRegisteredWithRegisteredSample() throws Exception {
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void validateTargetTubeNotRegisteredWithRegisteredSample(
+            ManifestSessionEjb.AccessioningProcessType processType, boolean withSampleKit) throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, withSampleKit,
+                processType);
 
         try {
             holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
@@ -1663,10 +1711,12 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void validateTargetTubeAlreadyAccessioned() throws Exception {
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void validateTargetTubeAlreadyAccessioned(String filePath,ManifestSessionEjb.AccessioningProcessType processType,
+                                                     boolean withSampleKit, int numberOfRecords) throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, withSampleKit,
+                processType);
 
         try {
             holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
@@ -1682,11 +1732,15 @@ public class ManifestSessionEjbDBFreeTest {
     /**  =======  Record Transfer Tests ============================== **/
     /**
      * ****************************************************************
+     * @param processType
+     * @param withSampleKit
      */
 
-    public void transferSourceValidRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void transferSourceValidRecord(String filePath,ManifestSessionEjb.AccessioningProcessType processType,
+                                          boolean withSampleKit, int numberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1708,9 +1762,11 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(testSample.getMetadata(), is(not(empty())));
     }
 
-    public void transferSourceRecordNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void transferSourceRecordNotFound(ManifestSessionEjb.AccessioningProcessType processType,
+                                             boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
@@ -1730,9 +1786,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSourceToSampleNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void transferSourceToSampleNotFound(ManifestSessionEjb.AccessioningProcessType processType,
+                                               boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1752,9 +1810,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSourceToVesselNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void transferSourceToVesselNotFound(ManifestSessionEjb.AccessioningProcessType processType,
+                                               boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1778,9 +1838,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSourceToMisMatchedSampleAndVesselNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void transferSourceToMisMatchedSampleAndVesselNotFound(
+            ManifestSessionEjb.AccessioningProcessType processType, boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1804,9 +1866,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSourceQuarantinedRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void transferSourceQuarantinedRecord(String fileUpload,ManifestSessionEjb.AccessioningProcessType processType,
+                                                boolean withSampleKit, int numberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1832,9 +1896,11 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSourceMismatchedGenderRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "crspProcessTypeAndSampleKitInput")
+    public void transferSourceMismatchedGenderRecord(ManifestSessionEjb.AccessioningProcessType processType,
+                                                     boolean withSampleKit) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
@@ -1856,9 +1922,11 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(testSample.getMetadata(), is(not(empty())));
     }
 
-    public void transferSourceGoodRecordUsedTarget() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false,
-                ManifestSessionEjb.AccessioningProcessType.CRSP);
+    @Test(dataProvider = "processTypeFileAndSampleKitInput")
+    public void transferSourceGoodRecordUsedTarget(String fileUpload,ManifestSessionEjb.AccessioningProcessType processType,
+                                                   boolean withSampleKit, int numberOfRecords) throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, withSampleKit,
+                processType);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
