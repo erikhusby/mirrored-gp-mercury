@@ -389,6 +389,9 @@ public class ManifestSessionFixupTest extends Arquillian {
 
     /**
      *
+     * Generic fixup test to alter the status of a single record (per input line) of a given accessioning session
+     * The optional final field will contain a comma separated list of metadata keys that are meant to be removed from the record
+     *
      * manifestAlterRecordStatus.txt
      *
      * GPLIM-XXXX  comment
@@ -422,8 +425,9 @@ public class ManifestSessionFixupTest extends Arquillian {
                     manifestRecord.getSampleId(), manifestRecord.getStatus().getDisplayName()));
 
             if(fields.length>3) {
-                for(int fieldIndex = 3;fieldIndex <fields.length;fieldIndex++) {
-                    final Metadata.Key key = Metadata.Key.fromName(fields[fieldIndex].trim());
+                final String[] optionalMetadataDelete = fields[3].split(",");
+                for(int fieldIndex = 0;fieldIndex <optionalMetadataDelete.length;fieldIndex++) {
+                    final Metadata.Key key = Metadata.Key.fromName(optionalMetadataDelete[fieldIndex].trim());
                     manifestRecord.getMetadata().removeIf(metadatum -> metadatum.getKey() == key);
                     System.out.println(String.format("The metadata stored for %s on the manifest record for sample id %s has been removed",
                             key.getDisplayName(), manifestRecord.getSampleId()));
