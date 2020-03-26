@@ -301,6 +301,8 @@ public class ManifestSessionEjb {
                     manifestSession.getAndValidateRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID,
                             referenceSampleId);
 
+            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
+
             Optional<Metadata> matrixMetadata = Optional.ofNullable(recordWithMatchingValueForKey.getMetadataByKey(Metadata.Key.BROAD_2D_BARCODE));
             if(matrixMetadata.isPresent()) {
                 matrixMetadata.get().setStringValue(barcode);
@@ -320,8 +322,6 @@ public class ManifestSessionEjb {
             final LabVessel labVessel =
                     findAndValidateTargetSampleAndVessel(mercurySample,
                             recordWithMatchingValueForKey.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
-
-            manifestSession.accessionScan(referenceSampleId, Metadata.Key.SAMPLE_ID);
 
             transferSample(manifestSession, referenceSampleId, barcode, 1L, labVessel);
         }
@@ -357,21 +357,17 @@ public class ManifestSessionEjb {
                 LabVessel labVessel;
 
                 try {
-                    if (manifestSession.isFromSampleKit() || manifestSession.isCovidSession()) {
+                    if (manifestSession.isFromSampleKit() && !manifestSession.isCovidSession()) {
                         String targetSampleKey = record.getSampleId();
-                        if(manifestSession.isCovidSession()) {
-                            targetSampleKey = record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID);
-                        }
-                        labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
-                                record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
 
-                        if (!manifestSession.isCovidSession()) {
+                            labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
+                                    record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+
                             String sourceCollaboratorSample = null;
                             sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
 
                             transferSample(manifestSession, sourceCollaboratorSample, targetSampleKey, disambiguator++,
                                     labVessel);
-                        }
                     }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                         List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                         if (labVessels.size() != 1) {

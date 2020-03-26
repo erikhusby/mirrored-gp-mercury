@@ -373,7 +373,7 @@ public class ManifestSession implements Updatable {
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> manifestRecords) {
 
         // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
-        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapBySampleId(manifestRecords);
+        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(manifestRecords, Metadata.Key.SAMPLE_ID);
 
         // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
@@ -650,6 +650,11 @@ public class ManifestSession implements Updatable {
             } else {
                 if(getAccessioningProcessType() != ManifestSessionEjb.AccessioningProcessType.COVID) {
                     record.setStatus(ManifestRecord.Status.ACCESSIONED);
+                } else {
+                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.NO_TRANSFER_ACTION_FOUND,
+                            ManifestRecord.ErrorStatus.NO_TRANSFER_ACTION_FOUND.formatMessage(Metadata.Key.SAMPLE_ID,record.getValueByKey(
+                                    Metadata.Key.SAMPLE_ID)),
+                            record));
                 }
             }
         }
@@ -841,6 +846,10 @@ public class ManifestSession implements Updatable {
 
     public boolean isCovidSession() {
         return accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID;
+    }
+
+    public boolean isSessionComplete() {
+        return status == SessionStatus.COMPLETED;
     }
 
     @Override
