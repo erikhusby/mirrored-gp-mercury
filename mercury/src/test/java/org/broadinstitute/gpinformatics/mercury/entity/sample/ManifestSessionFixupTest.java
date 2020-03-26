@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -386,4 +387,50 @@ public class ManifestSessionFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     *
+     * manifestAlterRecordStatus.txt
+     *
+     * GPLIM-XXXX  comment
+     * [session ID]\t[Sample ID]\t[new status]\t[optional CSV of metadata to remove]
+     *
+     * @throws Exception
+     */
+    @Test(enabled = true)
+    public void genericAlterRecordStatus() throws Exception {
+
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("manifestAlterRecordStatus.txt"));
+        assertThat("Expected the number of lines in the fixup file to contain more than the fixup comment",
+                lines.size(), is(greaterThan(1)));
+        String fixupComment = lines.get(0);
+
+        utx.begin();
+        for (String line : lines.subList(1, lines.size())) {
+            final String[] fields = TAB_PATTERN.split(line);
+
+            ManifestSession manifestSession = manifestSessionDao.find(Long.parseLong(fields[0].trim()));
+            ManifestRecord manifestRecord = manifestSession.getRecords().stream()
+                    .filter(manifestRecord1 -> manifestRecord1.getSampleId().equals(fields[1].trim()))
+                    .collect(CommonUtils.toSingleton());
+            if (manifestRecord == null) {
+                throw new RuntimeException(String.format("The manifest record with Sample ID %s is not found", fields[1].trim()));
+            }
+            manifestRecord.setStatus(ManifestRecord.Status.fromName(fields[2].trim()));
+            assertThat(manifestRecord.getStatus(), is(equalTo(ManifestRecord.Status.fromName(fields[2].trim()))));
+            System.out.println(String.format("The status of manifest record with sample ID %s has been changed to %s",
+                    manifestRecord.getSampleId(), manifestRecord.getStatus().getDisplayName()));
+
+            if(fields.length>3) {
+                for(int fieldIndex = 3;fieldIndex <fields.length;fieldIndex++) {
+                    final Metadata.Key key = Metadata.Key.fromName(fields[fieldIndex].trim());
+                    manifestRecord.getMetadata().removeIf(metadatum -> metadatum.getKey() == key);
+                    System.out.println(String.format("The metadata stored for %s on the manifest record for sample id %s has been removed",
+                            key.getDisplayName(), manifestRecord.getSampleId()));
+                }
+            }
+        }
+        manifestSessionDao.persist(new FixupCommentary(fixupComment));
+        utx.commit();
+    }
 }
