@@ -353,7 +353,8 @@ public class ManifestSessionEjb {
 
 //        List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
-            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED ||
+                record.getStatus() == ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE) {
                 LabVessel labVessel;
 
                 try {
