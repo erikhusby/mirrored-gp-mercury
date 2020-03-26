@@ -353,26 +353,21 @@ public class ManifestSessionEjb {
 
 //        List<LabVessel> accessionedVessels = new ArrayList<>();
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
-            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED ||
-                record.getStatus() == ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE) {
+            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 LabVessel labVessel;
 
                 try {
-                    if (manifestSession.isFromSampleKit() || manifestSession.isCovidSession()) {
+                    if (manifestSession.isFromSampleKit() && !manifestSession.isCovidSession()) {
                         String targetSampleKey = record.getSampleId();
-                        if(manifestSession.isCovidSession()) {
-                            targetSampleKey = record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID);
-                        }
-                        labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
-                                record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
 
-                        if (!manifestSession.isCovidSession()) {
+                            labVessel = findAndValidateTargetSampleAndVessel(targetSampleKey,
+                                    record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+
                             String sourceCollaboratorSample = null;
                             sourceCollaboratorSample = record.getValueByKey(Metadata.Key.SAMPLE_ID);
 
                             transferSample(manifestSession, sourceCollaboratorSample, targetSampleKey, disambiguator++,
                                     labVessel);
-                        }
                     }/* else { // todo jmt this code doesn't work for positive controls, disabling to focus on All of Us
                         List<LabVessel> labVessels = labVesselDao.findBySampleKey(record.getSampleId());
                         if (labVessels.size() != 1) {

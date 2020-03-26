@@ -53,8 +53,8 @@ public class ManifestTestFactory {
 
         for (int i = 1; i <= numberOfRecords; i++) {
             ManifestRecord manifestRecord = buildManifestRecord(i, excludeKeys);
-            manifestRecord.setStatus(defaultStatus);
             manifestSession.addRecord(manifestRecord);
+            manifestRecord.setStatus(defaultStatus);
         }
         return manifestSession;
     }
@@ -99,8 +99,8 @@ public class ManifestTestFactory {
                                  ManifestRecord.Status status, Map<Metadata.Key, String> initialData,
                                  EnumSet<Metadata.Key> excludeKeys) {
         ManifestRecord record = buildManifestRecord(20, initialData, excludeKeys);
-        record.setStatus(status);
         session.addRecord(record);
+        record.setStatus(status);
 
 
         if (errorStatus != null) {

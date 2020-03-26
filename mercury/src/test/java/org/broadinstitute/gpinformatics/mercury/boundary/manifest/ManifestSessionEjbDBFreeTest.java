@@ -65,6 +65,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
@@ -1043,8 +1044,11 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getManifestEvents(), is(empty()));
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            String collaboratorSampleId = manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
-            if (collaboratorSampleId.equals(tubeBarcode)) {
+            Optional<String> collaboratorSampleId = Optional.ofNullable(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                assertThat(collaboratorSampleId.isPresent(), is(true));
+            }
+            if (collaboratorSampleId.orElse("").equals(tubeBarcode)) {
                 if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
 
                     assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
@@ -1242,26 +1246,34 @@ public class ManifestSessionEjbDBFreeTest {
         String receiptKey = String.format("%s-%d", CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix(),
                 ARBITRARY_MANIFEST_SESSION_ID);
         holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, receiptKey);
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
-        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-        if(withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
-
-            assertThat(holder.manifestSession.getManifestEvents(), is(not(empty())));
-        } else {
-            assertThat(holder.manifestSession.getManifestEvents(), is(empty()));
-        }
-        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if(withSampleKit) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
-            } else if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
-
+        try {
+            holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
             }
-            else {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+            if (withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+
+                assertThat(holder.manifestSession.getManifestEvents(), is(not(empty())));
+            } else {
+                assertThat(holder.manifestSession.getManifestEvents(), is(empty()));
             }
+            for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+                if (withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+
+                } else {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+                }
+            }
+        } catch (TubeTransferException e) {
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("There should not be an exception at close if no sample kit or COVID");
+            }
+            e.printStackTrace();
         }
+
+
     }
 
     @Test(dataProvider = "processTypeFileAndSampleKitInput")
@@ -1274,20 +1286,34 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, duplicateSampleId), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        try {
+            holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
+            }
 
-        if(withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
-            assertThat(holder.manifestSession.getManifestEvents(), hasSize(1+expectedRecordAmount));
-        } else {
-            assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
-        }
+            assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(duplicateSampleId)) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+            if(withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                assertThat(holder.manifestSession.getManifestEvents(), hasSize(1+expectedRecordAmount));
             } else {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+                assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
+            }
+
+            for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+                if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(duplicateSampleId)) {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+                } else {
+                    if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+                    } else {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
             }
         }
     }
@@ -1296,26 +1322,40 @@ public class ManifestSessionEjbDBFreeTest {
     public void closeManifestWithUnScannedRecord(String uploadFilePath, ManifestSessionEjb.AccessioningProcessType processType,
                                                  boolean withSampleKit, int expectedRecordAmount) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(
-                (withSampleKit|| processType == ManifestSessionEjb.AccessioningProcessType.COVID)?ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE:ManifestRecord.Status.SCANNED,
+                (processType == ManifestSessionEjb.AccessioningProcessType.COVID)?ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE:ManifestRecord.Status.SCANNED,
                 20,
                 withSampleKit, processType);
         String unScannedBarcode = GOOD_TUBE_BARCODE;
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
-        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-
-        assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
-
-        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unScannedBarcode)) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
-                assertThat(manifestRecord.isQuarantined(), is(true));
-            } else {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+        try {
+            holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
             }
+
+            assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+            assertThat(holder.manifestSession.getManifestEvents(), hasSize(1+((processType == ManifestSessionEjb.AccessioningProcessType.COVID)?20:0)));
+
+            for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+                if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unScannedBarcode)) {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+                    assertThat(manifestRecord.isQuarantined(), is(true));
+                } else {
+                    if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
+                    } else {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
+            }
+
         }
     }
 
@@ -1334,25 +1374,39 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, dupeSampleId), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
-        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-
-        if(withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
-            assertThat(holder.manifestSession.getManifestEvents(), hasSize(holder.manifestSession.getRecords().size()));
-        } else {
-            assertThat(holder.manifestSession.getManifestEvents(), hasSize(2));
-        }
-        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unscannedBarcode)) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
-                assertThat(manifestRecord.isQuarantined(), is(true));
-            } else if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(dupeSampleId)) {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
-                assertThat(manifestRecord.isQuarantined(), is(true));
-            } else {
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+        try {
+            holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
             }
+
+            assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+            if(withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                assertThat(holder.manifestSession.getManifestEvents(), hasSize(holder.manifestSession.getRecords().size()));
+            } else {
+                assertThat(holder.manifestSession.getManifestEvents(), hasSize(2));
+            }
+            for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+                if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unscannedBarcode)) {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+                    assertThat(manifestRecord.isQuarantined(), is(true));
+                } else if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(dupeSampleId)) {
+                    assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+                    assertThat(manifestRecord.isQuarantined(), is(true));
+                } else {
+                    if(processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+                    } else {
+                        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if(!withSampleKit ||processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
+            }
+
         }
     }
 
@@ -1373,15 +1427,25 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        try {
+            holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+            if(withSampleKit && processType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
+            }
 
-        ManifestSession manifestSession = holder.manifestSession;
-        assertThat(manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+            ManifestSession manifestSession = holder.manifestSession;
+            assertThat(manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(manifestSession.getManifestEvents(), hasSize(2));
+            assertThat(manifestSession.getManifestEvents(), hasSize(2));
 
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            }
+        } catch (Exception e) {
+            if(!withSampleKit || processType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                Assert.fail("At this time, closing session for the CRSP flow without transfering tubes will result in an error that tubes have not been transferred");
+            }
+
         }
     }
 
