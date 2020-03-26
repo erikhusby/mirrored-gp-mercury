@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
-import com.google.common.io.CharStreams;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -33,8 +31,7 @@ import java.util.List;
 @Dependent
 public class ConcordanceCalculator {
 
-    // todo jmt rc and prod
-    private static final String JAR_FILE = "/prodinfo/prodapps/PicardWrapper/dev/PicardWrapper-1.0-SNAPSHOT-jar-with-dependencies.jar";
+    private static final String JAR_FILE = "/prodinfo/prodapps/PicardWrapper/PicardWrapper-2.0-SNAPSHOT-jar-with-dependencies.jar";
 
     public enum Comparison {
         ONE_TO_ONE("OneToOne"),
@@ -59,9 +56,6 @@ public class ConcordanceCalculator {
         commands.add("-cp");
         commands.add(convertFilePaths(JAR_FILE));
         commands.add("org.broadinstitute.gpinformatics.infrastructure.picard.Main");
-        System.out.println("COMMAND BEGIN");
-        System.out.println(StringUtils.join(commands, " "));
-        System.out.println("COMMA");
 
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
