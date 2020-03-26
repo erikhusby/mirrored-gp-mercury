@@ -396,7 +396,7 @@ public class ManifestSessionFixupTest extends Arquillian {
      *
      * @throws Exception
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void genericAlterRecordStatus() throws Exception {
 
         userBean.loginOSUser();
