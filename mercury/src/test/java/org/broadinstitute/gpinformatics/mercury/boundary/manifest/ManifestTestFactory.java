@@ -44,11 +44,11 @@ public class ManifestTestFactory {
         EnumSet<Metadata.Key> excludeKeys = EnumSet.noneOf(Metadata.Key.class);
         if(accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
             excludeKeys.add(Metadata.Key.BROAD_2D_BARCODE);
-        } else if(!fromSampleKit) {
+            if(fromSampleKit){
+                excludeKeys.add(Metadata.Key.SAMPLE_ID);
+            }
+        } else {
             excludeKeys.add(Metadata.Key.BROAD_SAMPLE_ID);
-        }
-        if(fromSampleKit && accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID){
-//            excludeKeys.add(Metadata.Key.SAMPLE_ID);
         }
 
         for (int i = 1; i <= numberOfRecords; i++) {
