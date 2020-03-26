@@ -218,7 +218,7 @@ public class ManifestRecord implements Updatable {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(key, value));
         }
-        if (status == Status.SCANNED) {
+        if (status == Status.SCANNED || status == Status.SAMPLE_TRANSFERRED_TO_TUBE) {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(key, value));
         }
@@ -469,7 +469,8 @@ public class ManifestRecord implements Updatable {
         INVALID_TARGET("The target sample or vessel is invalid.", ManifestEvent.Severity.ERROR),
         MISMATCHED_TARGET("The target sample or vessel does not match the one in the the manifest.", ManifestEvent.Severity.ERROR),
         SOURCE_ALREADY_TRANSFERRED("The source sample has already been transferred to a tube",
-                ManifestEvent.Severity.ERROR);
+                ManifestEvent.Severity.ERROR),
+        NO_TRANSFER_ACTION_FOUND("At this time, there was no sample transfer action taken on this tube", ManifestEvent.Severity.WARNING);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;
