@@ -77,7 +77,7 @@ public class BillingEjb {
         billingSessionDao.flush();
         List<BillingEjb.BillingResult> billingResults = null;
         try {
-            billingResults = billingAdaptor.billSessionItems("automated_biller", session.getBusinessKey());
+            billingResults = billingAdaptor.autoBillSessionItems("automated_biller", session.getBusinessKey());
             createBillingMessage(billingResults);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -318,6 +318,7 @@ public class BillingEjb {
                                   Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
             throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
+        log.debug(String.format("AutoBilling %s for sample %s in PDO %s", partNumber, aliquotId, orderKey));
         if (order == null) {
             log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", orderKey));
             return true;
