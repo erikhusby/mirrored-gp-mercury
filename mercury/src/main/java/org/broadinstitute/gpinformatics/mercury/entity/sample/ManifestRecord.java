@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
@@ -152,10 +153,14 @@ public class ManifestRecord implements Updatable {
     public void addMetadata(Metadata.Key key, String value) {
         Metadata metadata = getMetadataByKey(key);
 
-        if (metadata != null) {
+        if (metadata != null && StringUtils.isNotEmpty(metadata.getValue())) {
             throw new InformaticsServiceException(key.getDisplayName() + (manifestSession == null ?
                     (" is already set to " + metadata.getValue()) :
-                    (" is already set for the record " + toString())));
+                    (" is already set for the record for [" + getSampleId() +"]")));
+        }
+
+        if(metadata != null) {
+            this.metadata.remove(metadata);
         }
         this.metadata.add(new Metadata(key, value));
         updateMetadataMap();
@@ -213,12 +218,13 @@ public class ManifestRecord implements Updatable {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(key, value));
         }
-        if (status == Status.SCANNED) {
+        if (status == Status.SCANNED || status == Status.SAMPLE_TRANSFERRED_TO_TUBE) {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(key, value));
         }
 
-        status = Status.SCANNED;
+        status = (manifestSession.getAccessioningProcessType() == ManifestSessionEjb.AccessioningProcessType.COVID)
+                ?Status.ACCESSIONED:Status.SCANNED;
     }
 
     public void setManifestRecordIndex(int manifestRecordIndex) {
@@ -321,7 +327,7 @@ public class ManifestRecord implements Updatable {
      * Build a simple spreadsheet row message prefix.
      */
     private String buildSpreadsheetRowMessage() {
-        return "At row " + getSpreadsheetRowNumber() + ": ";
+        return "At  manifest row "+getManifestRecordIndex()+" : ";
     }
 
     /**
@@ -334,6 +340,13 @@ public class ManifestRecord implements Updatable {
                         Metadata.Key.PATIENT_ID));
         String sessionsWithMismatchedGenders = describeOtherManifestSessionsWithMatchingRecords(allRecordsWithSamePatientId);
         return buildSpreadsheetRowMessage() + mismatchedGendersMessage + "  " + sessionsWithMismatchedGenders;
+    }
+
+    public String buildMessageForDuplicateMatrixIds(Collection<ManifestRecord> value) {
+        String duplicateMatrixIdMessage =
+                ErrorStatus.DUPLICATE_MATRIX_ID.formatMessage(Metadata.Key.BROAD_2D_BARCODE, getValueByKey(
+                        Metadata.Key.BROAD_2D_BARCODE));
+        return buildSpreadsheetRowMessage() + duplicateMatrixIdMessage;
     }
 
     /**
@@ -369,13 +382,27 @@ public class ManifestRecord implements Updatable {
          * At some time before the current sample was scanned, another with the exact same
          * sample id and also connected to the current research project was scanned.
          */
-        DUPLICATE_SAMPLE_ID("The specified sample ID is duplicated within this Research Project.", ManifestEvent.Severity.QUARANTINED),
+        DUPLICATE_SAMPLE_ID("The specified sample ID is duplicated within this Research Project.",
+                ManifestEvent.Severity.QUARANTINED),
         /**
          * Another record in the system associated with the same research project and same patient
          * ID has a different value for gender.
          */
         MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender.",
                 ManifestEvent.Severity.ERROR),
+        /**
+         * Another record in the uploaded manifest has the same 2d Matrix Barcode.
+         */
+        DUPLICATE_MATRIX_ID("The specified matrix ID is duplicated within this manifest.",
+                ManifestEvent.Severity.ERROR),
+        /**
+         * Another record in the uploaded manifest has the same 2d Matrix Barcode.
+         */
+        MISSING_MATRIX_IDS("Some manifest Records are not assigned Matrix IDs", ManifestEvent.Severity.ERROR),
+        /**
+         * Another record in the uploaded manifest has the same 2d Matrix Barcode.
+         */
+        MISSING_MATRIX_ID("This manifest Record does not have a matrix ID assigned to it", ManifestEvent.Severity.ERROR),
         /**
          * TODO not sure this is an error, should be tracked by a Decision.
          * <p/>
@@ -425,8 +452,10 @@ public class ManifestRecord implements Updatable {
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.",
                 ManifestEvent.Severity.ERROR),
         INVALID_TARGET("The target sample or vessel is invalid.", ManifestEvent.Severity.ERROR),
+        MISMATCHED_TARGET("The target sample or vessel does not match the one in the the manifest.", ManifestEvent.Severity.ERROR),
         SOURCE_ALREADY_TRANSFERRED("The source sample has already been transferred to a tube",
-                ManifestEvent.Severity.ERROR);
+                ManifestEvent.Severity.ERROR),
+        NO_TRANSFER_ACTION_FOUND("At this time, there was no sample transfer action taken on this tube", ManifestEvent.Severity.WARNING);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;

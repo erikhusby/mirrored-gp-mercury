@@ -117,7 +117,7 @@
         <span>Or start a new session</span>
 
         <div id="startNewSession">
-            <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
+        <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
                 <stripes:hidden name="accessioningProcessName" value="${actionBean.accessioningProcessType.name()}" />
                 <div class="form-horizontal span6">
                     <c:if test="${!actionBean.covidProcess}">
@@ -132,14 +132,16 @@
                             </div>
                         </div>
                     </c:if>
-                    <div class="control-group">
-                        <stripes:label for="usesSampleKitId" class="control-label">
-                            Accession with Broad Sample Kit? *
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:checkbox name="usesSampleKit" id="usesSampleKit" value="true" />
+                    <c:if test="${!actionBean.covidProcess}">
+                        <div class="control-group">
+                            <stripes:label for="usesSampleKitId" class="control-label">
+                                Accession with Broad Sample Kit? *
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox name="usesSampleKit" id="usesSampleKit" value="true"/>
+                            </div>
                         </div>
-                    </div>
+                        </c:if>
                     <div class="control-group">
                         <stripes:label for="manifestFile" class="control-label">Manifest File *</stripes:label>
 
