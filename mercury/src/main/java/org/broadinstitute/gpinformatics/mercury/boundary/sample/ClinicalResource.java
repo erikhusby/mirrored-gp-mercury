@@ -74,9 +74,10 @@ public class ClinicalResource {
     @SuppressWarnings("unused")
     public ClinicalResource() {}
 
-    public ClinicalResource(UserBean userBean, ManifestSessionEjb manifestSessionEjb) {
+    public ClinicalResource(UserBean userBean, ManifestSessionEjb manifestSessionEjb, MercurySampleDao mercurySampleDaoIn) {
         this.userBean = userBean;
         this.manifestSessionEjb = manifestSessionEjb;
+        this.mercurySampleDao = mercurySampleDaoIn;
     }
 
     /**

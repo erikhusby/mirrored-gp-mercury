@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,8 +33,10 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 @UrlBinding(ManifestAccessioningActionBean.ACTIONBEAN_URL_BINDING)
@@ -44,13 +47,16 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
 
     public static final String REVIEW_UPLOAD_PAGE = "/sample/review_manifest_upload.jsp";
+    public static final String REVIEW_COVID_UPLOAD_PAGE = "/sample/review_covid_manifest_upload.jsp";
     public static final String ACCESSION_SAMPLE_PAGE = "/sample/accession_sample.jsp";
     public static final String SCAN_SAMPLE_RESULTS_PAGE = "/sample/manifest_status_insert.jsp";
     public static final String PREVIEW_CLOSE_SESSION_PAGE = "/sample/preview_close_session.jsp";
     private static final String ASSOCIATE_RECEIPT_PAGE = "/sample/associate_receipt.jsp";
 
     public static final String START_A_SESSION_ACTION = "startASession";
+    public static final String START_A_COVID_SESSION_ACTION = "startACovidSession";
     public static final String UPLOAD_MANIFEST_ACTION = "uploadManifest";
+    public static final String UPLOAD_COVID_MANIFEST_ACTION = "uploadCovidManifest";
     public static final String LOAD_SESSION_ACTION = "loadSession";
     public static final String VIEW_UPLOAD_ACTION = "viewUpload";
     public static final String ACCEPT_UPLOAD_ACTION = "acceptUpload";
@@ -62,6 +68,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String BEGIN_ACCESSION_ACTION = "beginAccession";
     public static final String FIND_RECEIPT_ACTION = "findReceipt";
     public static final String ASSOCIATE_RECEIPT_ACTION = "associateReceipt";
+    public static final String CANCEL_SESSION_ACTION = "cancelSession";
 
     public static final String UNABLE_TO_ASSOCIATE_RECEIPT_ERROR = "Unable to associate receipt with manifest Session";
 
@@ -85,10 +92,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
             EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION,
-            CLOSE_SESSION_ACTION})
+            CLOSE_SESSION_ACTION, CANCEL_SESSION_ACTION})
     private Long selectedSessionId;
 
-    @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
     private FileBean manifestFile;
 
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
@@ -101,19 +107,47 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     private ManifestStatus statusValues;
     private String scanErrors;
-    private String scanMessages;
+    private List<String> scanMessages = new ArrayList<>();
 
     private String receiptKey;
 
     private String receiptSummary;
     private String receiptDescription;
+    private String accessioningProcessName = ManifestSessionEjb.AccessioningProcessType.CRSP.name();
+    private ManifestSessionEjb.AccessioningProcessType accessioningProcessType =
+            ManifestSessionEjb.AccessioningProcessType.CRSP;
+    private String usesSampleKit = "false";
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION,"!"+START_A_COVID_SESSION_ACTION})
     public void init() {
         if (selectedSessionId != null) {
             selectedSession = manifestSessionDao.find(selectedSessionId);
             statusValues = selectedSession.generateSessionStatusForClose();
-            projectTokenInput.setup(selectedSession.getResearchProject().getBusinessKey());
+
+            String businessKey = "";
+            if(!selectedSession.isCovidSession()) {
+                businessKey = selectedSession.getResearchProject().getBusinessKey();
+            }
+            projectTokenInput.setup(businessKey);
+            accessioningProcessType = selectedSession.getAccessioningProcessType();
+            accessioningProcessName = accessioningProcessType.name();
+        }
+    }
+
+    @ValidationMethod(on = {UPLOAD_MANIFEST_ACTION})
+    public void validateUpload() {
+        if(manifestFile == null) {
+            addValidationError("manifestFile", "Manifest File is a required field");
+            restoreOpenSessions();
+        }
+    }
+
+    @ValidationMethod(on = {UPLOAD_COVID_MANIFEST_ACTION})
+    public void validateCovieUpload() {
+        if(manifestFile == null) {
+            addValidationError("manifestFile", "Manifest File is a required field");
+            accessioningProcessType = ManifestSessionEjb.AccessioningProcessType.COVID;
+            restoreOpenSessions();
         }
     }
 
@@ -143,7 +177,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution view() {
         addErrorMessages();
 
-        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+        ForwardResolution forwardResolution = new ForwardResolution(REVIEW_UPLOAD_PAGE);
+        if(selectedSession.isCovidSession()) {
+            forwardResolution = new ForwardResolution(REVIEW_COVID_UPLOAD_PAGE);
+        }
+        return forwardResolution;
     }
 
     @HandlesEvent(VIEW_ACCESSION_SCAN_ACTION)
@@ -157,33 +195,83 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(START_A_COVID_SESSION_ACTION)
+    public Resolution startACovidSession() {
+
+        accessioningProcessType = ManifestSessionEjb.AccessioningProcessType.COVID;
+        accessioningProcessName = accessioningProcessType.name();
+
+        return startASession();
+    }
+
     @DefaultHandler
     @HandlesEvent(START_A_SESSION_ACTION)
     public Resolution startASession() {
-        openSessions = manifestSessionDao.findOpenSessions();
+        restoreOpenSessions();
 
         return new ForwardResolution(START_SESSION_PAGE);
+    }
+
+    @HandlesEvent(CANCEL_SESSION_ACTION)
+    public Resolution cancelSession() {
+        accessioningProcessType = ManifestSessionEjb.AccessioningProcessType.fromName(accessioningProcessName);
+        manifestSessionEjb.cancelSession(selectedSessionId);
+
+        final RedirectResolution redirectResolution = new RedirectResolution(getClass(), START_A_SESSION_ACTION);
+        redirectResolution.addParameter("accessioningProcessType", accessioningProcessType);
+        redirectResolution.addParameter(SELECTED_SESSION_ID, null);
+        redirectResolution.addParameter("accessioningProcessName", accessioningProcessType.name());
+
+        return redirectResolution;
+    }
+
+    private void restoreOpenSessions() {
+        final List<ManifestSession> tempOpenSessions = manifestSessionDao.findOpenSessions();
+        this.openSessions = tempOpenSessions.stream().filter(manifestSession -> {
+            if(accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID) {
+                return manifestSession.getAccessioningProcessType() == ManifestSessionEjb.AccessioningProcessType.COVID;
+            } else {
+                return manifestSession.getAccessioningProcessType() != ManifestSessionEjb.AccessioningProcessType.COVID;
+            }
+        }).collect(Collectors.toList());
+    }
+
+    @HandlesEvent(UPLOAD_COVID_MANIFEST_ACTION)
+    public Resolution uploadCovidManifest() {
+        accessioningProcessType = ManifestSessionEjb.AccessioningProcessType.COVID;
+        return uploadManifest();
     }
 
     @HandlesEvent(UPLOAD_MANIFEST_ACTION)
     public Resolution uploadManifest() {
 
         try {
-            ResearchProject researchProject = projectTokenInput.getTokenObject();
+            ResearchProject researchProject = null;
+            String researchProjectBusinessKey = null;
+            if(accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+                researchProject = projectTokenInput.getTokenObject();
 
-            if (researchProject == null) {
-                addGlobalValidationError("a Research Project is required to upload manifest");
-                return getContext().getSourcePageResolution();
+                if (researchProject == null) {
+                    addGlobalValidationError("a Research Project is required to upload manifest");
+                    return getContext().getSourcePageResolution();
+                }
+                researchProjectBusinessKey = researchProject.getBusinessKey();
             }
 
-            //Uploads from the accessioning page will (as of this writing) always be considered to have Collaborator
-            //originated tubes (no sample kit)
-            selectedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(),
-                    manifestFile.getInputStream(), manifestFile.getFileName(), false);
+            selectedSession = manifestSessionEjb.uploadManifest(researchProjectBusinessKey,
+                    manifestFile.getInputStream(), manifestFile.getFileName(),
+                    accessioningProcessType, Boolean.parseBoolean(usesSampleKit));
 
         } catch (IOException | InformaticsServiceException e) {
+            logger.error(e);
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
             return getContext().getSourcePageResolution();
+        } finally {
+            try {
+                manifestFile.delete();
+            } catch (IOException e) {
+                logger.error("Failed to delete uploaded file", e);
+            }
         }
         return new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION).addParameter(
                 SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
@@ -196,8 +284,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
         try {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
-        } catch (TubeTransferException | InformaticsServiceException e) {
+        } catch (InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
+            logger.error(e);
             result = getContext().getSourcePageResolution();
         }
 
@@ -207,21 +296,30 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(SCAN_ACCESSION_SOURCE_ACTION)
     public Resolution scanAccessionSource() {
 
+        ManifestSession manifestSession = null;
         try {
-            if(selectedSession.isFromSampleKit()) {
-                if(StringUtils.isBlank(accessionTube)) {
-                    addGlobalValidationError("Source tube barcode is required for accessioning sample kits");
-                    return getContext().getSourcePageResolution();
+            if(!selectedSession.isCovidSession()) {
+                if (selectedSession.isFromSampleKit()) {
+                    if (StringUtils.isBlank(accessionTube)) {
+                        addGlobalValidationError("Source tube barcode is required for accessioning sample kits");
+                        return getContext().getSourcePageResolution();
+                    }
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
                 }
-                manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
             }
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
-            scanMessages = String.format("Sample %s scanned successfully", accessionSource);
+            manifestSession = manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
+            scanMessages.add(String.format("Sample %s and destination tube %s scanned successfully", accessionSource, accessionTube));
         } catch (Exception e) {
             scanErrors = e.getMessage();
+            logger.error(scanErrors);
         }
         statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-        return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        ForwardResolution forwardResolution = new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE);
+        forwardResolution.addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        if(manifestSession != null && manifestSession.getStatus() == ManifestSession.SessionStatus.COMPLETED) {
+            scanMessages.add(String.format("The session %s has successfully been marked as completed", selectedSession.getSessionName()));
+        }
+        return forwardResolution;
     }
 
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
@@ -242,7 +340,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
-            return getContext().getSourcePageResolution();
+            logger.error(e);
+            return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
         }
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
@@ -269,8 +368,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             }
         } catch (WebApplicationException e) {
             scanErrors = String.format("Unable to access the specified record of receipt: %s", receiptKey);
-        } catch (RuntimeException e) {
-            scanErrors = e.getMessage();
+            logger.error(scanErrors);
         } catch (Exception e) {
             scanErrors = e.getMessage();
             logger.error(scanErrors);
@@ -349,7 +447,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return scanErrors;
     }
 
-    public String getScanMessages() {
+    public List<String> getScanMessages() {
         return scanMessages;
     }
 
@@ -379,5 +477,34 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getReceiptSummary() {
         return receiptSummary;
+    }
+
+    public boolean isCovidProcess() {
+        return accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID;
+    }
+
+    public ManifestSessionEjb.AccessioningProcessType getAccessioningProcessType() {
+        return accessioningProcessType;
+    }
+
+    public String getUsesSampleKit() {
+        return usesSampleKit;
+    }
+
+    public void setUsesSampleKit(String usesSampleKit) {
+        this.usesSampleKit = usesSampleKit;
+    }
+
+    public String getAccessioningProcessName() {
+        return accessioningProcessName;
+    }
+
+    public void setAccessioningProcessName(String accessioningProcessName) {
+        this.accessioningProcessName = accessioningProcessName;
+    }
+
+    public void setAccessioningProcessType(
+            ManifestSessionEjb.AccessioningProcessType accessioningProcessType) {
+        this.accessioningProcessType = accessioningProcessType;
     }
 }

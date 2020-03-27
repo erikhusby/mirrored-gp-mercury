@@ -309,7 +309,7 @@ public class MayoManifestEjb {
         Set<String> previousRacks = new HashSet<>();
         if (manifestSession == null) {
             manifestSession = new ManifestSession(null, packageId, userBean.getBspUser(), false,
-                    Collections.emptyList());
+                    Collections.emptyList(), ManifestSessionEjb.AccessioningProcessType.CRSP);
             manifestSessionDao.persist(manifestSession);
         } else {
             previousRacks.addAll(manifestSession.getVesselLabels());

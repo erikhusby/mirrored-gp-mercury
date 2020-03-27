@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.AccessioningColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetValidator;
@@ -67,7 +68,8 @@ public class ManifestImporterTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        manifestImportProcessor = new ManifestImportProcessor();
+        manifestImportProcessor = new ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType.CRSP,
+                "");
     }
 
     @DataProvider(name = "excelFileDataProvider")
@@ -108,7 +110,7 @@ public class ManifestImporterTest {
     }
 
     @Test(dataProvider = "missingRequiredDataProvider")
-    public void testImportMissing(String fileName, ManifestHeader header) throws Exception {
+    public void testImportMissing(String fileName, AccessioningColumnHeader header) throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(fileName));
 
         try {
