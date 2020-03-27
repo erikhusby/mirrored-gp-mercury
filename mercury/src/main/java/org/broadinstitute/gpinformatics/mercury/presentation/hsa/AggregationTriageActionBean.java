@@ -14,9 +14,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -135,11 +139,13 @@ public class AggregationTriageActionBean extends CoreActionBean {
     @Inject
     private FingerprintScoreDao fingerprintScoreDao;
 
+    @Inject
+    private WorkCompleteMessageDao workCompleteMessageDao;
+
     private TriageDto dto;
 
     private List<WaitForReviewTask> selectedTasks;
     private Map<TriageDto, WaitForReviewTask> mapDtoToTask;
-
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -358,12 +364,47 @@ public class AggregationTriageActionBean extends CoreActionBean {
             for (Map.Entry<TriageDto, WaitForReviewTask> entry: mapDtoToTask.entrySet()) {
                 incrementMachine(entry.getValue(), entry.getKey().getPdoSample(), messageCollection);
             }
+            billSamples();
         } else if (decision == OutOfSpecCommands.MARK_OOS) {
             taskDecision = TaskDecision.Decision.MARK_OUT_OF_SPEC;
         }
         updateDecision(taskDecision, false);
         addMessages(messageCollection);
         return view();
+    }
+
+    /**
+     * This method creates WorkCompleteMessages for each sample so the AutoBiller can pick them up later and bill them.
+     * For a sample to be eligible for auto-billing it's PDO's BillingTrigger must be configured to bill on data review
+     * and the primary product on the PDO must have auto-billing enabled.
+     */
+    private void billSamples() {
+        List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+        mapNameToSample = mercurySampleDao.findMapIdToMercurySample(selectedSamples);
+        List<String> triagePdoNames = selectedDtos.stream().map(TriageDto::getPdo).collect(Collectors.toList());
+        mapKeyToProductOrder = productOrderDao.findListByBusinessKeys(triagePdoNames).stream()
+            .collect(Collectors.toMap(ProductOrder::getJiraTicketKey, Function.identity()));
+
+        selectedDtos.forEach(dto->{
+            ProductOrder productOrder = mapKeyToProductOrder.get(dto.getPdo());
+            MercurySample mercurySample = mapNameToSample.get(dto.getPdoSample());
+
+            if (productOrder != null && mercurySample != null) {
+                if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.DATA_REVIEW)) {
+                    if (mercurySample.getProductOrderSamples().stream()
+                        .allMatch(((Predicate<ProductOrderSample>) ProductOrderSample::isCompletelyBilled).negate())) {
+                        workCompleteMessages.add(new WorkCompleteMessage(productOrder.getJiraTicketKey(),
+                            mercurySample.getSampleKey(), productOrder.getProduct().getPartNumber(),
+                            userBean.getBspUser().getUserId(), new Date(), AutomatedBiller.WORK_COMPLETE_DATA));
+                    }
+                }
+            }
+        });
+
+        if (!workCompleteMessages.isEmpty()) {
+            workCompleteMessageDao.persistAll(workCompleteMessages);
+            log.info(String.format("%d samples queued for automatic billing.", workCompleteMessages.size()));
+        }
     }
 
     private void incrementMachine(WaitForReviewTask task, String sampleKey, MessageCollection messageCollection) {
@@ -577,7 +618,7 @@ public class AggregationTriageActionBean extends CoreActionBean {
         return Double.parseDouble(value) > min;
     }
 
-    private static boolean compareLess(String value, double min) {
+    private static boolean compareLess(String value, double     min) {
         if (StringUtils.isBlank(value)) {
             return false;
         }
