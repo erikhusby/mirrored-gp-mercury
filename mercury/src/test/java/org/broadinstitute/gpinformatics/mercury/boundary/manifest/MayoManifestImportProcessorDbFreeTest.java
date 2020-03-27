@@ -239,7 +239,7 @@ public class MayoManifestImportProcessorDbFreeTest {
         String values = "\nPKG-001,B001_S001,SU-0000001,B001,A1,S001,PS001," +
                 "089728001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
                 // Tests if parser can handle a quoted Total Dna(ng) field that has a comma.
-                "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
+                "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,aou_array";
         MessageCollection messages = new MessageCollection();
         MayoManifestImportProcessor processor;
         String expected;
@@ -267,7 +267,19 @@ public class MayoManifestImportProcessorDbFreeTest {
                 (headers + values + values.replace("PKG-001,", "PKG-002,")).getBytes(), CSV, messages), CSV, messages)
                 .isEmpty());
         Assert.assertTrue(StringUtils.join(messages.getErrors()).contains(
-                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV, "PKG-001, PKG-002")),
+                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV,
+                        MayoManifestImportProcessor.Header.PACKAGE_ID.getText(), "PKG-001, PKG-002")),
+                StringUtils.join(messages.getErrors(), "; "));
+
+        // Not ok if there are two different test names.
+        processor = new MayoManifestImportProcessor();
+        messages.clearAll();
+        Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
+                (headers + values + values.replace("aou_array", "aou_wgs")).getBytes(), CSV, messages), CSV, messages)
+                .isEmpty());
+        Assert.assertTrue(StringUtils.join(messages.getErrors()).contains(
+                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV,
+                        MayoManifestImportProcessor.Header.TEST_NAME.getText(), "aou_array, aou_wgs")),
                 StringUtils.join(messages.getErrors(), "; "));
 
         // Not ok if quantity is NaN.
@@ -356,16 +368,16 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "A1,S001,PS001,M001,03/26/2019," +
                 "B001,F,22,DNA,No Treatments,10," +
                 "1,2,2nd Visit,Whole Blood," +
-                "The Study Title,TRK001,theContact,email1@email.org,The Name,all\n" +
+                "The Study Title,TRK001,theContact,email1@email.org,The Name,aou_wgs\n" +
 
                 "PK001,B001_S002,SU-001,BX001,B1,S002,PS001,M002,03/26/2019,B001,F,22,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email2@email.org,The Name,all\n" +
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email2@email.org,The Name,aou_wgs\n" +
 
                 "PK001,B002_S003,SU-002,BX002,B1,S003,PS002,M003,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email3@email.org,Other,some\n" +
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email3@email.org,Other,aou_wgs\n" +
 
                 "PK001,B002_S004,SU-002,BX002,C1,S004,PS002,M004,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,a few\n";
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,aou_wgs\n";
 
         List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
         List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);

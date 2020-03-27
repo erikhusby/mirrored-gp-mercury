@@ -556,11 +556,9 @@ public class VesselEjb {
         return Triple.of(run, traverserResults, tubeToQuant);
     }
 
-    private LabMetricRun createNexomeStylePicoRun(String runName, Date runDate,
-                                                                                          LabMetric.MetricType metricType,
-                                                                                          long decidingUser,
-                                                                                          List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
-                                                                                          Map<String, StaticPlate> mapBarcodeToPlate, MessageCollection messageCollection) {
+    private LabMetricRun createNexomeStylePicoRun(String runName, Date runDate, LabMetric.MetricType metricType,
+            long decidingUser, List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
+            Map<String, StaticPlate> mapBarcodeToPlate, MessageCollection messageCollection) {
         Map<String, Map<VesselPosition, VesselPosition>> mapPlateToWellMap = new HashMap<>();
         Map<String, Set<LabVessel.VesselEvent>> mapPlateToVesselEvent = new HashMap<>();
         for (StaticPlate staticPlate: mapBarcodeToPlate.values()) {
@@ -990,6 +988,11 @@ public class VesselEjb {
                                 messageCollection.addError("Failed to average results for tube " + tube.getLabel());
                             }
                         }
+                    }
+
+                    if (decisionType == LabMetricDecision.Decision.PASS && average > 225
+                                && metricType == LabMetric.MetricType.INITIAL_PICO) {
+                        decisionType = LabMetricDecision.Decision.NORM;
                     }
 
                     LabMetric labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
@@ -1805,4 +1808,7 @@ public class VesselEjb {
         workbook.write(new FileOutputStream(tempFile));
         return new FileInputStream(tempFile);
     }
+
+
+
 }

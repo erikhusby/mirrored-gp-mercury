@@ -242,7 +242,10 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
         String message = "";
         try {
-            manifestSessionEjb.findAndValidateTargetSample(targetSample);
+            findActiveSession();
+            if(!activeSession.isCovidSession()) {
+                manifestSessionEjb.findAndValidateTargetSample(targetSample);
+            }
         } catch (Exception e) {
             message = e.getMessage();
             logger.error("Could not validate target sample " + targetSample, e);
@@ -259,6 +262,11 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         String message = "";
 
         try {
+            findActiveSession();
+            if(activeSession.isCovidSession()) {
+                //CREATE vessel and sample if they do not exist
+                manifestSessionEjb.createVesselAndSample(targetSample, targetVessel);
+            }
             manifestSessionEjb.findAndValidateTargetSampleAndVessel(targetSample, targetVessel);
         } catch (Exception e) {
             message = e.getMessage();

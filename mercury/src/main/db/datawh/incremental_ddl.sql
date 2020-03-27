@@ -1,6 +1,6 @@
+
 -- GPLIM-6706 Force use of enum for LAB_METRIC.VESSEL_POSITION (vs.String)
 SET SERVEROUTPUT ON;
-
 DECLARE
     CURSOR CUR_UPD IS
         select LAB_METRIC_ID
@@ -26,4 +26,3 @@ EXCEPTION
         RAISE;
 END;
 /
-

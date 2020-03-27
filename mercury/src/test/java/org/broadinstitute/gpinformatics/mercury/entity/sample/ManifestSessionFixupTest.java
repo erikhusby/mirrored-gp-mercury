@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -17,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventFixup;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.checkerframework.dataflow.qual.TerminatesExecution;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -37,11 +40,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
@@ -313,4 +320,121 @@ public class ManifestSessionFixupTest extends Arquillian {
         manifestSessionDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupCovidStateMa7576() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        final ManifestSession manifestSession = manifestSessionDao.find(238256);
+        manifestSession.getRecords().stream().filter(manifestRecord -> Arrays.asList("75", "76").contains(manifestRecord.getSampleId()))
+                .forEach(manifestRecord -> {
+                    if(manifestRecord.getStatus() == ManifestRecord.Status.SCANNED &&
+                       StringUtils.equals(manifestRecord.getSampleId(), "76")) {
+                        manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).setStringValue("75");
+                    } else if(manifestRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED &&
+                              StringUtils.equals(manifestRecord.getSampleId(), "75")) {
+                        manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).setStringValue("76");
+                    }
+                });
+
+        utx.commit();
+    }
+
+    /**
+     * File path and name:
+     * mercury/src/test/resources/testdata/accessioningManifestFixup.txt
+     *
+     * File Format:
+     * GPLIM-xxxx Fixup commentary
+     * [session id] \t [manifest record index] \t [Metadata.key] \t [new value]
+     *
+     * example File content:
+     * Support-xxxxx Update input based on accessioning error
+     * 234958   74  SAMPLE_ID   76
+     * 234958   75  SAMPLE_ID   75
+     * 237351   2  BROAD_2D_BARCODE   11736266
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void genericManifestFixup() throws Exception {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("accessioningManifestFixup.txt"));
+        assertThat("Expected the number of lines in the fixup file to contain more than the fixup comment",
+                lines.size(), is(greaterThan(1)));
+        String fixupComment = lines.get(0);
+
+        utx.begin();
+        for (String line : lines.subList(1, lines.size())) {
+            final String[] fields = TAB_PATTERN.split(line);
+            if (fields.length != 4) {
+                throw new RuntimeException("Expected four tab separated fields in " + line);
+            }
+            ManifestSession manifestSession = manifestSessionDao.find(Long.parseLong(fields[0]));
+            ManifestRecord manifestRecord = manifestSession.getRecords().stream()
+                    .filter(manifestRecord1 -> manifestRecord1.getManifestRecordIndex().equals(Integer.parseInt(fields[1])))
+                    .collect(CommonUtils.toSingleton());
+            if (manifestRecord == null) {
+                throw new RuntimeException(String.format("The manifest record with index %s is not found", fields[1]));
+            }
+            manifestRecord.getMetadataByKey(Metadata.Key.fromName(fields[2].trim())).setStringValue(fields[3].trim());
+            System.out.println(String.format("Record %s in session %s has had the meta %s updated to %s",
+                    manifestRecord.getManifestRecordIndex(), manifestSession.getSessionName(),
+                    fields[2], fields[3]));
+        }
+
+        manifestSessionDao.persist(new FixupCommentary(fixupComment));
+        utx.commit();
+    }
+
+    /**
+     *
+     * Generic fixup test to alter the status of a single record (per input line) of a given accessioning session
+     * The optional final field will contain a comma separated list of metadata keys that are meant to be removed from the record
+     *
+     * manifestAlterRecordStatus.txt
+     *
+     * GPLIM-XXXX  comment
+     * [session ID]\t[Sample ID]\t[new status]\t[optional CSV of metadata to remove]
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void genericAlterRecordStatus() throws Exception {
+
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("manifestAlterRecordStatus.txt"));
+        assertThat("Expected the number of lines in the fixup file to contain more than the fixup comment",
+                lines.size(), is(greaterThan(1)));
+        String fixupComment = lines.get(0);
+
+        utx.begin();
+        for (String line : lines.subList(1, lines.size())) {
+            final String[] fields = TAB_PATTERN.split(line);
+
+            ManifestSession manifestSession = manifestSessionDao.find(Long.parseLong(fields[0].trim()));
+            ManifestRecord manifestRecord = manifestSession.getRecords().stream()
+                    .filter(manifestRecord1 -> manifestRecord1.getSampleId().equals(fields[1].trim()))
+                    .collect(CommonUtils.toSingleton());
+            if (manifestRecord == null) {
+                throw new RuntimeException(String.format("The manifest record with Sample ID %s is not found", fields[1].trim()));
+            }
+            manifestRecord.setStatus(ManifestRecord.Status.fromName(fields[2].trim()));
+            assertThat(manifestRecord.getStatus(), is(equalTo(ManifestRecord.Status.fromName(fields[2].trim()))));
+            System.out.println(String.format("The status of manifest record with sample ID %s has been changed to %s",
+                    manifestRecord.getSampleId(), manifestRecord.getStatus().getDisplayName()));
+
+            if(fields.length>3) {
+                final String[] optionalMetadataDelete = fields[3].split(",");
+                for(int fieldIndex = 0;fieldIndex <optionalMetadataDelete.length;fieldIndex++) {
+                    final Metadata.Key key = Metadata.Key.fromName(optionalMetadataDelete[fieldIndex].trim());
+                    manifestRecord.getMetadata().removeIf(metadatum -> metadatum.getKey() == key);
+                    System.out.println(String.format("The metadata stored for %s on the manifest record for sample id %s has been removed",
+                            key.getDisplayName(), manifestRecord.getSampleId()));
+                }
+            }
+        }
+        manifestSessionDao.persist(new FixupCommentary(fixupComment));
+        utx.commit();
+    }
 }

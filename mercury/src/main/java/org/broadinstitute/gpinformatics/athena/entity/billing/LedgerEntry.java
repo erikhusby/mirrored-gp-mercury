@@ -102,8 +102,32 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;
 
-    @Column(name = "SAP_REPLACEMENT_PRICING")
-    private Boolean sapReplacementPricing = Boolean.FALSE;
+    @Column(name = "SAP_REPLACEMENT_CONDITION")
+    private String sapReplacement;
+
+    public static LedgerEntry cloneLedgerEntryToNewSample(LedgerEntry ledgerToClone, ProductOrderSample newSample) {
+        final LedgerEntry newLedgerEntry;
+        if(ledgerToClone.getProductOrderSample().getProductOrder().hasSapQuote()) {
+            newLedgerEntry =
+                    new LedgerEntry(newSample, ledgerToClone.getProduct(), ledgerToClone.getWorkCompleteDate(),
+                            ledgerToClone.getQuantity());
+        } else {
+            newLedgerEntry = new LedgerEntry(newSample, ledgerToClone.getPriceItem(),
+                    ledgerToClone.getWorkCompleteDate(), ledgerToClone.getQuantity());
+        }
+
+        newLedgerEntry.setAutoLedgerTimestamp(ledgerToClone.autoLedgerTimestamp);
+        newLedgerEntry.setBillingSession(ledgerToClone.billingSession);
+        newLedgerEntry.setBillingMessage(ledgerToClone.billingMessage);
+        newLedgerEntry.setQuoteId(ledgerToClone.quoteId);
+        newLedgerEntry.setPriceItemType(ledgerToClone.priceItemType);
+        newLedgerEntry.setWorkItem(ledgerToClone.workItem);
+        newLedgerEntry.setSapDeliveryDocumentId(ledgerToClone.sapDeliveryDocumentId);
+        newLedgerEntry.setSapOrderDetail(ledgerToClone.sapOrderDetail);
+        newLedgerEntry.setSapReplacement(ledgerToClone.sapReplacement);
+
+        return newLedgerEntry;
+    }
 
     /**
      * Package private constructor for JPA use.
@@ -194,16 +218,8 @@ public class LedgerEntry implements Serializable {
         this.product = product;
     }
 
-    public Boolean getSapReplacementPricing() {
-        return sapReplacementPricing;
-    }
-
     public boolean hasSapReplacementPricing() {
-        return sapReplacementPricing != null && sapReplacementPricing;
-    }
-
-    public void setSapReplacementPricing(Boolean sapReplacementCondition) {
-        this.sapReplacementPricing = sapReplacementCondition;
+        return sapReplacement != null;
     }
 
     /**
@@ -287,6 +303,14 @@ public class LedgerEntry implements Serializable {
         this.sapDeliveryDocumentId = sapDeliveryDocumentId;
     }
 
+    public String getSapReplacement() {
+        return sapReplacement;
+    }
+
+    public void setSapReplacement(String sapReplacement) {
+        this.sapReplacement = sapReplacement;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -303,9 +327,10 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem, castOther.getPriceItem())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession());
+                .append(billingSession, castOther.getBillingSession())
+                .append(sapReplacement, castOther.getSapReplacement());
 
-                    ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
+        ledgerEntryEqualsBuilder.append(product, castOther.getProduct());
         return ledgerEntryEqualsBuilder.isEquals();
     }
 
@@ -316,8 +341,10 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession);
-                    ledgerEntryHashcodeBuilder.append(product);
+                .append(billingSession)
+                .append(sapReplacement);
+
+        ledgerEntryHashcodeBuilder.append(product);
         return ledgerEntryHashcodeBuilder.toHashCode();
     }
 

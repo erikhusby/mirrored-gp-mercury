@@ -65,7 +65,9 @@ public class MayoSampleReceiptActionBean extends RackScanActionBean {
     @HandlesEvent(SAVE_BTN)
     public Resolution accessionEvent() {
         reconstructScan();
+        // Makes separate calls to the ejb so that accessioning still succeeds when the PDO fails.
         mayoManifestEjb.accession(this);
+        mayoManifestEjb.makeAouPdo(this);
         addMessages(messageCollection);
         return new ForwardResolution(PAGE1);
     }

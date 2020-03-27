@@ -63,9 +63,8 @@ public class ProductOrderData {
      */
     private List<String> samples = new ArrayList<>();
 
-    @SuppressWarnings("UnusedDeclaration")
-    /** Required by JAXB. */
-    ProductOrderData() {
+    /** Also required by JAXB. */
+    public ProductOrderData() {
     }
 
     /**
