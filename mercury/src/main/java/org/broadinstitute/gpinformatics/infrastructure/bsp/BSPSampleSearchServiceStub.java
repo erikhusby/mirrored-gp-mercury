@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.annotation.Priority;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 @Stub
 @Alternative
+@Priority(0)
 @ApplicationScoped
 public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 

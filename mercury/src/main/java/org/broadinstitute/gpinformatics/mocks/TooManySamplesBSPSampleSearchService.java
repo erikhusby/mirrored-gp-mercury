@@ -3,15 +3,21 @@ package org.broadinstitute.gpinformatics.mocks;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 
+import javax.annotation.Priority;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Given n samples to search for, this mock returns n + 1 samples,
  * each of which has "3.14" as a value for each search column.
  */
 @Alternative
+@Priority(0)
 @Dependent
 public class TooManySamplesBSPSampleSearchService implements BSPSampleSearchService {
 

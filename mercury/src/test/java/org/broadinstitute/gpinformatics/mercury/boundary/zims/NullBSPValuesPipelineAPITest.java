@@ -1,43 +1,48 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.RunTimeAlternatives;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mocks.NullValuesBSPSampleSearchService;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-
-@Test(groups = TestGroups.ALTERNATIVES)
-@Dependent
-public class NullBSPValuesPipelineAPITest extends Arquillian {
-
-    public NullBSPValuesPipelineAPITest(){}
-
+@Test(groups = TestGroups.STUBBY)
+public class NullBSPValuesPipelineAPITest extends StubbyContainerTest {
     @Inject
     IlluminaRunResource runLaneResource;
 
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,
-                MockThriftService.class,
-                NullValuesBSPSampleSearchService.class
-        ).addAsResource(ThriftFileAccessor.RUN_FILE);
+    @Inject
+    private MockThriftService thriftService;
+
+    @Inject
+    private NullValuesBSPSampleSearchService bspSampleSearchService;
+
+    public NullBSPValuesPipelineAPITest(){}
+
+    @BeforeMethod
+    public void beforeMethod() {
+        RunTimeAlternatives.addThreadLocalAlternative(ThriftService.class, thriftService);
+        RunTimeAlternatives.addThreadLocalAlternative(BSPSampleSearchService.class, bspSampleSearchService);
     }
 
-    @Test(groups = TestGroups.ALTERNATIVES)
+    @AfterMethod
+    public void afterMethod() {
+        RunTimeAlternatives.clearThreadLocalAlternatives();
+    }
+
+    @Test(groups = TestGroups.STUBBY)
     public void testNullBspSampleData() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());
-        Assert.assertTrue(run.getError().contains("BSP returned no"));
+        Assert.assertTrue(run.getError().contains("BSP returned no"), run.getError());
     }
 }

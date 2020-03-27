@@ -16,6 +16,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
+import javax.annotation.Priority;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.Map;
  */
 @Offline
 @Alternative
+@Priority(0)
 @Dependent
 public class OfflineThriftService implements ThriftService {
 

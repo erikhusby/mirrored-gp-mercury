@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mocks;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 
+import javax.annotation.Priority;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Map;
  * @deprecated Use SampleDataFetcherStub.EverythingYouAskForYouGetAndItsHuman instead.
  */
 @Alternative
+@Priority(0)
 @Deprecated
 @Dependent
 public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchService {

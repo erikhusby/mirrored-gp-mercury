@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -24,14 +25,14 @@ public class StubbyContainerTest extends Arquillian {
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcherStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub",
-                "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.bsp.StubbyBSPSampleSearchService",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub",
                 "org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceStub",
-                "org.broadinstitute.gpinformatics.infrastructure.thrift.OfflineThriftService"
-        );
+                "org.broadinstitute.gpinformatics.infrastructure.thrift.StubbyThriftService"
+        ).addAsResource(ThriftFileAccessor.RUN_FILE);
         return stubbyArchive;
     }
 
