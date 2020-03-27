@@ -113,7 +113,8 @@ public class ManifestEvent implements Updatable {
          * Something like mismatched gender, where there is a problem but lab users are given the discretion to
          * continue processing a sample.
          */
-        ERROR
+        ERROR,
+        WARNING
     }
 
     @Override
