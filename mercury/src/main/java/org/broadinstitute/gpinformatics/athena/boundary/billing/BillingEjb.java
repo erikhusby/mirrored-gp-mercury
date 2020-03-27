@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import com.google.common.collect.HashMultimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -44,6 +47,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,6 +63,59 @@ public class BillingEjb {
             "This billing session is currently in the process of being processed for billing.  If you believe this " +
             "is in error, please contact the informatics group for assistance";
 
+    public void createAndBillSession(List<String> productOrders, Long userId) {
+        List<String> errorMessages = new ArrayList<>();
+        Set<LedgerEntry> ledgerItems =
+            ledgerEntryDao.findWithoutBillingSessionByOrderList(productOrders,errorMessages);
+
+        if (CollectionUtils.isEmpty(ledgerItems)) {
+            log.error("no ledgers to bill");
+            return;
+        }
+        BillingSession session = new BillingSession(userId, ledgerItems);
+        billingSessionDao.persist(session);
+        billingSessionDao.flush();
+        List<BillingEjb.BillingResult> billingResults = null;
+        try {
+            billingResults = billingAdaptor.autoBillSessionItems("automated_biller", session.getBusinessKey());
+            createBillingMessage(billingResults);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        } finally {
+            billingSessionAccessEjb.saveAndUnlockSession(session);
+        }
+    }
+
+    public boolean createBillingMessage(List<BillingEjb.BillingResult> billingResults) {
+            boolean errorsInBilling = false;
+            HashMultimap<ProductOrder.QuoteSourceType, String> billingDestinationMap = HashMultimap.create();
+            for (BillingEjb.BillingResult billingResult : billingResults) {
+                if (billingResult.isError()) {
+                    errorsInBilling = true;
+                }
+            }
+            billingDestinationMap.asMap().entrySet().stream().collect(
+                Collectors.groupingBy(type -> type.getKey().isSapType())).forEach((isSap, entries) -> {
+                if (isSap) {
+                    entries.forEach(quoteDest -> {
+                        StringBuilder message = new StringBuilder(BillingSessionActionBean.SENT_TO_SAP).append(" ");
+                        quoteDest.getValue().forEach(quoteId -> message.append(quoteId).append(" "));
+                        log.info(message.toString().trim());
+                    });
+                } else {
+                    entries.forEach(quoteDest -> {
+                        StringBuilder message = new StringBuilder(BillingSessionActionBean.SENT_TO_QUOTE_SERVER).append(" ");
+                        quoteDest.getValue().forEach(quoteId -> message.append(quoteId).append(" "));
+                        log.info(message.toString());
+                    });
+                }
+            });
+            if (!billingDestinationMap.isEmpty()) {
+                log.info("Click links to view quote.");
+            }
+
+            return errorsInBilling;
+        }
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
      */
@@ -119,6 +176,10 @@ public class BillingEjb {
     private PriceListCache priceListCache;
 
     private BillingSessionDao billingSessionDao;
+
+    private BillingAdaptor billingAdaptor;
+
+    private BillingSessionAccessEjb billingSessionAccessEjb;
 
     private ProductOrderDao productOrderDao;
 
@@ -246,22 +307,28 @@ public class BillingEjb {
      * @param orderKey          business key of order to bill for
      * @param aliquotId         the sample aliquot ID
      * @param completedDate     the date completed to use when billing
+     * @param partNumber        the part number being billed
      * @param data              used to check and see if billing can occur
      * @param orderLockoutCache The cache by keys whether the order is locked out or not
      *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
      * is currently locked out of billing.
      */
-    public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
+    public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate, String partNumber,
                                   Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
             throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
+        log.debug(String.format("AutoBilling %s for sample %s in PDO %s", partNumber, aliquotId, orderKey));
         if (order == null) {
             log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", orderKey));
             return true;
         }
 
-        Product product = order.getProduct();
+        Product product = order.findProduct(partNumber);
+        if (product == null) {
+            log.error("Attempt to bill with no product");
+            return false;
+        }
         if (!product.isUseAutomatedBilling()) {
             log.debug(
                     MessageFormat.format("Product {0} does not support automated billing.", product.getProductName()));
@@ -292,7 +359,7 @@ public class BillingEjb {
         } else {
             // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
             if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
-                sample.autoBillSample(completedDate, BigDecimal.ONE);
+                sample.autoBillSample(product, BigDecimal.ONE, completedDate);
             }
         }
 
@@ -425,5 +492,15 @@ public class BillingEjb {
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate(template, objectMap, stringWriter);
         return stringWriter.toString();
+    }
+
+    @Inject
+    public void setBillingAdaptor(BillingAdaptor billingAdaptor) {
+        this.billingAdaptor = billingAdaptor;
+    }
+
+    @Inject
+    public void setBillingSessionAccessEjb(BillingSessionAccessEjb billingSessionAccessEjb) {
+        this.billingSessionAccessEjb = billingSessionAccessEjb;
     }
 }

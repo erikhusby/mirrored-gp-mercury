@@ -178,14 +178,15 @@ public class ProductActionBean extends CoreActionBean {
                     label = "Part Number"),
             @Validate(field = "description", required = true, maxlength = 2000, on = {SAVE_ACTION},
                     label = "Description"),
-            @Validate(field = "availabilityDate", required = true, on = {SAVE_ACTION}, label = "Availability Date")
+            @Validate(field = "availabilityDate", required = true, on = {SAVE_ACTION}, label = "Availability Date"),
+            @Validate(field = "requirement.value", required = false, label = "'Bill When'"),
+
     })
     private Product editProduct;
-
     private boolean productUsedInOrders = false;
     private boolean productUsedInLLCOrders = false;
 
-    private List<String> suggestedValueSelections = new ArrayList();
+    private List<String> suggestedValueSelections = new ArrayList<>();
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);

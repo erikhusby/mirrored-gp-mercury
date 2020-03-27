@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -232,6 +233,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private State state;
     private ProductOrder.QuoteSourceType quoteSource;
     private String sapOrder;
+    private BillingTrigger billingTrigger;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);

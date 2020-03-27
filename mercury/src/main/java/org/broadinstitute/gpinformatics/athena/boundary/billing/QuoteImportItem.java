@@ -225,10 +225,14 @@ public class QuoteImportItem {
      * @param sapDeliveryId
      */
     public void updateSapLedgerEntries(String billingMessage, String quoteServerWorkItem, String sapDeliveryId) {
+        LedgerEntry.PriceItemType priceItemType = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
+        if (productOrder.isAddOn(product)) {
+            priceItemType = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+        }
 
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
-            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setPriceItemType(priceItemType);
             ledgerEntry.setBillingMessage(billingMessage);
             ledgerEntry.setWorkItem(quoteServerWorkItem);
             if (StringUtils.isNotBlank(sapDeliveryId)) {

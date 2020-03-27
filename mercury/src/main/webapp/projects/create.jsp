@@ -1,4 +1,8 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.Developer" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.BillingManager" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.PDM" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -372,6 +376,23 @@
                             </div>
                         </div>
                     </fieldset>
+                    <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
+                        <fieldset>
+                            <legend><h4>Default Billing Triggers</h4></legend>
+                            <div class="control-group">
+                                <stripes:label for="billingTriggers" class="control-label"/>
+                                <div class="controls">
+                                    <stripes:select multiple="true" style="width: auto;" id="billingTrigger"
+                                                    name="editResearchProject.defaultBillingTriggers"
+                                                    value="${actionBean.editResearchProject.billingTriggers}"
+                                                    title="What can trigger billing.">
+                                        <stripes:options-enumeration label="displayName"
+                                                                     enum="org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger"/>
+                                    </stripes:select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </security:authorizeBlock>
                 </div>
 
             <div class="row">

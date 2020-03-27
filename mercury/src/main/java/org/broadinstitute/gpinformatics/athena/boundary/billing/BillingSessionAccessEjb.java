@@ -63,6 +63,7 @@ public class BillingSessionAccessEjb implements Serializable {
         log.info("Setting billing session BILL-" + billingSession.getBillingSessionId() + " to unlocked");
         billingSessionLockStatus.put(billingSession.getBusinessKey(), Boolean.FALSE);
         billingSessionDao.persist(billingSession);
+        billingSessionDao.flush();
     }
 
     /**

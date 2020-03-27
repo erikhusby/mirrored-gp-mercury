@@ -52,7 +52,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     // This RP has a Cohort and has two PMs. Both features are needed for testing.
     private static final String RP_CONTAINING_COHORTS = "RP-40";
     private static final String RP_WITHOUT_COHORTS = "RP-32";
-    private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
+    private static final String EXOME_EXPRESS_V3_PART_NUMBER = "P-WG-0092";
     
     private static final String TEST_PDO_NAME = "test";
 
@@ -73,7 +73,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setProductPartNumber(EXOME_EXPRESS_V3_PART_NUMBER);
         data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
@@ -95,7 +95,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setProductPartNumber(EXOME_EXPRESS_V3_PART_NUMBER);
         data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setResearchProjectId(RP_WITHOUT_COHORTS);
@@ -116,7 +116,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     private static ProductOrderData createTestProductOrderData(String username) {
         ProductOrderData data = new ProductOrderData();
-        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setProductPartNumber(EXOME_EXPRESS_V3_PART_NUMBER);
         data.setTitle(TEST_PDO_NAME + " rest/createWithKitRequest " + new Date().getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         // Need to use a research project that has a cohort associated with it.

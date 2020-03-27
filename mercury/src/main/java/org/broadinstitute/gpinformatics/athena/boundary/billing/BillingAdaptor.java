@@ -126,6 +126,24 @@ public class BillingAdaptor implements Serializable {
     }
 
     /**
+     * This method is a pass- through to BillingAdaptor#billSessionItems(java.lang.String, java.lang.String)
+     * which starts the actual billing process. Since automated billing runs in a transaction this method needs to
+     * support transactions, whereas manual billing should not. This method should be public to satisfy the EJB spec.
+     *
+     * @param pageUrl    Page from which billing request was initiated
+     * @param sessionKey Key of the Billing session entity for which the system will attempt to file and record
+     *                   billing charges
+     *
+     * @return collection of "Billing Results".  Each one represents the aggregation of billing charges and will
+     * record the success or failure of the billing attempt
+     * @see BillingAdaptor#billSessionItems(java.lang.String, java.lang.String)
+     */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<BillingEjb.BillingResult> autoBillSessionItems(@Nonnull String pageUrl, @Nonnull String sessionKey) {
+        return billSessionItems(pageUrl, sessionKey);
+    }
+
+    /**
      * Non-Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the
      * quote server and update billing entities as appropriate to the results of the billing attempt.  Results
      * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a

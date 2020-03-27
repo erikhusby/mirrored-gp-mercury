@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -22,6 +23,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -38,11 +41,10 @@ public class ProductOrderData {
     private Date createdDate;
     private Date placedDate;
     private Date modifiedDate;
-    private String product;
     private String status;
     private String aggregationDataType;
     private String researchProjectId;
-    private String productName;
+    private String productPartNumber;
     private String quoteId;
     private String username;
     private String requisitionName;
@@ -62,6 +64,12 @@ public class ProductOrderData {
      * This is really a list of sample IDs.
      */
     private List<String> samples = new ArrayList<>();
+    private List<String> addOnPartNumbers = new ArrayList<>();
+
+    /**
+     * Billing Triggers For this PDO
+     */
+    private List<String> billingTriggers = new ArrayList<>();
 
     /** Also required by JAXB. */
     public ProductOrderData() {
@@ -99,8 +107,7 @@ public class ProductOrderData {
 
         Product product = productOrder.getProduct();
         if (product != null) {
-            this.product = product.getBusinessKey();
-            productName = product.getProductName();
+            productPartNumber = product.getPartNumber();
             aggregationDataType = product.getPipelineDataTypeString();
         }
 
@@ -180,14 +187,6 @@ public class ProductOrderData {
         this.modifiedDate = modifiedDate;
     }
 
-    public String getProduct() {
-        return (product == null) ? "" : product;
-    }
-
-    public void setProduct(String product) {
-        this.product = product;
-    }
-
     public String getStatus() {
         return (status == null) ? "" : status;
     }
@@ -242,12 +241,12 @@ public class ProductOrderData {
         return (workRequestId == null) ? "" : workRequestId;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    public void setProductPartNumber(String productPartNumber) {
+        this.productPartNumber = productPartNumber;
     }
 
-    public String getProductName() {
-        return (productName == null) ? "" : productName;
+    public String getProductPartNumber() {
+        return (productPartNumber == null) ? "" : productPartNumber;
     }
 
     public void setQuoteId(String quoteId) {
@@ -304,9 +303,9 @@ public class ProductOrderData {
 
         ProductOrder productOrder = new ProductOrder(title, comments, quoteId);
 
-        // Find the product by the product name.
-        if (!StringUtils.isBlank(productName)) {
-            productOrder.setProduct(productDao.findByName(productName));
+        // Find the product by the product part number.
+        if (!StringUtils.isBlank(productPartNumber)) {
+            productOrder.setProduct(productDao.findByPartNumber(productPartNumber));
         }
 
         if (StringUtils.isNumeric(quoteId)) {
@@ -343,6 +342,11 @@ public class ProductOrderData {
             }
 
             productOrder.setResearchProject(researchProject);
+        }
+
+        Set<BillingTrigger> triggers = billingTriggers.stream().map(BillingTrigger::valueOf).collect(Collectors.toSet());
+        if (!billingTriggers.isEmpty()) {
+            productOrder.setBillingTriggers(triggers);
         }
 
         // Find and add the product order samples.
@@ -405,5 +409,17 @@ public class ProductOrderData {
 
     public void setGenoChipType(String genoChipType) {
         this.genoChipType = genoChipType;
+    }
+
+    public List<String> getAddOnPartNumbers() {
+        return addOnPartNumbers;
+    }
+
+    public void setAddOnPartNumbers(List<String> addOnPartNumbers) {
+        this.addOnPartNumbers = addOnPartNumbers;
+    }
+
+    public void setBillingTriggers(List<String> billingTriggers) {
+        this.billingTriggers = billingTriggers;
     }
 }

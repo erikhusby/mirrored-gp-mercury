@@ -1686,6 +1686,15 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </div>
 <div class="view-control-group control-group">
+    <label title="Applies to all samples in this order except for cases where samples were indivdually set."
+           class="control-label label-form">Billing Trigger</label>
+    <div class="controls">
+        <c:forEach var="billiingTrigger" items="${actionBean.editOrder.billingTriggerOrDefault}">
+            <div class="form-value">${billiingTrigger.displayName}</div>
+        </c:forEach>
+    </div>
+</div>
+<div class="view-control-group control-group">
     <label class="control-label label-form">Coverage</label>
     <div class="controls">
         <div class="form-value">

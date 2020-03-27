@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -30,6 +32,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -151,6 +155,9 @@ public class ProductOrderEjb {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private WorkCompleteMessageDao workCompleteMessageDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -1736,6 +1743,11 @@ public class ProductOrderEjb {
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
             }
+            // Adds valid product add-ons from productOrderData.addOnPartNumbers to this order.
+            productOrder.setProductOrderAddOns(productOrder.getProduct().getAddOns().stream().
+                    filter(product -> productOrderData.getAddOnPartNumbers().contains(product.getPartNumber())).
+                    map(product -> new ProductOrderAddOn(product, productOrder)).
+                    collect(Collectors.toList()));
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
             // is only one IRB on the RP.
@@ -1788,6 +1800,23 @@ public class ProductOrderEjb {
                         forEach(mapEntry -> messageCollection.addInfo(mapEntry.getValue().size() +
                                 " samples added to " + mapEntry.getKey()));
             }
+
+            List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
+            if (productOrder.getBillingTriggerOrDefault().contains(BillingTrigger.ADDONS_ON_RECEIPT)) {
+                productOrder.getSamples().forEach(pdoSample -> {
+                    ProductOrder productOrder1 = pdoSample.getProductOrder();
+                    productOrder1.getAddOns().stream().map(ProductOrderAddOn::getAddOn).forEach(product -> {
+                        String aliquotId = pdoSample.getAliquotId();
+                        if (StringUtils.isBlank(aliquotId)) {
+                            aliquotId = pdoSample.getSampleKey();
+                        }
+                        workCompleteMessages.add(new WorkCompleteMessage(productOrder1.getJiraTicketKey(),
+                            aliquotId, product.getPartNumber(), productOrder1.getCreatedBy(),
+                            pdoSample.getReceiptDate(), AutomatedBiller.WORK_COMPLETE_DATA));
+                    });
+                });
+            }
+            workCompleteMessageDao.persistAll(workCompleteMessages);
         } catch (Exception e) {
             log.error(e);
             messageCollection.addWarning(e.toString());

@@ -1705,6 +1705,20 @@
                     </div>
                 </div>
             </security:authorizeBlock>
+            <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
+                <div class="control-group">
+                    <stripes:label for="billingTrigger" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select multiple="true" style="width: auto;" id="billingTrigger"
+                                        name="editOrder.billingTriggers"
+                                        value="${actionBean.editOrder.billingTriggerOrDefault}"
+                                        title="What can trigger billing.">
+                            <stripes:options-enumeration label="displayName"
+                                                         enum="org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger"/>
+                        </stripes:select>
+                    </div>
+                </div>
+            </security:authorizeBlock>
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">

@@ -207,7 +207,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product", nullable = false)
     @AuditJoinTable(name = "product_requirement_join_aud")
-    private List<BillingRequirement> requirements;
+    private List<BillingRequirement> requirements=new ArrayList<>();
 
     // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -624,7 +624,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public BillingRequirement getRequirement() {
 
         if (CollectionUtils.isEmpty(requirements)) {
-            return new BillingRequirement();
+            requirements.add(new BillingRequirement());
         }
 
         return requirements.get(0);
@@ -1232,6 +1232,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
 
         return display;
+    }
+
+    public void addRequirement(BillingRequirement billingRequirement) {
+        requirements.add(billingRequirement);
     }
 
     public enum AggregationParticle implements Displayable {

@@ -27,6 +27,7 @@ import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -750,19 +751,23 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
      *
-     * @param completedDate completion date for billing
+     * @param product       product to bill.
      * @param quantity      quantity for billing
+     * @param completedDate completion date for billing
      */
-    public void autoBillSample(Date completedDate, BigDecimal quantity) {
+    public void autoBillSample(@Nullable Product product, @Nonnull BigDecimal quantity, @Nonnull Date completedDate) {
         Date now = new Date();
         Map<ProductLedgerIndex, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
-        Product product = getProductOrder().getProduct();
+        if (product == null) {
+            product = getProductOrder().getProduct();
+        }
         Optional<PriceItem> nullablePriceItem = Optional.ofNullable(product.getPrimaryPriceItem());
         PriceItem priceItem = null;
         if(nullablePriceItem.isPresent()) {
             priceItem = product.getPrimaryPriceItem();
         }
-
+        log.debug(String.format("Auto-billing Sample %s for %s in %s", getSampleKey(), product.getPartNumber(),
+            getProductOrder().getBusinessKey()));
         LedgerQuantities quantities = ledgerQuantitiesMap.get(ProductLedgerIndex.create(product, nullablePriceItem.orElse(null),
                 getProductOrder().hasSapQuote()));
         if (quantities == null) {

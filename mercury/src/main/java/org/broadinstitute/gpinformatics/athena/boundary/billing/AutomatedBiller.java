@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 
@@ -11,8 +13,13 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * This is a scheduled class that can generate ledger entries for product orders based on messages in the message
@@ -28,8 +35,15 @@ public class AutomatedBiller {
     public static final int PROCESSING_START_HOUR = 0;
     public static final int PROCESSING_END_HOUR = 5;
 
+    public static final String CAN_BILL = "CAN_BILL";
+    @SuppressWarnings("serial")
+    public static final Map<String, Object> WORK_COMPLETE_DATA = new HashMap<String, Object>() {{
+        put(CAN_BILL, 1L);
+    }};
+
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BillingEjb billingEjb;
+    private final ProductOrderDao productOrderDao;
     private final SessionContextUtility sessionContextUtility;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
@@ -37,52 +51,72 @@ public class AutomatedBiller {
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
                     BillingEjb billingEjb,
+                    ProductOrderDao productOrderDao,
                     SessionContextUtility sessionContextUtility) {
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.billingEjb = billingEjb;
+        this.productOrderDao = productOrderDao;
         this.sessionContextUtility = sessionContextUtility;
     }
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public AutomatedBiller() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     /**
-     * The schedule is every 30 minutes from 2 minutes after Midnight through 4:30 (before 5AM). It is offset
-     * by 2 minutes because the Quote server reboots at midnight (prod) and 3AM (dev).
+     * The schedule is hourly at the 30 minutes.
      */
-    @Schedule(minute = "2/30", hour = "0,1,2,3,4", persistent = false)
+    @Schedule(minute = "30", hour = "*", persistent = false)
     public void processMessages() {
         // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
-        sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
-            @Override
-            public void apply() {
+        sessionContextUtility.executeInContext(() -> {
 
-                // Since we may check on product orders one at a time per sample, this will keep us from
-                // doing two queries every time within the following loop.
-                Map<String, Boolean> orderLockoutCache = new HashMap<> ();
+            // Since we may check on product orders one at a time per sample, this will keep us from
+            // doing two queries every time within the following loop.
+            Map<String, Boolean> orderLockoutCache = new HashMap<>();
+            Map<Long, Set<String>> pdosByUser = new HashMap<>();
+            Map<String, ProductOrder> pdoCache = new HashMap<>();
+            List<WorkCompleteMessage> newMessages = workCompleteMessageDao.getNewMessages();
+            for (WorkCompleteMessage message : newMessages) {
 
-                for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
-                    // Default to true. Even if an exception is thrown, the message is considered to be processed
-                    // to avoid re-throwing every time.
-                    boolean processed = true;
-                    try {
-                        // For each message, request auto billing of the sample in the order.
-                        processed = billingEjb.autoBillSample(message.getPdoName(), message.getAliquotId(),
-                                message.getCompletedDate(), message.getData(), orderLockoutCache);
-                    } catch (Exception e) {
-                        log.error(MessageFormat.format(
-                                "Error while processing work complete message. PDO: {0}, Sample: {1} {2}",
-                                message.getPdoName(), message.getAliquotId() + e.getLocalizedMessage()
-                                ));
-                    }
-                    if (processed) {
-                        // Once a message is processed, mark it to avoid processing it again.
-                        workCompleteMessageDao.markMessageProcessed(message);
-                    }
+                // Default to true. Even if an exception is thrown, the message is considered to be processed
+                // to avoid re-throwing every time.
+                boolean processed = true;
+                String pdoName = message.getPdoName();
+                try {
+
+                    // For each message, request auto billing of the sample in the order.
+                    processed = billingEjb.autoBillSample(pdoName, message.getAliquotId(), message.getCompletedDate(),
+                        message.getPartNumber(), message.getData(), orderLockoutCache);
+                } catch (Exception e) {
+                    log.error(MessageFormat.format(
+                        "Error while processing work complete message. PDO: {0}, Sample: {1} {2}",
+                        pdoName, message.getAliquotId() + e.getLocalizedMessage()
+                    ));
                 }
+                if (processed) {
+                    if (message.getUserId() == null) {
+                        ProductOrder pdo =
+                            pdoCache.computeIfAbsent(message.getPdoName(), k -> productOrderDao.findByBusinessKey(k));
+                        if (pdo != null) {
+                            message.setUserId(pdo.getCreatedBy());
+                        }
+                    }
+                    // Once a message is processed, mark it to avoid processing it again.
+                    workCompleteMessageDao.markMessageProcessed(message);
+                    Optional.ofNullable(message.getUserId())
+                        .ifPresent(userId -> Optional.of(message.getPdoName())
+                            .ifPresent(pdo -> pdosByUser.computeIfAbsent(userId, k -> new HashSet<>()).add(pdo)));
+                }
+            }
+            workCompleteMessageDao.persistAll(newMessages);
+            workCompleteMessageDao.flush();
+            if (!pdosByUser.isEmpty()) {
+                pdosByUser.forEach((user, productOrderIds) -> {
+                    billingEjb.createAndBillSession(new ArrayList<>(productOrderIds), user);
+                });
             }
         });
     }
