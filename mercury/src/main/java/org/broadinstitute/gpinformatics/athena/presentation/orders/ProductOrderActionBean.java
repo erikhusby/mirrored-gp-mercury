@@ -958,6 +958,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateQuoteDetails(Quote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getAlphanumericId())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addGlobalValidationError(unFundedMessage);
@@ -984,6 +987,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     protected void validateSapQuoteDetails(SapQuote quote, int additionalSampleCount) throws InvalidProductException,
             SAPIntegrationException {
+        if (!canChangeQuote(editOrder, originalQuote, quote.getQuoteHeader().getQuoteNumber())) {
+            addGlobalValidationError(SWITCHING_QUOTES_NOT_PERMITTED);
+        }
         if (!quote.getQuoteHeader().getQuoteStatus().equals(QuoteStatus.Z4) ||
             !quote.getQuoteHeader().getFundingHeaderStatus().equals(FundingStatus.APPROVED)) {
             String unFundedMessage = "A quote should be approved in order to be used for a product order.";
