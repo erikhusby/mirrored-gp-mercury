@@ -17,4 +17,9 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-7005-1" author="thompson">
+        <createIndex schemaName="mercury" tableName="LAB_BATCH_REWORKS" indexName="IX_LBR_LAB_BATCH">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
