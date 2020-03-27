@@ -495,6 +495,46 @@ public class LabVesselSearchDefinition {
         searchTerm.setValueType( ColumnValueType.UNSIGNED);
         searchTerms.add(searchTerm);
 
+        SearchTerm queueStatusSearchTerm = new SearchTerm();
+        queueStatusSearchTerm.setName("Queue Entity Status");
+        queueStatusSearchTerm.setRackScanSupported(Boolean.FALSE);
+        queueStatusSearchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueStatusValuesExpression());
+        queueStatusSearchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.QueueStatusValueConversionExpression());
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+
+        criteriaPath.setCriteria(Arrays.asList("queueEntities"));
+        criteriaPath.setPropertyName("queueStatus");
+        queueStatusSearchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+        queueStatusSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> statuses = new HashSet<>();
+                for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
+                    statuses.add(queueEntity.getQueueStatus().getName());
+                }
+
+                return statuses;
+            }
+        });
+        queueStatusSearchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+
+            @Override
+            public String evaluate(Object value, SearchContext context) {
+                Set<String> types = (Set<String>) value;
+                StringBuilder result = new StringBuilder();
+                for (String type : types) {
+                    result.append(QueueStatus.valueOf(type).getName()).append(" ");
+                }
+                return result.toString();
+            }
+        });
+
+        queueStatusSearchTerm.setValueType(ColumnValueType.STRING);
+        searchTerms.add(queueStatusSearchTerm);
+
         searchTerm = new SearchTerm();
         searchTerm.setName("Queue Type");
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -504,6 +544,8 @@ public class LabVesselSearchDefinition {
 
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueTypeValuesExpression());
         searchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.QueueTypeValueConversionExpression());
+        // Adding a dependent term 'Queue Status' so that we can search for vessels in a certain queue with certain status.
+        searchTerm.setDependentSearchTerms(Collections.singletonList(queueStatusSearchTerm));
 
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -532,45 +574,8 @@ public class LabVesselSearchDefinition {
         searchTerm.setValueType(ColumnValueType.STRING);
         searchTerms.add(searchTerm);
 
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Queue Entity Status");
-        searchTerm.setRackScanSupported(Boolean.FALSE);
-        searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueStatusValuesExpression());
-        searchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.QueueStatusValueConversionExpression());
-
-        criteriaPath = new SearchTerm.CriteriaPath();
-
-        criteriaPath.setCriteria(Arrays.asList("queueEntities"));
-        criteriaPath.setPropertyName("queueStatus");
-        searchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
-
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                Set<String> statuses = new HashSet<>();
-                for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
-                    statuses.add(queueEntity.getQueueStatus().getName());
-                }
-
-                return statuses;
-            }
-        });
-        searchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
-
-            @Override
-            public String evaluate(Object value, SearchContext context) {
-                Set<String> types = (Set<String>) value;
-                StringBuilder result = new StringBuilder();
-                for (String type : types) {
-                    result.append(QueueStatus.valueOf(type).getName()).append(" ");
-                }
-                return result.toString();
-            }
-        });
-
-        searchTerm.setValueType(ColumnValueType.STRING);
-        searchTerms.add(searchTerm);
+        queueStatusSearchTerm.setValueType(ColumnValueType.STRING);
+        searchTerms.add(queueStatusSearchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
@@ -624,6 +629,49 @@ public class LabVesselSearchDefinition {
                 return containerInformation.toString();
             }
         });
+
+
+        SearchTerm dnaQueueStatusSearchTerm = new SearchTerm();
+        dnaQueueStatusSearchTerm.setName("DNA Quant Entity Status");
+        dnaQueueStatusSearchTerm.setRackScanSupported(Boolean.FALSE);
+        dnaQueueStatusSearchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.QueueStatusValuesExpression());
+        dnaQueueStatusSearchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.QueueStatusValueConversionExpression());
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+
+        criteriaPath.setCriteria(Arrays.asList("queueEntities"));
+        criteriaPath.setPropertyName("queueStatus");
+        dnaQueueStatusSearchTerm.setCriteriaPaths(Collections.singletonList(criteriaPath));
+
+        dnaQueueStatusSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> statuses = new HashSet<>();
+                for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
+                    if (queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType() == QueueType.DNA_QUANT) {
+                        statuses.add(queueEntity.getQueueStatus().getName());
+                    }
+                }
+
+                return statuses;
+            }
+        });
+        dnaQueueStatusSearchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+
+            @Override
+            public String evaluate(Object value, SearchContext context) {
+                Set<String> types = (Set<String>) value;
+                StringBuilder result = new StringBuilder();
+                for (String type : types) {
+                    result.append(QueueStatus.valueOf(type).getName()).append(" ");
+                }
+                return result.toString();
+            }
+        });
+
+        dnaQueueStatusSearchTerm.setValueType(ColumnValueType.STRING);
+        searchTerms.add(dnaQueueStatusSearchTerm);
 
         searchTerm.setValueType(ColumnValueType.STRING);
         searchTerms.add(searchTerm);

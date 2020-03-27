@@ -63,7 +63,7 @@
 
             .searchWrapper {
                 list-style: none;
-                width: 100%;
+                width: 200px;
                 height: auto;
                 margin: 0;
                 padding: 0;
@@ -75,7 +75,7 @@
                 width: auto;
                 height: auto;
                 padding-right: 10px;
-                padding-bottom: 10px;
+                padding-bottom: 0px;
                 display:block;
             }
 
@@ -136,13 +136,18 @@
 
 
                 $j("#searchQueue").click(function(){
-                    var selection=document.querySelector('input[name="selectedSearchTermType"]:checked')!=null?
-                        document.querySelector('input[name="selectedSearchTermType"]:checked').value:"";
+                    var selection=$j('#selectedSearchTermType:checked').val() != null ?
+                        $j('#selectedSearchTermType:checked').val() : "";
                     if(selection==='') {
                         alert('Please select a search type.');
                     } else {
-                        // make it search?
-                        $j("#queueSearchForm").submit();
+                        var searchValue=$j('#selectedSearchTermValues').val() != null ?
+                            $j('#selectedSearchTermValues').val() : "";
+                        if(searchValue === '') {
+                            alert('Please enter a search value.');
+                        } else {
+                            $j("#queueSearchForm").submit();
+                        }
                     }
                 });
 

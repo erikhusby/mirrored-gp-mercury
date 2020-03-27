@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
@@ -34,8 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.queue.datadump.Abstract
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.GenericQueueDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.queue.QueueGroupingDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.GenericQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueGrouping;
@@ -45,11 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean;
 import org.jetbrains.annotations.NotNull;
@@ -63,15 +56,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * ActionBean for interacting with Queues.
@@ -133,6 +126,7 @@ public class QueueActionBean extends CoreActionBean {
     // todo this is actually going to need to be changed somehow to be loaded based off the
     private String selectedSearchTermType;
     private String selectedSearchTermValues;
+    private Set<String> searchValuesNotFound;
 
     /**
      * Search results in column set chosen by user
@@ -229,6 +223,22 @@ public class QueueActionBean extends CoreActionBean {
     }
 
     /**
+     * Utility enum usued internally in search feature to easily track what the 'not found' terms are tracked by.
+     */
+    private enum FinderFlag {
+        BARCODE("Barcode"),
+        MERCURY_SAMPLE_ID("Mercury Sample ID"),
+        CONTAINER_BARCODE("Container barcode");
+
+        private final String text;
+
+        FinderFlag(String text) {
+            this.text = text;
+        }
+        String getText() { return this.text; }
+    }
+
+    /**
      * Perform a search of the corresponding queue
      * @return
      */
@@ -254,36 +264,121 @@ public class QueueActionBean extends CoreActionBean {
         configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
 
         if (selectedSearchTermType != null) {
+            if (StringUtils.isNotBlank(selectedSearchTermValues)) {
+                SearchInstance.SearchValue userSelectedTerm =
+                        searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
+                userSelectedTerm.setOperator(SearchInstance.Operator.IN);
+                userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
 
-            SearchInstance.SearchValue userSelectedTerm = searchInstance.addTopLevelTerm(selectedSearchTermType, configurableSearchDef);
-            userSelectedTerm.setOperator(SearchInstance.Operator.IN);
-            userSelectedTerm.setValues(Collections.singletonList(selectedSearchTermValues));
+                // Check for vessels specifically in DNA Quant queue.
+                SearchInstance.SearchValue queue_type = searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
+                queue_type.setOperator(SearchInstance.Operator.EQUALS);
+                queue_type.setValues(Collections.singletonList(queueType.toString()));
+                queue_type.setIncludeInResults(false);
 
-            // Check for vessels specifically in DNA Quant queue.
-            SearchInstance.SearchValue queue_type =
-                    searchInstance.addTopLevelTerm("Queue Type", configurableSearchDef);
-            queue_type.setOperator(SearchInstance.Operator.EQUALS);
-            queue_type.setValues(Collections.singletonList(QueueType.DNA_QUANT.toString()));
-            queue_type.setIncludeInResults(false);
+                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
+                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm());
+                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+                // Note that in order for this search to work in all queues the corresponding queue type search definition MUST have a term named
+                // in the format of '[queue type] Entity Status' e.g. 'DNA Quant Entity Status'.
+                searchInstance.getPredefinedViewColumns().add(queueType.toString() + " Entity Status"); // Used to determine if the sample is active in the queue or not.
 
-            // Check for vessels that are NOT active in a queue entity
-            SearchInstance.SearchValue queue_entity_status =
-                    searchInstance.addTopLevelTerm("Queue Entity Status", configurableSearchDef);
-            queue_entity_status.setOperator(SearchInstance.Operator.NOT_IN);
-            queue_entity_status.setValues(Collections.singletonList(QueueStatus.Active.getName()));
-            queue_entity_status.setIncludeInResults(false);
+                searchInstance.establishRelationships(configurableSearchDef);
+                ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                        searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
+                labSearchResultList = firstPageResults.getResultList();
 
-            searchInstance.getPredefinedViewColumns()
-                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
-            searchInstance.getPredefinedViewColumns()
-                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm());
-            searchInstance.getPredefinedViewColumns()
-                    .add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+                List<ConfigurableList.ResultRow> resultRows = labSearchResultList.getResultRows();
 
-            searchInstance.establishRelationships(configurableSearchDef);
-            ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
-                    searchInstance, configurableSearchDef, null, 0, null, "ASC", entityName);
-            labSearchResultList = firstPageResults.getResultList();
+                // Split up the values so that we can verify that all the searched values had returned results.
+                searchValuesNotFound = new HashSet<>(Arrays.asList(selectedSearchTermValues.split("\\r?\\n")));
+                FinderFlag termToFind = FinderFlag.CONTAINER_BARCODE;   // Defaulting to container barcode because that is the most common use.
+
+                // Determine the index for the column we'll specifically be looking for to determine 'searched item found in results'
+                if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MERCURY_SAMPLE_ID.getTerm()) == 0) {
+                    termToFind = FinderFlag.MERCURY_SAMPLE_ID;
+                } else if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm()) == 0) {
+                    termToFind = FinderFlag.BARCODE;
+                }
+
+                if (resultRows.size() > 0) {
+
+                    List<ConfigurableList.ResultRow> rowsToRemove = new ArrayList<>();
+                    int queueStatusPosition = -1;
+
+                    // Determine which search term is being used so that we know what the 'not found' map will be based on.
+                    int positionToVerifyNotFoundTerms = 0;
+
+                    for (ConfigurableList.Header header : labSearchResultList.getHeaders()) {
+                        String viewHeader = header.getViewHeader();
+
+                        if (viewHeader.compareToIgnoreCase(queueType.toString() + " Entity Status") == 0) {
+                            queueStatusPosition = header.getOrder();
+                        }
+
+                        // Determine the index for the column we'll specifically be looking for to determine 'searched item found in results'
+                        // as container barcode is handled differently in the search results.
+                        if (termToFind == FinderFlag.CONTAINER_BARCODE && viewHeader.compareToIgnoreCase(
+                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm()) == 0) {
+                            positionToVerifyNotFoundTerms = header.getOrder();
+                        } else  if (termToFind == FinderFlag.MERCURY_SAMPLE_ID && viewHeader.compareToIgnoreCase(
+                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm()) == 0) {
+                            positionToVerifyNotFoundTerms = header.getOrder();
+                        } else if (termToFind == FinderFlag.BARCODE && viewHeader.compareToIgnoreCase(
+                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm()) == 0) {
+                            positionToVerifyNotFoundTerms = header.getOrder();
+                        }
+                    }
+
+                    for (ConfigurableList.ResultRow resultRow : resultRows) {
+                        int cellCounter = 0;
+                        for (String cell : resultRow.getRenderableCells()) {
+
+                            // If we are at the position for the 'queue status' then check to see if it's 'active' or 'repeat'
+                            if (cellCounter == queueStatusPosition && StringUtils.isNotBlank(cell)) {
+                                if (cell.compareToIgnoreCase(QueueStatus.Active.getName()) == 0
+                                    || cell.compareToIgnoreCase(QueueStatus.Repeat.getName()) == 0) {
+                                    rowsToRemove.add(resultRow);
+                                }
+                            }
+
+                            // We need to determine which cell position the term we need to grab is going to be found in.
+                            if (termToFind == FinderFlag.CONTAINER_BARCODE) {
+                                if (cellCounter == positionToVerifyNotFoundTerms && (StringUtils.isNotBlank(cell))) {
+                                    String[] foundContainers = cell.split(" ");
+                                    if (foundContainers.length > 0) {
+
+                                        for (String foundContainer : foundContainers) {
+                                            // The split string containing the container barcode will have a '/' in it.
+                                            // e.g. (000010117154/A01:01/14/2020 12:16:22 S-114121602/H11:01/14/2020 12:17:52 000110117154/H11:01/14/2020 12:18:28)
+                                            if (foundContainer.contains("/")) {
+                                                int endOfContainerBarcode = foundContainer.indexOf("/");
+                                                String barcode = foundContainer.substring(0, endOfContainerBarcode);
+                                                searchValuesNotFound.remove(barcode);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (cellCounter == positionToVerifyNotFoundTerms) {
+                                    searchValuesNotFound.remove(cell);
+                                }
+                            }
+
+                            cellCounter++;
+                        }
+                    }
+                    // Attempt to remove all the rows that we found are in the DNA Quant queue and are 'Active' or 'Repeat'.
+                    if (!rowsToRemove.isEmpty()) {
+                        resultRows.removeAll(rowsToRemove);
+                    }
+                } else {
+                    // no results found!!!
+                    addGlobalValidationError("No Mercury samples were found!");
+                }
+            } else {
+                addGlobalValidationError("You must enter a search value.");
+            }
         } else {
             addGlobalValidationError("You must select a search term.");
         }
@@ -674,5 +769,13 @@ public class QueueActionBean extends CoreActionBean {
 
     public ConfigurableList.ResultList getLabSearchResultList() {
         return labSearchResultList;
+    }
+
+    public Set<String> getSearchValuesNotFound() {
+        return searchValuesNotFound;
+    }
+
+    public void setSearchValuesNotFound(Set<String> searchValuesNotFound) {
+        this.searchValuesNotFound = searchValuesNotFound;
     }
 }
