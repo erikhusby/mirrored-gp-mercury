@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -51,6 +52,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -72,7 +74,7 @@ public class ManifestSession implements Updatable {
     private Long manifestSessionId;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "RESEARCH_PROJECT_ID")
+    @JoinColumn(name = "RESEARCH_PROJECT_ID", nullable = true)
     private ResearchProject researchProject;
 
     @Column(name = "SESSION_PREFIX")
@@ -126,6 +128,9 @@ public class ManifestSession implements Updatable {
     @CollectionTable(name = "MANIFEST_VESSEL_LABELS", joinColumns=@JoinColumn(name="MANIFEST_SESSION"))
     private Set<String> vesselLabels = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    private ManifestSessionEjb.AccessioningProcessType accessioningProcessType = ManifestSessionEjb.AccessioningProcessType.CRSP;
+
     /**
      * For JPA.
      */
@@ -133,17 +138,22 @@ public class ManifestSession implements Updatable {
     }
 
     public ManifestSession(ResearchProject researchProject, String manifestSessionName, BspUser createdBy,
-                           boolean fromSampleKit) {
-        this(researchProject, manifestSessionName, createdBy, fromSampleKit, Collections.<ManifestRecord>emptyList());
+                           boolean fromSampleKit, ManifestSessionEjb.AccessioningProcessType accessioningProcessType) {
+        this(researchProject, manifestSessionName, createdBy, fromSampleKit, Collections.<ManifestRecord>emptyList(),
+                accessioningProcessType);
     }
 
-    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser createdBy, boolean fromSampleKit,
-                           Collection<ManifestRecord> manifestRecords) {
+    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser createdBy,
+                           boolean fromSampleKit,
+                           Collection<ManifestRecord> manifestRecords,
+                           ManifestSessionEjb.AccessioningProcessType accessioningType) {
+        this.accessioningProcessType = accessioningType;
         this.researchProject = researchProject;
         if (researchProject != null) {
             researchProject.addManifestSession(this);
         }
-        sessionPrefix = sessionName;
+        sessionPrefix = ((accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID) ? "COVID_" : "")
+                        + sessionName;
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
         if(fromSampleKit) {
@@ -432,7 +442,14 @@ public class ManifestSession implements Updatable {
      */
     public List<ManifestRecord> findRecordsByKey(String value, Metadata.Key keyToFindRecordBy) {
         return records.stream().
-                filter(record -> record.getValueByKey(keyToFindRecordBy).equals(value)).
+                filter(record -> {
+                    boolean foundRecord = false;
+                    final Optional<String> valueByKey = Optional.ofNullable(record.getValueByKey(keyToFindRecordBy));
+                    if(valueByKey.isPresent()) {
+                        foundRecord =valueByKey.get().equals(value);
+                    }
+                    return foundRecord;
+                }).
                 collect(Collectors.toList());
     }
 
@@ -573,6 +590,10 @@ public class ManifestSession implements Updatable {
         setStatus(SessionStatus.COMPLETED);
     }
 
+    public void cancelSession() {
+        setStatus(SessionStatus.CANCELLED);
+    }
+
     /**
      * Within the context of trying to transfer a source sample, find the corresponding record contained within the
      * session.  Given this context, the method should inform the caller of any issues with attempting to transfer
@@ -665,7 +686,8 @@ public class ManifestSession implements Updatable {
 
         boolean result = true;
 
-        if(StringUtils.isBlank(getReceiptTicket())) {
+        if(StringUtils.isBlank(getReceiptTicket())
+           && accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
             result = false;
         }
         return result;
@@ -678,7 +700,8 @@ public class ManifestSession implements Updatable {
      */
     public enum SessionStatus implements Displayable {
         OPEN("Manifest Uploaded"), PENDING_SAMPLE_INFO("Awaiting manifest"),
-        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed");
+        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed"),
+        CANCELLED("Session Processing Cancelled");
 
         private final String displayName;
         SessionStatus(String displayName) {
@@ -711,6 +734,18 @@ public class ManifestSession implements Updatable {
 
     public void setVesselLabels(Set<String> vesselLabels) {
         this.vesselLabels = vesselLabels;
+    }
+
+    public ManifestSessionEjb.AccessioningProcessType getAccessioningProcessType() {
+        ManifestSessionEjb.AccessioningProcessType returnValue = ManifestSessionEjb.AccessioningProcessType.CRSP;
+        if(accessioningProcessType != null) {
+            returnValue = accessioningProcessType;
+        }
+        return returnValue;
+    }
+
+    public boolean isCovidSession() {
+        return accessioningProcessType == ManifestSessionEjb.AccessioningProcessType.COVID;
     }
 
     @Override

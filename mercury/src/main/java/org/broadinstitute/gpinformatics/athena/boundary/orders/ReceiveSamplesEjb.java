@@ -13,7 +13,10 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValid
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleInfo;
@@ -23,6 +26,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBea
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -56,6 +64,9 @@ public class ReceiveSamplesEjb {
     private BSPUserList bspUserList;
     private SampleReceiptResource sampleReceiptResource;
     private BSPRestService bspRestService;
+    private LabVesselDao labVesselDao;
+    private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     public ReceiveSamplesEjb() {
     }
@@ -65,14 +76,20 @@ public class ReceiveSamplesEjb {
                              BSPManagerFactory managerFactory,
                              ProductOrderSampleDao productOrderSampleDao,
                              BSPUserList bspUserList,
+                             BSPRestService bspRestService,
                              SampleReceiptResource sampleReceiptResource,
-                             BSPRestService bspRestService) {
+                             LabVesselDao labVesselDao,
+                             QueueEjb queueEjb,
+                             DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
         this.bspUserList = bspUserList;
         this.sampleReceiptResource = sampleReceiptResource;
         this.bspRestService = bspRestService;
+        this.labVesselDao = labVesselDao;
+        this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
     }
 
     /**
@@ -190,10 +207,36 @@ public class ReceiveSamplesEjb {
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
+
+                // todo jmt disabling to focus on All of Us
+//                addToDnaQuantQueueIfNecessary(sampleIds, messageCollection);
             }
         }
 
         return receiptResponse;
+    }
+
+    /**
+     * Adds all DNA samples to quant queue.
+     *
+     * @param sampleIds             SampleIDs which are being received.
+     * @param messageCollection     Messages back to the user.
+     */
+    private void addToDnaQuantQueueIfNecessary(List<String> sampleIds, MessageCollection messageCollection) {
+        List<LabVessel> vesselsForQuanting = new ArrayList<>();
+        List<LabVessel> labVessels = labVesselDao.findBySampleKeyOrLabVesselLabel(sampleIds);
+        labVessels.addAll(labVesselDao.findByBarcodes(sampleIds).values());
+
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel.isDNA()) {
+                vesselsForQuanting.add(labVessel);
+            }
+        }
+        QueueSpecialization queueSpecialization =
+                dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(vesselsForQuanting);
+        queueEjb.enqueueLabVessels(vesselsForQuanting, QueueType.DNA_QUANT,
+                "Received on " + DateUtils.convertDateTimeToString(new Date()), messageCollection,
+                QueueOrigin.RECEIVING, queueSpecialization);
     }
 
     /**
@@ -220,10 +263,16 @@ public class ReceiveSamplesEjb {
                             .stream().collect(Collectors.toMap(SampleKitReceivedBean.TubeTypePerSample::getSampleId,
                                     SampleKitReceivedBean.TubeTypePerSample::getTubeType));
                     List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    List<String> sampleBarcodesReceived = new ArrayList<>();
                     for (SampleKitReceivedBean.SampleBarcodes barcodes : kit.getSampleBarcodes()) {
+                        sampleBarcodesReceived.add(barcodes.getSampleBarcode());
                         String tubeType = sampleToType.get(barcodes.getSampleBarcode());
                         parentVesselBeans.add(new ParentVesselBean(null, barcodes.getSampleBarcode(), tubeType,null));
                     }
+
+                    // todo jmt disabling to focus on All of Us
+//                    addToDnaQuantQueueIfNecessary(sampleBarcodesReceived, messageCollection);
+
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), kit.getKitId(),
                             parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
@@ -380,8 +429,8 @@ public class ReceiveSamplesEjb {
             addValidation(messageCollection, operator, entry.getValue(),
                     SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                     SampleReceiptValidation.SampleValidationType.WARNING, String.format(
-                            "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
-                                    .getReasonMessage(), entry.getKey()));
+                    "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
+                            .getReasonMessage(), entry.getKey()));
         }
     }
 

@@ -30,6 +30,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.control.dao.infrastructure.QuarantinedDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -42,6 +45,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.KeyValueMa
 import org.broadinstitute.gpinformatics.mercury.entity.infrastructure.Quarantined;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
+import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -61,7 +67,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,6 +133,9 @@ public class MayoManifestEjb {
     private static final List<String> EXPECTED_PDO_PARAMS = ImmutableList.of(OWNER_PARAM, WATCHERS_PARAM,
             RESEARCH_PROJECT_PARAM, PRODUCT_PARAM, QUOTE_PARAM, TEST_NAME);
 
+    public static final String AOU_GENOME = "aou_wgs";
+    public static final String AOU_ARRAY = "aou_array";
+
     public static final Map<String, CustomFieldDefinition> JIRA_DEFINITION_MAP =
             new HashMap<String, CustomFieldDefinition>() {{
                 put("MaterialTypeCounts", new CustomFieldDefinition("customfield_15660", "Material Type Counts", true));
@@ -158,6 +166,8 @@ public class MayoManifestEjb {
     private ProductDao productDao;
     private BSPUserList bspUserList;
     private ResearchProjectDao researchProjectDao;
+    private QueueEjb queueEjb;
+    private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
 
     /**
      * CDI constructor.
@@ -171,7 +181,8 @@ public class MayoManifestEjb {
             LabVesselDao labVesselDao, MercurySampleDao mercurySampleDao, TubeFormationDao tubeFormationDao,
             QuarantinedDao quarantinedDao, JiraService jiraService, Deployment deployment,
             ProductOrderEjb productOrderEjb, AttributeArchetypeDao attributeArchetypeDao, ProductDao productDao,
-            BSPUserList bspUserList, ResearchProjectDao researchProjectDao) {
+            BSPUserList bspUserList, ResearchProjectDao researchProjectDao, QueueEjb queueEjb,
+            DnaQuantEnqueueOverride dnaQuantEnqueueOverride) {
 
         this.manifestSessionDao = manifestSessionDao;
         this.googleBucketDao = googleBucketDao;
@@ -186,6 +197,9 @@ public class MayoManifestEjb {
         this.productDao = productDao;
         this.bspUserList = bspUserList;
         this.researchProjectDao = researchProjectDao;
+        this.queueEjb = queueEjb;
+        this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
+
         // This config is from the yaml file.
         MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(MayoManifestConfig.class, deployment);
@@ -287,7 +301,7 @@ public class MayoManifestEjb {
         Set<String> previousRacks = new HashSet<>();
         if (manifestSession == null) {
             manifestSession = new ManifestSession(null, packageId, userBean.getBspUser(), false,
-                    Collections.emptyList());
+                    Collections.emptyList(), ManifestSessionEjb.AccessioningProcessType.CRSP);
             manifestSessionDao.persist(manifestSession);
         } else {
             previousRacks.addAll(manifestSession.getVesselLabels());
@@ -359,6 +373,10 @@ public class MayoManifestEjb {
 
         JiraTicket jiraTicket = makeOrUpdatePackageRct(bean, manifestSession, rctTicketComments);
         if (jiraTicket != null) {
+            // Puts RCT id metadata on each record.
+            manifestSession.getRecords().stream().
+                    filter(record -> record.getValueByKey(Metadata.Key.RECEIPT_RECORD) == null).
+                    forEach(record -> record.addMetadata(Metadata.Key.RECEIPT_RECORD, jiraTicket.getTicketId()));
             manifestSessionDao.persist(jiraTicket);
             bean.setRctUrl(jiraTicket.getBrowserUrl());
             manifestSession.setReceiptTicket(jiraTicket.getTicketName());
@@ -906,6 +924,13 @@ public class MayoManifestEjb {
             }
 
             labVesselDao.persistAll(newEntities);
+
+            Collection<LabVessel> labVessels = new ArrayList<>(vesselPositionToTube.values());
+            QueueSpecialization queueSpecialization =
+                    dnaQuantEnqueueOverride.determineDnaQuantQueueSpecialization(labVessels);
+            queueEjb.enqueueLabVessels(labVessels, QueueType.VOLUME_CHECK,
+                    bean.getRackBarcode() + " Accessioned on " + DateUtils.convertDateTimeToString(new Date()), messages,
+                    QueueOrigin.RECEIVING, queueSpecialization);
         }
         // Adds comment to the existing RCT.
         addRctComment(manifestSession.getReceiptTicket(), messages, rctMessages);

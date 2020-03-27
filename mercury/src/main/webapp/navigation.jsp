@@ -151,6 +151,13 @@
                         </li>
                         <li>
                             <stripes:link id="accessioning"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"
+                                          event="startACovidSession">
+                                Accession COVID Manifest
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="accessioning"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean">
                                 Accession Manifest
                             </stripes:link>
@@ -257,6 +264,55 @@
                             </li>
                         </security:authorizeBlock>
 
+                    </ul>
+                </li>
+            </security:authorizeBlock>
+
+            <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer)%>">
+                <li class="dropdown">
+                    <a id="queueNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-tasks"></span> Queues <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li>
+                            <stripes:link id="volumeCheckQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="VOLUME_CHECK"/>
+                                Volume Check Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="dnaQuantQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="DNA_QUANT"/>
+                                DNA Quant Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="fingerprintingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="FINGERPRINTING"/>
+                                Fingerprinting Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="arrayPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="ARRAY_PLATING"/>
+                                Array Plating Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="seqPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="SEQ_PLATING"/>
+                                Seq Plating Queue
+                            </stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

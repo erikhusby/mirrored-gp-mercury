@@ -1265,7 +1265,7 @@ public class ProductOrderEjb {
         conditionallyShortCloseOrder(productOrder);
     }
 
-    private void conditionallyShortCloseOrder(ProductOrder productOrder) throws SAPInterfaceException {
+    public void conditionallyShortCloseOrder(ProductOrder productOrder) throws SAPInterfaceException {
 
         ProductOrder targetSapPdo = productOrder;
 

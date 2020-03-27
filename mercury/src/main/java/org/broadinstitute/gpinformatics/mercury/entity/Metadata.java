@@ -322,6 +322,7 @@ public class Metadata {
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
         MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER),
+        CLIENT(Category.SAMPLE, DataType.STRING, "Client", Visibility.SYSTEM),
         // Mayo sample metadata.
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         RACK_LABEL(Category.SAMPLE, DataType.STRING, "Rack Label", Visibility.NONE),
@@ -344,6 +345,7 @@ public class Metadata {
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
         FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
+        INSTITUTE_ID(Category.SAMPLE, DataType.STRING, "Institute ID", Visibility.USER),
         ;
 
         private final Category category;

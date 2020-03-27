@@ -170,7 +170,7 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
                 String productOrderKey = null;
                 if (singleBucketEntry != null) {
-                    productOrderKey = singleBucketEntry.getPoBusinessKey();
+                    productOrderKey = singleBucketEntry.getProductOrder().getBusinessKey();
                     productOrderKeys.add(productOrderKey);
                 }
                 // todo jmt root may be null
