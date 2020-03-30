@@ -2,13 +2,17 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -18,13 +22,16 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.CovidManifestBucketConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -146,6 +153,9 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private ResearchProjectEjb researchProjectEjb;
 
+    @Inject
+    private GoogleBucketDao googleBucketDao;
+
     @Alternative
     @Dependent
     public static class BSPCohortListProducer {
@@ -257,6 +267,13 @@ public class ManifestSessionContainerTest extends Arquillian {
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
+
+        // This config is from the yaml file.
+        CovidManifestBucketConfig covidManifestBucketConfig =
+                (CovidManifestBucketConfig) MercuryConfiguration.getInstance().
+                        getConfig(CovidManifestBucketConfig.class,
+                                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV);
+        googleBucketDao.setConfigGoogleStorageConfig(covidManifestBucketConfig);
     }
 
     /**
@@ -1298,5 +1315,54 @@ public class ManifestSessionContainerTest extends Arquillian {
             }
         }
         return allComments;
+    }
+
+    /** Tests writing a csv file to the Google bucket. */
+    @Test
+    public void testCsvToGoogleBucket() {
+        String filename = "test-" + System.currentTimeMillis() + ".csv";
+        // Writes a manifest that has 3 rows, 3 columns.
+        byte[] upload = "header 1,header 2,header 3\n1-1,1-2,1-3\n2-1,2-2,2-3\n".getBytes();
+        manifestSessionEjb.copyToGoogleBucket(filename, upload);
+        // Reads the file back from the Google Bucket. There should be no errors and identical file content,
+        // after removing the csv field quotes added by OpenCsv
+        MessageCollection messageCollection = new MessageCollection();
+        byte[] download = googleBucketDao.download(filename, messageCollection);
+        String downloadErrors = StringUtils.join(messageCollection.getErrors(), "; ");
+        // Removes the test file from the bucket.
+        googleBucketDao.delete(filename, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        Assert.assertEquals(downloadErrors, "");
+        Assert.assertEquals(new String(download).replaceAll("\"", ""), new String(upload).replaceAll("\"", ""));
+    }
+
+    /** Tests writing a xlsx file to the Google bucket (as a csv file). */
+    @Test
+    public void testXlsxToGoogleBucket() throws IOException {
+        String resourceFilename = "test_1584995285.xlsx";
+        byte[] upload = IOUtils.toByteArray(VarioskanParserTest.getTestResource(resourceFilename));
+        String xlsxFilename = "test-" + System.currentTimeMillis() + ".xlsx";
+        String csvFilename = xlsxFilename.replaceAll(".xlsx", ".csv");
+        manifestSessionEjb.copyToGoogleBucket("/make/a/test/path/" + xlsxFilename, upload);
+        // Reads the file back from the Google Bucket. There should be no errors and identical file content,
+        // after removing the csv field quotes added by OpenCsv
+        MessageCollection messageCollection = new MessageCollection();
+        byte[] download = googleBucketDao.download(csvFilename, messageCollection);
+        String downloadErrors = StringUtils.join(messageCollection.getErrors(), "; ");
+        // The xlsx should not be in the bucket.
+        messageCollection.clearAll();
+        boolean xlsInBucket = googleBucketDao.exists(xlsxFilename, messageCollection);
+        String existErrors = StringUtils.join(messageCollection.getErrors(), "; ");
+        // Removes the test file from the bucket.
+        messageCollection.clearAll();
+        googleBucketDao.delete(csvFilename, messageCollection);
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
+
+        Assert.assertEquals(downloadErrors, "");
+        Assert.assertEquals(existErrors, "");
+        Assert.assertFalse(xlsInBucket);
+        Assert.assertEquals(new String(download).replaceAll("\"", ""),
+                "header 1,header 2,header 3\n1-1,1-2,1-3\n2-1,2-2,2-3\n");
     }
 }
