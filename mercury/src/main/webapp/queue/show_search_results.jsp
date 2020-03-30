@@ -4,12 +4,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.queueType.textName} Queue"
-                       sectionTitle="${actionBean.queueType.textName} Queue" showCreate="false" dataTablesVersion="1.10">
 <%--@elvariable id="labSearchResultList" type="org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList.ResultList"--%>
-<stripes:layout-component name="extraHead">
-</stripes:layout-component>
-<stripes:layout-component name="content">
     <div class="form-inline">
         <c:if test="${fn:length(actionBean.searchValuesNotFound) > 0}">
             <h3 style="margin-top: 50px;text-align:center;">${fn:length(actionBean.searchValuesNotFound)} searched values listed below were not found in Mercury at all.</h3>
@@ -61,5 +56,3 @@
             </c:otherwise>
         </c:choose>
     </div>
-</stripes:layout-component>
-</stripes:layout-render>

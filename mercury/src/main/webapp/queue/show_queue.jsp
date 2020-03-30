@@ -63,26 +63,24 @@
 
             .searchWrapper {
                 list-style: none;
-                width: 200px;
+                width: 500px;
                 height: auto;
-                margin: 0;
+                margin: 0 0 10px 0;
                 padding: 0;
-                overflow: hidden;
             }
 
             .searchWrapper > li {
                 float: left;
-                width: auto;
                 height: auto;
-                padding-right: 10px;
+                padding-right: 30px;
                 padding-bottom: 0px;
-                display:block;
+                display:flex;
             }
 
             .searchWrapper > input,label {
                 float: left;
                 clear:none;
-                margin-top:3px;
+                margin-top:5px;
                 margin-right:5px;
             }
         </style>
@@ -146,7 +144,24 @@
                         if(searchValue === '') {
                             alert('Please enter a search value.');
                         } else {
-                            $j("#queueSearchForm").submit();
+
+                            $j.ajax({
+                                url: "${ctxpath}/queue/Queue.action",
+                                type: 'POST',
+                                data: $j("#queueSearchForm").serialize(),
+                                async: true,
+                                success: function (results) {
+                                    if (results.hasOwnProperty('errors')) {
+                                        $j("#dialogResultsError").text(results.errors);
+                                    } else {
+                                        $j("#searchResults").html(results);
+                                    }
+                                },
+                                error: function () {
+                                    $j("#dialogResultsError").text("A server error occurred");
+                                },
+                                cache: false,
+                            });
                         }
                     }
                 });
@@ -204,19 +219,27 @@
                     <input type="hidden" name="queueType" value="${actionBean.queueType}" />
                     <input type="hidden" name="searchQueue" />
                     <div>
-                        <ul class="searchWrapper">
-                            <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
-                                <li>
-                                    <label for="selectedSearchTermType">${searchTerm}</label>
-                                    <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm}" type="radio" />
-                                </li>
-                            </c:forEach>
-                        </ul>
-                        <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
-                        <br/>
-                        <input type="button" id="searchQueue" name="searchQueue" value="Search" />
+                        <div style="display:flex;">
+                            <ul class="searchWrapper">
+                                <c:forEach items="${actionBean.allowedDisplaySearchTerms}" var="searchTerm">
+                                    <li>
+                                        <label for="selectedSearchTermType">${searchTerm}</label>
+                                        <input name="selectedSearchTermType" id="selectedSearchTermType" value="${searchTerm}" type="radio" />
+                                    </li>
+                                </c:forEach>
+                            </ul>
+                        </div>
+                        <div style="float:left;">
+                            <textarea name="selectedSearchTermValues" id="selectedSearchTermValues" rows="4" ></textarea>
+                            <br/>
+                            <input type="button" id="searchQueue" name="searchQueue" value="Search" />
+                        </div>
                     </div>
                 </form>
+
+                <div id="dialogResults" title="Rename Queue Group">
+                    <div id="dialogResultsError" style="color:red"></div>
+                </div>
 
                 <div id="searchResults"></div>
             </div>

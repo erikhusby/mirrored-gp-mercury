@@ -281,7 +281,7 @@ public class QueueActionBean extends CoreActionBean {
                 searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
                 // Note that in order for this search to work in all queues the corresponding queue type search definition MUST have a term named
                 // in the format of '[queue type] Entity Status' e.g. 'DNA Quant Entity Status'.
-                searchInstance.getPredefinedViewColumns().add(queueType.toString() + " Entity Status"); // Used to determine if the sample is active in the queue or not.
+                searchInstance.getPredefinedViewColumns().add(queueType.getTextName() + " Entity Status"); // Used to determine if the sample is active in the queue or not.
 
                 searchInstance.establishRelationships(configurableSearchDef);
                 ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
@@ -312,7 +312,7 @@ public class QueueActionBean extends CoreActionBean {
                     for (ConfigurableList.Header header : labSearchResultList.getHeaders()) {
                         String viewHeader = header.getViewHeader();
 
-                        if (viewHeader.compareToIgnoreCase(queueType.toString() + " Entity Status") == 0) {
+                        if (viewHeader.compareToIgnoreCase(queueType.getTextName() + " Entity Status") == 0) {
                             queueStatusPosition = header.getOrder();
                         }
 
