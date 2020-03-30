@@ -1,18 +1,27 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.opencsv.CSVWriter;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.GenericTableProcessor;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
@@ -20,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFa
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
@@ -43,9 +53,12 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -97,6 +110,8 @@ public class ManifestSessionEjb {
     private LabVesselFactory labVesselFactory;
 
     private DnaQuantEnqueueOverride dnaQuantEnqueueOverride;
+    private GoogleBucketDao googleBucketDao;
+    private Deployment deployment;
 
     private static final Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
@@ -112,7 +127,8 @@ public class ManifestSessionEjb {
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
                               BSPUserList bspUserList, JiraService jiraService, QueueEjb queueEjb,
                               DnaQuantEnqueueOverride dnaQuantEnqueueOverride,
-                              LabVesselFactory labVesselFactoryIn) {
+                              LabVesselFactory labVesselFactoryIn, GoogleBucketDao googleBucketDao,
+                              Deployment deployment) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
@@ -123,6 +139,8 @@ public class ManifestSessionEjb {
         this.queueEjb = queueEjb;
         this.dnaQuantEnqueueOverride = dnaQuantEnqueueOverride;
         this.labVesselFactory = labVesselFactoryIn;
+        this.googleBucketDao = googleBucketDao;
+        this.deployment = deployment;
     }
 
     /**
@@ -140,15 +158,23 @@ public class ManifestSessionEjb {
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
                                           AccessioningProcessType accessioningProcessType, boolean fromSampleKit) {
-
-        ResearchProject researchProject = null;
-        if (accessioningProcessType != AccessioningProcessType.COVID) {
-            researchProject = findResearchProject(researchProjectKey);
+        try {
+            byte[] content = inputStream == null ? new byte[0] : IOUtils.toByteArray(inputStream);
+            IOUtils.closeQuietly(inputStream);
+            ResearchProject researchProject = null;
+            if (accessioningProcessType != AccessioningProcessType.COVID) {
+                researchProject = findResearchProject(researchProjectKey);
+            } else {
+                copyToGoogleBucket(pathToFile, content);
+            }
+            Collection<ManifestRecord> manifestRecords = importManifestRecords(new ByteArrayInputStream(content),
+                    accessioningProcessType, pathToFile);
+            return createManifestSession(FilenameUtils.getBaseName(pathToFile), manifestRecords, researchProject,
+                    fromSampleKit, accessioningProcessType);
+        } catch (IOException e) {
+            logger.error(e);
+            return null;
         }
-        Collection<ManifestRecord> manifestRecords = importManifestRecords(inputStream, accessioningProcessType,
-                pathToFile);
-        return createManifestSession(FilenameUtils.getBaseName(pathToFile), manifestRecords, researchProject,
-                fromSampleKit, accessioningProcessType);
     }
 
     /**
@@ -732,6 +758,70 @@ public class ManifestSessionEjb {
 
         public String getStateName() {
             return stateName;
+        }
+    }
+
+    /**
+     * Copies a Covid manifest file to a Google bucket.
+     */
+    public void copyToGoogleBucket(String path, byte[] content) {
+        String filename = FilenameUtils.getName(path);
+        // Parses the manifest csv or xls or xlst into a generic cell grid.
+        List<List<String>> cellGrid = new ArrayList<>();
+        try {
+            if (filename.toLowerCase().endsWith(".csv")) {
+                // Parses file as a .csv spreadsheet.
+                CsvParser.parseToCellGrid(new ByteArrayInputStream(content)).
+                        stream().
+                        filter(line -> StringUtils.isNotBlank(StringUtils.join(line))).
+                        map(Arrays::asList).
+                        forEach(cellGrid::add);
+            } else {
+                // Parses file as Excel spreadsheet.
+                GenericTableProcessor processor = new GenericTableProcessor();
+                InputStream inputStream = new ByteArrayInputStream(content);
+                PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
+                cellGrid.addAll(processor.getHeaderAndDataRows().stream().
+                        filter(row -> row.size() > 0).
+                        collect(Collectors.toList()));
+            }
+        } catch (Exception e) {
+            logger.error("Manifest file " + filename + " cannot be parsed. " + e.getMessage());
+        }
+        if (cellGrid.size() < 2) {
+            // No data rows found.
+            return;
+        }
+        // Cleans up headers and values by removing characters that may present a problem later.
+        int maxColumnIndex = -1;
+        for (List<String> columns : cellGrid) {
+            for (int i = 0; i < columns.size(); ++i) {
+                columns.set(i, MercuryStringUtils.cleanupValue(columns.get(i)));
+                if (StringUtils.isNotBlank(columns.get(i))) {
+                    maxColumnIndex = Math.max(maxColumnIndex, i);
+                }
+            }
+        }
+        // Makes a csv file.
+        StringWriter stringWriter = new StringWriter();
+        CSVWriter writer = new CSVWriter(stringWriter);
+        String[] template = new String[0];
+        for (List<String> columns : cellGrid) {
+            writer.writeNext(columns.toArray(template));
+        }
+        IOUtils.closeQuietly(writer);
+        // Writes csv to google bucket.
+        if (deployment != null && googleBucketDao != null) {
+            CovidManifestBucketConfig config = (CovidManifestBucketConfig) MercuryConfiguration.getInstance().
+                    getConfig(CovidManifestBucketConfig.class, deployment);
+            googleBucketDao.setConfigGoogleStorageConfig(config);
+            MessageCollection messageCollection = new MessageCollection();
+            googleBucketDao.upload(filename, stringWriter.toString().getBytes(), messageCollection);
+            if (messageCollection.hasErrors()) {
+                logger.error(StringUtils.join(messageCollection.getErrors(), "; "));
+            } else {
+                logger.info("Wrote Covid manifest " + filename + " to Google bucket.");
+            }
         }
     }
 }
