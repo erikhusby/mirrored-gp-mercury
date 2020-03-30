@@ -200,7 +200,10 @@ public class FingerprintEjb {
                 FingerprintResource.getMercurySampleMultimap(lsids, mapSmidToMercurySample, bspLsids, mapSmidToFpLsid,
                         bspGetExportedSamplesFromAliquots, mercurySampleDao);
 
-        Collection<MercurySample> mercurySamples = mapLsidToFpSamples.values();
+        Collection<MercurySample> mercurySamples = mapLsidToFpSamples.values().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         for (MercurySample mercurySample : mercurySamples) {
             fingerprints.addAll(mercurySample.getFingerprints());
         }
@@ -229,14 +232,20 @@ public class FingerprintEjb {
                                                             String participantId,
                                                             MercurySampleDao mercurySampleDao) {
         if (StringUtils.isNotBlank(participantId)) {
-            SearchItem searchItem =
-                    new SearchItem("Participant ID", "IN", Arrays.asList((participantId.toUpperCase().split("\\s+"))));
-            List<Object> ptMercurySamples = LabMetricSearchDefinition.runBspSearch(searchItem);
-            List<String> mercurySamples = ptMercurySamples.stream()
-                    .map(object -> Objects.toString(object, null))
+            List<String> partIds = Arrays.asList((participantId.toUpperCase().split("\\s+")));
+            List<String> ptIds = partIds.stream()
+                    .filter(partId -> partId.startsWith("PT-") )
                     .collect(Collectors.toList());
-            mapSmidToMercurySample =
-                    mercurySampleDao.findMapIdToMercurySample(mercurySamples);
+            if (!ptIds.isEmpty()) {
+                SearchItem searchItem =
+                        new SearchItem("Participant ID", "IN", ptIds);
+                List<Object> ptMercurySamples = LabMetricSearchDefinition.runBspSearch(searchItem);
+                List<String> mercurySamples = ptMercurySamples.stream()
+                        .map(object -> Objects.toString(object, null))
+                        .collect(Collectors.toList());
+                mapSmidToMercurySample =
+                        mercurySampleDao.findMapIdToMercurySample(mercurySamples);
+            }
         }
         return mapSmidToMercurySample;
     }
@@ -274,7 +283,7 @@ public class FingerprintEjb {
     }
 
     public void findAnchor(List<Fingerprint> fingerprints, Map<Fingerprint, String> lodScoreMap,
-                            List<Fingerprint> expected, List<Fingerprint> observed) {
+                           List<Fingerprint> expected, List<Fingerprint> observed) {
         String lodScoreStr;
         for (Fingerprint fingerprint : fingerprints) {
             Optional<Fingerprint> oldFluidigmFp = fingerprints.stream()
@@ -297,7 +306,7 @@ public class FingerprintEjb {
             if (oldFluidigmFp.isPresent()) {
                 oldFingerprint = oldFluidigmFp.get();
                 if (isAnchor(fingerprint, oldFingerprint)
-                    ) {
+                ) {
                     lodScoreStr = "Anchor FP";
                     lodScoreMap.put(fingerprint, lodScoreStr);
                 } else if (oldFingerprint.getGender() != null
@@ -319,15 +328,16 @@ public class FingerprintEjb {
         boolean isBefore = (fingerprint.getDateGenerated().before(oldFingerprint.getDateGenerated()) ||
                             oldFingerprint.getDateGenerated().equals(fingerprint.getDateGenerated()));
         boolean samePassingSample = oldFingerprint.getMercurySample().getSampleKey()
-                            .equals(fingerprint.getMercurySample().getSampleKey()) &&
+                                            .equals(fingerprint.getMercurySample().getSampleKey()) &&
                                     fingerprint.getDisposition() == Fingerprint.Disposition.PASS;
 
-        boolean isFluigidm = isBefore && samePassingSample && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM;
+        boolean isFluigidm =
+                isBefore && samePassingSample && fingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM;
         boolean isGenArray = samePassingSample && isBefore;
 
-        if (oldFingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY){
+        if (oldFingerprint.getPlatform() == Fingerprint.Platform.GENERAL_ARRAY) {
             anchor = isGenArray;
-        }else if (oldFingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM){
+        } else if (oldFingerprint.getPlatform() == Fingerprint.Platform.FLUIDIGM) {
             anchor = isFluigidm;
         }
         return anchor;

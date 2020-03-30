@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
@@ -127,6 +128,35 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     private MercurySample mercurySample;
 
     private String aggregationParticle;
+
+    public static ProductOrderSample cloneProductOrderSample(ProductOrderSample sampleToClone) {
+        ProductOrderSample newSample = new ProductOrderSample(sampleToClone.sampleName, sampleToClone.getSampleData());
+
+        newSample.setSampleComment(sampleToClone.sampleComment);
+        sampleToClone.getMercurySample().addProductOrderSample(newSample);
+        newSample.setAggregationParticle(sampleToClone.aggregationParticle);
+        newSample.setAliquotId(sampleToClone.aliquotId);
+        newSample.setDeliveryStatus(sampleToClone.deliveryStatus);
+
+        Set<RiskItem> clonedRiskItems = new HashSet<>();
+
+        // "Clone" risk items to the new sample
+        sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
+                riskItem.getComparedValue(),riskItem.getRemark())));
+        newSample.setRiskItems(clonedRiskItems);
+
+        // "Clone" sample receipt validations for the new sample
+        sampleToClone.getSampleReceiptValidations()
+                .forEach(sampleReceiptValidation ->
+                        newSample.addValidation(new SampleReceiptValidation(newSample,
+                                sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
+                                sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
+
+        // Clone Ledger items for the new sample
+        sampleToClone.getLedgerItems().forEach(ledgerEntry -> newSample.addClonedLedgerItem(LedgerEntry.cloneLedgerEntryToNewSample(ledgerEntry, newSample)));
+
+        return newSample;
+    }
 
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
@@ -463,7 +493,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Override
     public SampleData makeSampleData() {
-        return getMercurySample().makeSampleData();
+        return mercurySample != null ? mercurySample.makeSampleData() : new BspSampleData();
     }
 
     @Override
@@ -738,7 +768,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
             if(getProductOrder().hasSapQuote()) {
-                addAutoLedgerItem(completedDate, product, quantity, now, false);
+                addAutoLedgerItem(completedDate, product, quantity, now, null);
             } else {
                 addAutoLedgerItem(completedDate, nullablePriceItem.orElse(null), quantity, now);
             }
@@ -1037,7 +1067,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private Date workCompleteDate;
 
-        private boolean replacementUsed;
+        private DeliveryCondition replacementUsed;
 
         /**
          * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
@@ -1070,7 +1100,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param replacementUsed
          */
         public LedgerUpdate(String sampleName, Product product, BigDecimal oldQuantity, BigDecimal currentQuantity,
-                            BigDecimal newQuantity, Date workCompleteDate, boolean replacementUsed) {
+                            BigDecimal newQuantity, Date workCompleteDate, DeliveryCondition replacementUsed) {
             this.sampleName = sampleName;
             this.product = product;
             this.currentQuantity = currentQuantity;
@@ -1203,6 +1233,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
 
             // Update quantity, adding a new ledger entry if needed.
+            Optional<DeliveryCondition> replacementUsed = Optional.ofNullable(ledgerUpdate.replacementUsed);
+            String deliveryCondtionName = null;
+            if(replacementUsed.isPresent()) {
+                deliveryCondtionName = replacementUsed.get().getConditionName();
+            }
             if (ledgerUpdate.isQuantityChanging()) {
                 if (ledgerUpdate.isChangeRequestCurrent()) {
 
@@ -1213,7 +1248,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         if(ledgerUpdate.getPriceItem() == null) {
 
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta,
-                                    ledgerUpdate.replacementUsed);
+                                    deliveryCondtionName);
                         } else {
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(),
                                     quantityDelta);
@@ -1240,7 +1275,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             // Update work complete date for existing entry, whether or not the quantity is changing.
             if (haveExistingEntry) {
                 existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
-                existingLedgerEntry.setSapReplacementPricing(ledgerUpdate.replacementUsed);
+                existingLedgerEntry.setSapReplacement(deliveryCondtionName);
             }
         }
     }
@@ -1269,7 +1304,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param sapReplacement
      */
     public void addAutoLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, Date currentDate,
-                                  Boolean sapReplacement) {
+                                  String sapReplacement) {
         addLedgerItem(workCompleteDate, product, delta, currentDate, sapReplacement);
     }
 
@@ -1294,7 +1329,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param delta            The plus or minus value to bill to the quote server.
      * @param sapReplacement
      */
-    public void addLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, Boolean sapReplacement) {
+    public void addLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, String sapReplacement) {
         addAutoLedgerItem(workCompleteDate, product, delta, null, sapReplacement);
     }
 
@@ -1312,14 +1347,23 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public void addLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, Date autoLedgerTimestamp,
-                              Boolean sapReplacement) {
+                              String sapReplacement) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, product, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
-        ledgerEntry.setSapReplacementPricing(sapReplacement);
+        ledgerEntry.setSapReplacement(sapReplacement);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for partNumber: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), product.getName(), delta));
+    }
+
+    /**
+     * Added primarily for the purpose of fixup tests
+     * @param clonedLedgerItem
+     */
+    public void addClonedLedgerItem(LedgerEntry clonedLedgerItem) {
+        ledgerItems.add(clonedLedgerItem);
+
     }
 
     /**

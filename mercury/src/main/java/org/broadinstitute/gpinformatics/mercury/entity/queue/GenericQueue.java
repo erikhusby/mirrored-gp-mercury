@@ -51,6 +51,7 @@ public class GenericQueue {
     @OneToMany(mappedBy = "associatedQueue", cascade = CascadeType.ALL)
     @BatchSize(size = 100)
     @Sort(comparator = QueueGrouping.BySortOrder.class, type = SortType.COMPARATOR)
+    @Where(clause = "(queue_status='ACTIVE' or queue_status='REPEAT')")
     private SortedSet<QueueGrouping> queueGroupings;
 
     @ManyToMany(cascade = CascadeType.PERSIST)

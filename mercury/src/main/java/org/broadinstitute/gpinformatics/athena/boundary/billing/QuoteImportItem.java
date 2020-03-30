@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.quote.SapQuote;
 
 import javax.annotation.Nonnull;
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,9 +68,12 @@ public class QuoteImportItem {
                     if (tabularIdentifier == null) {
                         tabularIdentifier = ledger.getWorkItem();
                     }
-                } else if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
+                }
+                if (StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems = ledger.getSapDeliveryDocumentId();
-                    tabularIdentifier = sapItems;
+                    if (tabularIdentifier == null) {
+                        tabularIdentifier = sapItems;
+                    }
                 } else {
                     if (!StringUtils.equals(ledger.getSapDeliveryDocumentId(), sapItems)) {
                         throw new RuntimeException("Mis Matched SAPDelivery Document Found");
@@ -395,5 +400,25 @@ public class QuoteImportItem {
 
     public boolean isQuoteServerOrder() {
         return productOrder.hasQuoteServerQuote();
+    }
+
+    public DeliveryCondition getSapReplacementCondition() {
+        DeliveryCondition replacementResult = null;
+        Optional<String> reduce = Optional.empty();
+
+        if(productOrder.hasSapQuote()) {
+            replacementResult = null;
+            for(LedgerEntry entry:ledgerItems) {
+                if(StringUtils.isNotBlank(entry.getSapReplacement())) {
+                    // The aggregation that creates the Quote Import Items includes SAP Replacement so all ledger
+                    // entries in the Quote Inport Item should have the same sap Replacement.  Therefore, we only need
+                    // to grab the first one that we find.
+                    replacementResult = DeliveryCondition.fromConditionName(entry.getSapReplacement());
+                    break;
+                }
+            }
+        }
+
+        return replacementResult;
     }
 }

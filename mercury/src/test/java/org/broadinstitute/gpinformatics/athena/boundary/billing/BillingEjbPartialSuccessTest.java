@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderD
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -486,8 +487,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                               ". java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
         }
-        String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT, GOOD_WORK_ID,
-            BillingAdaptor.NOT_ELIGIBLE_FOR_SAP_INDICATOR, "", "", 0f, "", "", "").substring(0, 50) + ".*";
+        String successMessagePattern = String.format(BillingAdaptor.BILLING_LOG_TEXT_FORMAT,
+                billingSession.getBusinessKey(),
+                "Work item '" +GOOD_WORK_ID+"'", "", "", 0f, "", "", "").substring(0, 50) + ".*";
         assertThat(failMessage, notNullValue());
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
@@ -589,9 +591,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         QuoteImportItem quoteImportItem =
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);
         QuotePriceItem quotePriceItem = new QuotePriceItem();
-
+        BillingSession billingSession = Mockito.mock(BillingSession.class);
+        Mockito.when(billingSession.getBusinessKey()).thenReturn("BILL-12345");
         adaptor.logBilling(GOOD_WORK_ID, quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
-                SAP_DOCUMENT_ID);
+                SAP_DOCUMENT_ID, billingSession.getBusinessKey());
         Assert.assertEquals(testLogHandler.getLogs().size(), 1);
         Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }

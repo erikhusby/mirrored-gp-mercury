@@ -95,16 +95,6 @@
                     "iDisplayLength": 25
                 });
 
-                // TBD: These dialogs not implemented yet
-                // $j(".excludeSamplesDialog").dialog({ autoOpen: false, modal: true, title: "Sample IDs to exclude", resizable: false });
-                // $j("#exclude-opener").click(function() {
-                //     $j(".excludeSamplesDialog").dialog("open");
-                // });
-                // $j(".uploadSamplesDialog").dialog({ autoOpen: false, modal: true, title: "Upload Sample IDs", resizable: false });
-                // $j("#upload-opener").click(function() {
-                //     $j(".uploadSamplesDialog").dialog("open");
-                // });
-
                 $j("#dialogRename").dialog({
                     autoOpen: false,
                     height: 220,

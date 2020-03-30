@@ -345,6 +345,7 @@ public class Metadata {
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
         FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
+        INSTITUTE_ID(Category.SAMPLE, DataType.STRING, "Institute ID", Visibility.USER),
         ;
 
         private final Category category;
@@ -392,6 +393,19 @@ public class Metadata {
 
             for (Key key : values()) {
                 if (key.getDisplayName().equals(displayName)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
+        }
+        public static Key fromName(String Name) {
+
+            // todo jmt improve
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.name().equals(Name)) {
                     foundKey = key;
                     break;
                 }

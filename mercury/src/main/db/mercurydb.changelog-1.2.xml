@@ -2855,6 +2855,38 @@
             <column name="ancillary_target_vessel"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-6706" author="jsacco">
+        <sql splitStatements="false">
+            DECLARE
+            CURSOR CUR_UPD IS
+            select LAB_METRIC_ID
+            from LAB_METRIC
+            where REGEXP_INSTR( VESSEL_POSITION, '[A-Z][0-9]$' ) = 1;
+            TYPE V_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+            V_PK_ARR V_ARR_TY;
+            BEGIN
+            OPEN CUR_UPD;
+            FETCH CUR_UPD BULK COLLECT INTO V_PK_ARR;
+            CLOSE CUR_UPD;
+            IF( V_PK_ARR.COUNT > 0 ) THEN
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC_AUD
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+            END IF;
+            COMMIT;
+            EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('ERROR OCCURRED: ' || SQLERRM );
+            ROLLBACK;
+            RAISE;
+            END;
+        </sql>
+    </changeSet>
 
     <changeSet author="thompson" id="GPLIM-6080-1">
         <addColumn schemaName="mercury" tableName="mercury_control">
@@ -2886,11 +2918,55 @@
             'Fingerprinting Queue for newly received or extracted samples.');
         </sql>
     </changeSet>
-
-    <changeSet id="GPLIM-6433-1" author="jameslee">
-        <createIndex tableName="QUEUE_ENTITY" indexName="IX_VESSEL_QUEUE_ENTITY">
-            <column name="LAB_VESSEL_ID"/>
-        </createIndex>
+    <changeSet id="GPLIM-6677-3" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'ARRAY_PLATING', 'Array Plating Queue',
+            'Array Plating Queue for quanted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-4" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'SEQ_PLATING', 'Seq Plating Queue',
+            'Seq Plating Queue for quanted samples.');
+        </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-6372-3" author="thompson">
+        <addPrimaryKey tableName="QUEUE_AUD" schemaName="mercury" columnNames="rev, queue_id"
+                       constraintName="PK_QUEUE_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-4" author="thompson">
+        <addPrimaryKey tableName="QUEUE_ENTITY_AUD" schemaName="mercury" columnNames="rev, queue_entity_id"
+                       constraintName="PK_QUEUE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-5" author="thompson">
+        <addPrimaryKey tableName="QUEUE_GROUPING_AUD" schemaName="mercury" columnNames="rev, queue_grouping_id"
+                       constraintName="PK_QUEUE_GROUPING_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-6" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_AUD" indexName="IDX_QA_QUEUE_ID" >
+            <column name="QUEUE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-7" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_ENTITY_AUD" indexName="IDX_QEA_QUEUE_ENTITY_ID" >
+            <column name="QUEUE_ENTITY_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-8" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_GROUPING_AUD" indexName="IDX_QGA_QUEUE_GROUPING_ID" >
+            <column name="QUEUE_GROUPING_ID"/>
+        </createIndex>
+    </changeSet>
+    <!--
+   ##################################################################
+   ##################################################################
+
+                NO MORE CHANGES FOR THIS FILE
+                Continued in mercurydb.changelog-1.3.xml
+   ##################################################################
+   ##################################################################
+    -->
 </databaseChangeLog>

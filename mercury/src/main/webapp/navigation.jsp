@@ -42,6 +42,13 @@
                                           tabindex="=1" event="create">Create</stripes:link>
                         </li>
                     </security:authorizeBlock>
+                    <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <li>
+                            <stripes:link id="aouPdoConfig"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.AouPdoConfigActionBean"
+                                          tabindex="=1" event="list">AoU PDO Parameters</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
 
                     <security:authorizeBlock roles="<%= roles(Developer, BillingManager, PDM) %>">
                         <li class="divider"></li>
@@ -141,6 +148,13 @@
                             <stripes:link id="uploadSampleVessels"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean"
                                           event="view">Upload Sample Vessels</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="covidAccessioning"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"
+                                          event="startACovidSession">
+                                Accession COVID Manifest
+                            </stripes:link>
                         </li>
                         <li>
                             <stripes:link id="accessioning"
@@ -281,6 +295,22 @@
                                           event="view">
                                 <stripes:param name="queueType" value="FINGERPRINTING"/>
                                 Fingerprinting Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="arrayPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="ARRAY_PLATING"/>
+                                Array Plating Queue
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="seqPlatingQueue"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.queue.QueueActionBean"
+                                          event="view">
+                                <stripes:param name="queueType" value="SEQ_PLATING"/>
+                                Seq Plating Queue
                             </stripes:link>
                         </li>
                     </ul>

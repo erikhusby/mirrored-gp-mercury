@@ -49,7 +49,7 @@ public class QueueEntityDao extends GenericDao {
             Path<GenericQueue> genericQueuePath = queueGroupingPath.get(QueueGrouping_.associatedQueue);
             criteriaQuery.where(labVesselPath.get(LabVessel_.labVesselId).in(vesselIds),
                     criteriaBuilder.equal(genericQueuePath.get(GenericQueue_.queueType), queueType),
-                    criteriaBuilder.equal(root.get(QueueEntity_.queueStatus), QueueStatus.Active));
+                    criteriaBuilder.equal(root.get(QueueEntity_.queueStatus), QueueStatus.ACTIVE));
         });
     }
 }

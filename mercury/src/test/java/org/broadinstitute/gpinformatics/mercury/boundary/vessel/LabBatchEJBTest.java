@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
@@ -74,7 +75,7 @@ public class LabBatchEJBTest extends StubbyContainerTest {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
         scottmat = "scottmat";
     }
 

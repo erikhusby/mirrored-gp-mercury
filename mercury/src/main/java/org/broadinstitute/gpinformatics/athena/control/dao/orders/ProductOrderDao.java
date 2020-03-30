@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -507,6 +508,23 @@ public class ProductOrderDao extends GenericDao {
                         productOrderRoot.join(ProductOrder_.sapReferenceOrders);
             }
         }) ;
+    }
+
+    public ProductOrder findBySapOrderId(String sapOrderId) {
+        return findSingle(ProductOrder.class, new ProductOrderDaoCallback() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
+                super.callback(criteriaQuery, productOrder);
+                criteriaQuery.distinct(true);
+
+                CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+                final ListJoin<ProductOrder, SapOrderDetail> join =
+                        productOrder.join(ProductOrder_.sapReferenceOrders);
+                Predicate predicate = builder.equal(join.get(SapOrderDetail_.sapOrderNumber),sapOrderId);
+                criteriaQuery.where(predicate);
+            }
+        });
     }
 }
 

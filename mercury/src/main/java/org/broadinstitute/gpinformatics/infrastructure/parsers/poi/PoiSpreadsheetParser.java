@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public final class PoiSpreadsheetParser {
 
-    private static final Format DATE_FORMATTER = FastDateFormat.getInstance("MM/dd/yyyy");
+    static final Format DATE_FORMATTER = FastDateFormat.getInstance("MM/dd/yyyy");
 
     // This maps table processors by sheet name.
     private final Map<String, ? extends TableProcessor> processorMap;
@@ -325,6 +325,17 @@ public final class PoiSpreadsheetParser {
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.emptyMap());
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
+            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
+            parser.processRows(workbook.getSheetAt(0), processor);
+            return processor.getMessages();
+        } finally {
+            processor.close();
+        }
+    }
+    public static List<String> processSingleWorksheet(Workbook workbook, TableProcessor processor)
+            throws InvalidFormatException, IOException, ValidationException {
+        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.emptyMap());
+        try {
             processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
             parser.processRows(workbook.getSheetAt(0), processor);
             return processor.getMessages();

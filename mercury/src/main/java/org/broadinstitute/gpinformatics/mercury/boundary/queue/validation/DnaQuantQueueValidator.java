@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -30,6 +31,12 @@ public class DnaQuantQueueValidator implements AbstractQueueValidator {
      */
     @Override
     public Map<Long, ValidationResult> validatePreEnqueue(Collection<LabVessel> labVessels, MessageCollection messageCollection) {
+        return validateDna(labVessels, sampleDataFetcher);
+    }
+
+    @NotNull
+    public static Map<Long, ValidationResult> validateDna(Collection<LabVessel> labVessels,
+            BSPSampleDataFetcher sampleDataFetcher) {
         Map<Long, String> bspSampleIdsByVesselId = new HashMap<>();
 
         Map<Long, ValidationResult> validationResultsById = new HashMap<>(labVessels.size());

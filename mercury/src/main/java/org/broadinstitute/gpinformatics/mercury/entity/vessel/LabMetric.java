@@ -428,8 +428,8 @@ public class LabMetric implements Comparable<LabMetric> {
     @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
-    //todo jmt convert to enum?
-    private String vesselPosition;
+    @Enumerated(EnumType.STRING)
+    private VesselPosition vesselPosition;
 
     private Date createdDate;
 
@@ -450,7 +450,7 @@ public class LabMetric implements Comparable<LabMetric> {
     protected LabMetric() {
     }
 
-    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit, String vesselPosition,
+    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit, VesselPosition vesselPosition,
                      Date createdDate) {
         this.value = value;
         this.metricType = metricType;
@@ -519,7 +519,7 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labVessel = labVessel;
     }
 
-    public String getVesselPosition() {
+    public VesselPosition getVesselPosition() {
         return vesselPosition;
     }
 

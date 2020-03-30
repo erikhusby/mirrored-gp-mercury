@@ -149,10 +149,10 @@ public class QueueEjbDbFreeTest {
         for (QueueGrouping queueGrouping : dnaQuantQueue.getQueueGroupings()) {
             for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
                 if (queueEntity.getLabVessel().getLabel().equals(BARCODE_1)
-                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                            && queueEntity.getQueueStatus() == QueueStatus.EXCLUDED) {
                     foundItems++;
                 } else if (queueEntity.getLabVessel().getLabel().equals(BARCODE_2)
-                            && queueEntity.getQueueStatus() == QueueStatus.Excluded) {
+                            && queueEntity.getQueueStatus() == QueueStatus.EXCLUDED) {
                     foundItems++;
                 }
             }

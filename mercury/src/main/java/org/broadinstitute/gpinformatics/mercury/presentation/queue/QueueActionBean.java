@@ -11,7 +11,6 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -72,7 +71,7 @@ import java.util.Set;
 @UrlBinding(QueueActionBean.QUEUE_QUEUE_ACTION)
 public class QueueActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(QueueActionBean.class);
-    private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xls";
+    private static final String SPREADSHEET_FILENAME = "_queue_data_dump.xlsx";
 
     public static final String QUEUE_QUEUE_ACTION = "/queue/Queue.action";
 
@@ -87,8 +86,6 @@ public class QueueActionBean extends CoreActionBean {
     private String enqueueSampleIds;
 
     private QueueGrouping queueGrouping;
-
-    private Map<Long, BspUser> userIdToUsername = new HashMap<>();
 
     @Inject
     private QueueEjb queueEjb;
@@ -426,9 +423,9 @@ public class QueueActionBean extends CoreActionBean {
             for (Map.Entry<QueueStatus, Long> entry : entityStatusCounts.entrySet()) {
                 totalEntitiesInQueue.put(queueGroupingId, totalEntitiesInQueue.get(queueGroupingId) + entry.getValue().intValue());
                 switch (entry.getKey()) {
-                    case Repeat:
+                    case REPEAT:
                         totalNeedRework += entry.getValue().intValue();
-                    case Active:
+                    case ACTIVE:
                         totalInQueue += entry.getValue().intValue();
                         entitiesQueuedByPriority.put(queuePriority, entitiesQueuedByPriority.get(queuePriority) + entry.getValue().intValue());
                         remainingEntitiesInQueue.put(queueGroupingId,
@@ -455,13 +452,11 @@ public class QueueActionBean extends CoreActionBean {
 
         queueGrouping = queueDao.findById(QueueGrouping.class, queueGroupingId);
 
-        List<Long> userIds = new ArrayList<>(); // todo jmt queried but never updated
         List<LabVessel> labVessels = new ArrayList<>();
         labVesselIdToSampleId = new HashMap<>();
         labVesselIdToMercurySample = new HashMap<>();
         for (QueueEntity queueEntity : queueGrouping.getQueuedEntities()) {
             labVessels.add(queueEntity.getLabVessel());
-            // todo jmt add to userIds?
         }
 
         List<MercurySample> mercurySamples = new ArrayList<>();
@@ -469,10 +464,6 @@ public class QueueActionBean extends CoreActionBean {
         AbstractDataDumpGenerator.loadMercurySampleInformation(labVessels, mercurySamples, labVesselIdToSampleId, labVesselIdToMercurySample);
 
         sampleIdToSampleData = loadData(mercurySamples);
-
-        for (Long userId : userIds) {
-            userIdToUsername.put(userId, userList.getById(userId));
-        }
 
         return new ForwardResolution("/queue/show_queue_grouping.jsp");
     }
@@ -555,7 +546,7 @@ public class QueueActionBean extends CoreActionBean {
     private Resolution streamSpreadsheet(Object[][] rows) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", rows, out, SpreadsheetCreator.Type.XLS);
+            SpreadsheetCreator.createSpreadsheet("Sample Info", rows, out, SpreadsheetCreator.Type.XLSX);
         } catch (IOException ioEx) {
             log.error("Failed to create spreadsheet");
             throw new RuntimeException(ioEx);
@@ -669,14 +660,6 @@ public class QueueActionBean extends CoreActionBean {
 
     public void setQueueGrouping(QueueGrouping queueGrouping) {
         this.queueGrouping = queueGrouping;
-    }
-
-    public Map<Long, BspUser> getUserIdToUsername() {
-        return userIdToUsername;
-    }
-
-    public void setUserIdToUsername(Map<Long, BspUser> userIdToUsername) {
-        this.userIdToUsername = userIdToUsername;
     }
 
     public Integer getPositionToMoveTo() {
