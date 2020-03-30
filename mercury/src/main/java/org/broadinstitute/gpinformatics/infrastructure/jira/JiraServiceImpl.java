@@ -28,6 +28,8 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJaxRsClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -354,6 +356,19 @@ public class JiraServiceImpl extends AbstractJsonJaxRsClientService implements J
         UpdateIssueRequest request = new UpdateIssueRequest(key, customFields);
         WebTarget webResource = getJaxRsClient().target(request.getUrl(getBaseUrl()));
         put(webResource, request);
+    }
+
+    @Override
+    public void updateAssignee(String key, String assigneeName) {
+        UpdateIssueRequest updateIssueRequest = new UpdateIssueRequest(key, null);
+        WebTarget webResource = getJaxRsClient().target(updateIssueRequest.getUrl(getBaseUrl()));
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("fields", new JSONObject().put("assignee", new JSONObject().put("name", assigneeName)));
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        put(webResource, jsonObject.toString());
     }
 
     @Override

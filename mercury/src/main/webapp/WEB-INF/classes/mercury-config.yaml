@@ -168,37 +168,6 @@ deckMsgs:
     PROD:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
-
-bettaLimsServer:
-
-    DEV:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    TEST:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    QA:
-        wsHost: vbettalimsqa1
-        wsPort: 9998
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.qa
-
-    PROD:
-        wsHost: seqlims
-        wsPort: 9998
-        jmsHost: seqlims
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims
-
 datawhEtl:
 
     DEV:
@@ -299,13 +268,6 @@ sap:
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
-    QA:
-      #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
-      login:      GPCOMU
-      password:   SAPERQ300!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapSupportEmailSubjectPrefix: "TEST SAP Order"
-      url:  https://quote-qa.broadinstitute.org
     RC:
       #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU
@@ -363,7 +325,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -383,7 +344,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -403,7 +363,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -422,7 +381,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -442,7 +400,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -462,7 +419,6 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-      bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
       submission: PROD

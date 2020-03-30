@@ -106,6 +106,11 @@ public class SampleParentChildVesselProcessor extends SampleVesselProcessor {
         public boolean isStringColumn() {
             return false;
         }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
     }
 
     public Map<String, ParentVesselBean> getMapBarcodeToParentVessel() {

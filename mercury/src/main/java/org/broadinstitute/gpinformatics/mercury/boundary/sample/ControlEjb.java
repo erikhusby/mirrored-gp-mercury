@@ -15,7 +15,7 @@ import javax.inject.Inject;
 public class ControlEjb {
 
     @Inject
-    ControlDao controlDao;
+    private ControlDao controlDao;
 
     /**
      *

@@ -59,7 +59,7 @@ public class BillingAdaptor implements Serializable {
     public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
     public static final String BILLING_CREDIT_REQUESTED_INDICATOR = "Credit Requested";
     public static final String BILLING_LOG_TEXT_FORMAT =
-        "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
+        "%s: %s with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'";
 
     private BillingEjb billingEjb;
 
@@ -73,8 +73,10 @@ public class BillingAdaptor implements Serializable {
 
     private SapIntegrationService sapService;
 
-    private static final FastDateFormat BILLING_DATE_FORMAT =
+    private static final FastDateFormat BILLING_DATETIME_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
+    private static final FastDateFormat BILLING_DATE_FORMAT =
+            FastDateFormat.getDateInstance(FastDateFormat.SHORT);
 
     private SAPProductPriceCache productPriceCache;
 
@@ -229,7 +231,7 @@ public class BillingAdaptor implements Serializable {
                         sapBillingId = NOT_ELIGIBLE_FOR_SAP_INDICATOR;
                     }
 
-                    double quantityForSAP = item.getQuantityForSAP();
+                    BigDecimal quantityForSAP = item.getQuantity();
 
                     if (item.getProductOrder().getQuoteSource() != null) {
                         if (item.getProductOrder().hasQuoteServerQuote()) {
@@ -263,7 +265,7 @@ public class BillingAdaptor implements Serializable {
                                 if (!item.getProductOrder().getOrderStatus().canPlace()) {
                                     if (StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
-                                        if (quantityForSAP > 0) {
+                                        if (quantityForSAP.compareTo(BigDecimal.ZERO) > 0) {
                                             //todo, validate if the quantity override parameter is still necessary
                                             sapBillingId = sapService.billOrder(item, null,
                                                     item.getWorkCompleteDate());
@@ -291,14 +293,13 @@ public class BillingAdaptor implements Serializable {
 
                                             // Negative billing is allowed if the same positive number has been previously billed.
                                             // When this is not the case throw an exception.
-                                            double previouslyBilledQty =
+                                            BigDecimal previouslyBilledQty =
                                                     priorSapBillings.stream().map(LedgerEntry::getQuantity)
-                                                            .mapToDouble(Double::doubleValue)
-                                                            .sum();
-                                            if (quantityForSAP + previouslyBilledQty < 0) {
+                                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                            if (quantityForSAP.add(previouslyBilledQty).compareTo(BigDecimal.ZERO) < 0) {
                                                 result.setErrorMessage(NEGATIVE_BILL_ERROR);
                                                 throw new BillingException(NEGATIVE_BILL_ERROR);
-                                            } else if (quantityForSAP < 0) {
+                                            } else if (quantityForSAP.compareTo(BigDecimal.ZERO) < 0) {
                                                 billingEjb.sendBillingCreditRequestEmail(item, priorSapBillings,
                                                         billingSession.getCreatedBy());
                                                 item.setBillingMessages(BillingSession.BILLING_CREDIT);
@@ -329,7 +330,8 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId,
+                        billingSession.getBusinessKey());
                 } catch (Exception ex) {
 
                     StringBuilder errorMessageBuilder = new StringBuilder();
@@ -398,18 +400,26 @@ public class BillingAdaptor implements Serializable {
     }
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
-                    Set<String> billedPdoKeys, Object sapDocumentID) {
-        String priceItemName = "";
-        if(quotePriceItem != null) {
-            priceItemName = quoteImportItem.getProduct().getProductName();
+                    Set<String> billedPdoKeys, String sapDocumentID, String billingSessionId) {
+        String productOrPriceItemName = "";
+        if(quotePriceItem == null) {
+            productOrPriceItemName = quoteImportItem.getProduct().getProductName();
+        } else {
+            productOrPriceItemName = quotePriceItem.getName();
+        }
+        String billingIdText;
+        if (quoteImportItem.isSapOrder()) {
+            billingIdText = String.format("SAP Document '%s'", sapDocumentID);
+        } else {
+            billingIdText = String.format("Work item '%s'", workId);
         }
         String billingLogText = String.format(BILLING_LOG_TEXT_FORMAT,
-                workId,
-                sapDocumentID,
+                billingSessionId,
+                billingIdText,
                 BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
-                BILLING_DATE_FORMAT.format(new Date()),
+                BILLING_DATETIME_FORMAT.format(new Date()),
                 quoteImportItem.getQuantity(),
-                priceItemName,
+                productOrPriceItemName,
                 quoteImportItem.getNumSamples(),
                 billedPdoKeys);
         log.info(billingLogText);

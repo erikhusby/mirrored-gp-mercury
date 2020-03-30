@@ -90,7 +90,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
@@ -108,6 +108,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         assertThat(manifestSession.getRecords().size(), equalTo(1));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(sampleId));
+        // After running through the method, we change the metadata source from mercury to the crsp portal.
+        assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
     }
 
     public void testCreateManifestWithSamplesWithoutMaterialType() throws Exception {
@@ -118,7 +120,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
@@ -143,7 +145,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         } else {
-            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.CRSP_PORTAL));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory

@@ -53,6 +53,12 @@ class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
     }
 
     @Override
+    public void updateAssignee(String key, String name) {
+        invocationCount++;
+        throw new NotImplementedException();
+    }
+
+    @Override
     public JiraIssue getIssue(String key) throws IOException {
         invocationCount++;
         throw new NotImplementedException();

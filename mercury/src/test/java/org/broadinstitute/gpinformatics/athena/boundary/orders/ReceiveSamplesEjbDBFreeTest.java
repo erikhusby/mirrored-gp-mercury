@@ -15,8 +15,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.BSPRestService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -140,9 +143,13 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
-        ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
+        ReceiveSamplesEjb testEjb =
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList,
+                        bspRestService, sampleReceiptResource,
+                        Mockito.mock(LabVesselDao.class), Mockito.mock(QueueEjb.class),
+                        Mockito.mock(DnaQuantEnqueueOverride.class));
 
+        // TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
         testEjb.validateForReceipt(test1RequestSMIds, validationResults, "scottmat");
@@ -191,9 +198,12 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
+        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
+        DnaQuantEnqueueOverride dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
-
+                testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb, dnaQuantEnqueueOverride);
+// TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
         testEjb.validateForReceipt(test2RequestSMIds, validationResults, "scottmat");
@@ -258,9 +268,12 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
+        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
+        DnaQuantEnqueueOverride dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
-
+                testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb, dnaQuantEnqueueOverride);
+// TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
         testEjb.validateForReceipt(test3RequestSMIds, validationResults, "scottmat");
@@ -328,9 +341,12 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
+        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
+        DnaQuantEnqueueOverride dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
-
+                testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb, dnaQuantEnqueueOverride);
+// TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
         testEjb.validateForReceipt(test4RequestSMIds, validationResults, "scottmat");
@@ -429,9 +445,12 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
+        LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
+        QueueEjb queueEjb = Mockito.mock(QueueEjb.class);
+        DnaQuantEnqueueOverride dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
         ReceiveSamplesEjb testEjb = new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao,
-                testUserList, sampleReceiptResource, bspRestService);
-
+                testUserList, bspRestService, sampleReceiptResource, labVesselDao, queueEjb, dnaQuantEnqueueOverride);
+// TODO: Review this to msee what needs to be mocked on labVesselDao and QueueEjb
         MessageCollection validationResults = new MessageCollection();
 
         testEjb.validateForReceipt(test5RequestSMIds, validationResults, "scottmat");

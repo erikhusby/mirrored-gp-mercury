@@ -41,6 +41,7 @@ public class LabMetricDecision {
                 TEN_PERCENT_DIFF_REPEAT(true),
         FAIL(true),
         RISK(true),
+        NORM(true),
         FAIL_ACCEPTANCE_CRITERIA(true),
         DIVERTED_TO_XL20(false);
 
@@ -76,7 +77,6 @@ public class LabMetricDecision {
         public static Decision getDecisionByName(String name) {
             return MAP_NAME_TO_DECISION.get(name);
         }
-
     }
 
     public enum NeedsReview {

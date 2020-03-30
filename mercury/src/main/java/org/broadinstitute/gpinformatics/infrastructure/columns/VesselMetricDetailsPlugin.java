@@ -109,6 +109,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             headerGroup.addHeader(header);
         }
 
+        // Reset for next page of data
+        isDataInitialized = false;
         return metricRows;
     }
 
@@ -204,7 +206,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
             } else if ( metricEntry.getValue().size() == 1 ) {
                 LabMetric labMetric = metricEntry.getValue().get(0);
                 barcode = Encode.forHtml(labMetric.getLabVessel().getLabel());
-                position = labMetric.getVesselPosition();
+                position = labMetric.getVesselPosition().name();
                 metricValueNumber = labMetric.getValue();
                 metricValueString = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
                         + " " + labMetric.getUnits().getDisplayName();
@@ -240,7 +242,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
                     for( LabMetric labMetric : metricEntry.getValue() ) {
                         barcodeAppend.append(labMetric.getLabVessel().getLabel())
                                 .append("\n");
-                        positionAppend.append(labMetric.getVesselPosition())
+                        positionAppend.append(labMetric.getVesselPosition().name())
                                 .append("\n");
                         valueAppend.append(ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" ) + " "
                             + labMetric.getUnits().getDisplayName())

@@ -30,7 +30,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -48,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.D
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.QueueEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
@@ -74,6 +77,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntity
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FingerprintingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -101,7 +105,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -139,7 +142,7 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    public static SystemOfRecord.System expectedRouting = SystemOfRecord.System.MERCURY;
     private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -210,7 +213,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
@@ -232,7 +235,9 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
-                new BspNewRootHandler(), new CreateLabBatchHandler());
+                new BspNewRootHandler(), new CreateLabBatchHandler(), new QueueEjb(), new DnaQuantEnqueueOverride(),
+                new QueueEventHandler());
+        // TODO: Review usages of this to make sure the new QueueEjb doesn't break things
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -863,6 +868,11 @@ public class BaseEventTest {
                 labEventFactory, getLabEventHandler(), prefix).invoke();
     }
 
+    public FingerprintingEntityBuilder runFingerprintingProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new FingerprintingEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
+    }
+
     /**
      * This method runs the entities through the TruSeqStrandSpecific process.
      *
@@ -1155,10 +1165,10 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        SystemRouter systemRouter = new SystemRouter(null, workflowConfig, null);
-        SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
-        Assert.assertEquals(system, expectedRouting);
+        WorkflowConfig workflowConfig = new WorkflowLoader().getWorkflowConfig();
+
+        // All messages are now routed to Mercury.
+        Assert.assertEquals(SystemOfRecord.System.MERCURY, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
         workflowValidator.setWorkflowConfig(workflowConfig);
@@ -1200,7 +1210,7 @@ public class BaseEventTest {
         });
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override

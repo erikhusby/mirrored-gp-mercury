@@ -232,5 +232,10 @@ public class VarioskanPlateProcessor extends TableProcessor {
         public boolean isStringColumn() {
             return isString;
         }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
     }
 }

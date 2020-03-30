@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -62,6 +63,7 @@ import static java.util.Arrays.asList;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.ISeqFlowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
@@ -135,7 +137,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
     }
 
     @AfterMethod
@@ -201,7 +203,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
@@ -266,7 +268,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
@@ -410,9 +412,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         // Iterates on the loading tube barcodes to be used in the test.
         Iterator<String> barcodeIterator = mapBarcodeToTube.keySet().iterator();
         // Defines the number of tubes used for each test run, and the number of lanes to be allocated for each tube.
-        int[][] numberLanes = {{3}, {5, 17}};
+        int[][] numberLanes = {{3}, {5, 17}, {2}};
         // Defines the flowcell type to be used on each test run.
-        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell};
+        IlluminaFlowcell.FlowcellType[] flowcellTypes = {MiSeqFlowcell, HiSeq4000Flowcell, ISeqFlowcell};
 
         for (int runIdx = 0; runIdx < numberLanes.length; ++runIdx) {
 

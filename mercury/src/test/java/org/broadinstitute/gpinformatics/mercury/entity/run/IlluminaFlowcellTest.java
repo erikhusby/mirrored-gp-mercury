@@ -27,17 +27,7 @@ public class IlluminaFlowcellTest {
                 String.format("%s is not a %s, but a %s flowcellType.", barcode, flowcellType, foundFlowcellType));
     }
 
-        /*
-        2500's end in ADXX
-        MiSeqs are A plus 4 digits/chars
-        2000's are (mostly) any other 9 char/digit FC name.
-
-        select fc.barcode, mach.model
-        from receptacle fc, next_generation_run nrun, lab_machine mach, solexa_run srun
-        where fc.receptacle_id = srun.new_flowcell_id
-        and srun.run_id = nrun.run_id and nrun.lab_machine_id = mach.lab_machine_id
-
-         */
+        /* Test data for flowcell barcodes and corresponding types. */
         @DataProvider(name = "barcodesWithTypes")
         public Object[][] getBarcodesAndTypes() {
             return new Object[][]{
@@ -73,7 +63,8 @@ public class IlluminaFlowcellTest {
                     {"QQYH5CBB89", IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell},
                     {"H2JLNBGX3", IlluminaFlowcell.FlowcellType.NextSeqFlowcell},
                     {"QQYH5CBB8", IlluminaFlowcell.FlowcellType.OtherFlowcell},
-                    {"flowBcode123412341234123", IlluminaFlowcell.FlowcellType.OtherFlowcell}
+                    {"flowBcode123412341234123", IlluminaFlowcell.FlowcellType.OtherFlowcell},
+                    {"BPA73010-2735", IlluminaFlowcell.FlowcellType.ISeqFlowcell},
             };
 
         }

@@ -119,4 +119,14 @@ public interface SampleData {
     String getSampleStatus();
 
     String getReceptacleType();
+
+    String containerName();
+
+    String getManufacturerBarcode();
+
+    String getPosition();
+
+    String getBspStorageLocation();
+
+    String getMercuryStorageLocation();
 }

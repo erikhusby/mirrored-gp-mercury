@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.control.JaxRsUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -269,7 +269,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
         Assert.assertEquals(runBean.getImagedAreaPerLaneMM2(),
                 ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
-        Assert.assertEquals(runBean.getSystemOfRecord(), SystemRouter.System.SQUID);
+        Assert.assertEquals(runBean.getSystemOfRecord(), SystemOfRecord.System.SQUID);
         Assert.assertEquals(runBean.getSetupReadStructure(), thriftRun.getSetupReadStructure());
         Assert.assertEquals(runBean.getLanesSequenced(), thriftRun.getLanesSequenced());
         Assert.assertEquals(runBean.getRunFolder(), thriftRun.getRunFolder());

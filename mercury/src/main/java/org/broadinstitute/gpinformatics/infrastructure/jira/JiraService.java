@@ -49,6 +49,9 @@ public interface JiraService extends Serializable {
      */
     void updateIssue(String key, Collection<CustomField> customFields) throws IOException;
 
+    /** Updates the assignee. */
+    void updateAssignee(String key, String assigneeName);
+
     /**
      * Get the JiraIssue object for a JIRA key.
      *

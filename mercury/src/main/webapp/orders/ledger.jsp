@@ -115,6 +115,11 @@
             width: 4em;
         }
 
+        .ledgerReplacement {
+            text-align: right;
+            width: 10em;
+        }
+
         .changed {
             background-color: lawngreen;
         }
@@ -137,7 +142,7 @@
             opacity: .35;
         }
 
-        .ledgerQuantity.pending, .unbilledStatus.pending {
+        .ledgerQuantity.pending, .unbilledStatus.pending .ledgerReplacement.pending{
             font-weight: bold;
         }
 
@@ -205,6 +210,8 @@
             enableDefaultPagingOptions();
             var $ledger = $j("#ledger");
             var $ledgerQuantities = $ledger.find('input.ledgerQuantity');
+            var $ledgerReplacements = $ledger.find('select.ledgerReplacement');
+
             var ledgerTable = $ledger.dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
@@ -292,22 +299,46 @@
                             var $selectedInputs = getSelectedRows().find('input.dateComplete:enabled');
                             for (var i = 0; i < $selectedInputs.length; i++) {
                                 var $selectedInput = $selectedInputs.eq(i);
-                                if ($selectedInput.attr('name') != inputName) {
+                                if ($selectedInput.attr('name') !== inputName) {
                                     $selectedInput.val(value);
-                                    var changed = value != $selectedInput.attr('originalValue');
+                                    var changed = value !== $selectedInput.attr('originalValue');
                                     $selectedInput.toggleClass('changed', changed);
                                     $selectedInput.closest("tr").toggleClass('changed', changed);
                                     updateDateCompleteValidation($selectedInput);
                                 }
                             }
                         }
-                        var changed = value != $input.attr('originalValue');
+                        var changed = value !== $input.attr('originalValue');
                         $input.toggleClass('changed', changed);
                         $input.closest("tr").toggleClass('changed', changed);
                         updateDateCompleteValidation($input);
 
                         updateSubmitButton();
                     });
+
+                    $j('#ledger').on('change', '.ledgerReplacement', function(event) {
+                        var $input = $j(event.target);
+                        var value = $input.find(":selected").val();
+                        if(getSelectedRows().length > 0) {
+                            var inputName = $input.attr('name');
+                            var $selectedInputs = getSelectedRows().find('select.ledgerReplacement:enabled');
+                            for (var i = 0; i < $selectedInputs.length; i++) {
+                                var $selectedSelect = $selectedInputs.eq(i);
+                                if($selectedSelect.attr('name') !== inputName) {
+                                    $selectedSelect.val(value).change();
+                                    var changed = value !== $selectedSelect.attr('originalValue');
+                                    $selectedSelect.toggleClass('changed', changed);
+                                    $selectedSelect.cosest("tr").toggleClass('changed', changed);
+                                    updateUnbilledStatus($selectedSelect, $dateCompleteInputs);
+                                }
+                            }
+                        }
+                        var changed = value !== $input.attr('originalValue');
+                        $input.toggleClass('changed', changed);
+                        $input.closest("tr").toggleClass('changed', changed);
+                        updateUnbilledStatus($input, $dateCompleteInputs);
+                        updateSubmitButton();
+                    })
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
@@ -352,7 +383,7 @@
                 var $target = $j(event.target);
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
-                var filterText = $target.text()
+                var filterText = $target.text();
                 var pill = $target.parentsUntil('li.dropdown').siblings
                 ('a');
                 var check = $target.siblings('div');
@@ -393,7 +424,13 @@
                 }
 
                 // Update display styles in response to change event fired after auto-fill.
+                // TODO investigate if we have to do something for replacements
                 $ledgerQuantities.on('change', function(event) {
+                    updateUnbilledStatus($j(event.target), $dateCompleteInputs);
+                    updateSubmitButton();
+                });
+
+                $ledgerReplacements.on('change', function(event) {
                     updateUnbilledStatus($j(event.target), $dateCompleteInputs);
                     updateSubmitButton();
                 });
@@ -432,17 +469,27 @@
                 if ($selectedRows.length > 0) {
                     unselectedRows.filter(".dateComplete").prop('disabled',true);
                     unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable');
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', true);
                     var isChecked = function () {
                         $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") !== 0;
                     };
                     inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     $ledgerQuantities.filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
                     inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    unselectedRows.filter(".ledgerRepacement").prop('disabled', false);
                     inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
             });
 
+            // initialize delivery discount select lists to the pre-selected value upon page load
+            var replacementInput = $ledger.find("select.ledgerReplacement");
+            for(var index = 0;index<replacementInput.length; index++) {
+                indexedInput = replacementInput.eq(index);
+                var initialValue = indexedInput.attr('originalValue');
+                indexedInput.val(initialValue).change();
+            }
             /*
              * This page's DataTable reserves a spot, #dtButtonHolder (see its sDom property), above the table between
              * the filter input and download buttons. This one-liner moves the existing #dtButtons element into that
@@ -471,7 +518,7 @@
                     var allDataByRow = {};
                     var allRows = [];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
-                    var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
+                    var dom = changedRows.find("input, select").filter("[name^='ledgerData']").get();
                     var totalRowsToUpdate=0;
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = {};
@@ -622,7 +669,9 @@
                  * same price item, but not the current input, and apply the action.
                  */
                 var priceItemId = input.attr('priceItemId');
-                var $quantityInputs = getSelectedRows().find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                let selectedRows = getSelectedRows();
+                var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                var $replacementSelectInputs = selectedRows.find('select.ledgerReplacement[priceItemId=' + priceItemId + ']');
                 var value = input.val();
 
                 for (var i = 0; i < $quantityInputs.length; i++) {
@@ -634,7 +683,6 @@
                     }
                 }
             }
-
         });
 
         /*
@@ -703,7 +751,7 @@
 
         function updateSubmitButton() {
 <c:if test="${!actionBean.productOrderListEntry.billing}">
-            var changedInputs = $j('input.changed');
+            var changedInputs = $j('input.changed, select.changed') ;
             $j('#updateLedgers').attr('disabled', changedInputs.length == 0);
 </c:if>
         }
@@ -725,8 +773,10 @@
          * dependent on the pending processing of the unbilled ledger entries.
          */
         function updateUnbilledStatus($input, dateComplete) {
-            var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
+            var quantityInput = $input.parentsUntil('td').find('input.ledgerQuantity');
+            var hasUnbilledQuantity = parseFloat(quantityInput.val()) != parseFloat(quantityInput.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
+            quantityInput.toggleClass('pending', hasUnbilledQuantity);
             var row = $input.parentsUntil('tbody', 'tr');
             var hasUnbilledQuantityForAnyPriceItem = row.find('input.ledgerQuantity.pending').length > 0;
             row.find('.unbilledStatus').text(hasUnbilledQuantityForAnyPriceItem ? '*' : '');
@@ -960,9 +1010,9 @@
         <table id="ledger" class="table simple" style="display: none">
         <thead>
             <tr>
-                <th colspan="4"></th>
+                <th colspan="4" id="adminStuff"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
-                <th colspan="${actionBean.potentialBillings.size() * 2 + 2}" style="text-align: center">Billing</th>
+                <th colspan="${(actionBean.potentialBillings.size() * 2) + 2}" style="text-align: center">Billing</th>
             </tr>
             <tr>
                 <th>
@@ -982,9 +1032,6 @@
                     <th>Original value for ${billingIndex.ledgerDisplay}</th>
                     <th style="text-align: center">${billingIndex.ledgerDisplay}</th>
                 </c:forEach>
-                <c:if test="${actionBean.ledgerData[info.sample.samplePosition].sapOrder && actionBean.ledgerData[info.sample.samplePosition].deliveryConditionAvailable}">
-                    <th>Use Replacement Pricing for Primary Product</th>
-                </c:if>
                 <th style="text-align: center">Billed</th>
             </tr>
         </thead>
@@ -1077,7 +1124,23 @@
                                            class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                            priceItemId="${billingIndex.indexId}"
                                            billedQuantity="${info.getBilledForPriceIndex(billingIndex)}"/>
+                                    <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
+                                    <c:if test="${actionBean.productOrder.hasSapQuote() && actionBean.potentialSapReplacements.containsKey(billingIndex.product)}">
+                                            <c:set var="submittedReplacement" value="${info.replacementsByProduct.get(billingIndex)}"/>
+                                            <c:set var="currentReplacement"
+                                                   value="${submittedReplacement != null ? submittedReplacement : ''}"/>
 
+                                                <select name="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
+                                                        id="ledgerData[${info.sample.samplePosition}].quantities[${billingIndex.indexId}].replacementCondition"
+                                                        data-rownum="${info.sample.samplePosition}" class="ledgerReplacement" priceItemId="${billingIndex.indexId}"
+                                                        originalValue="${currentReplacement}">
+                                                    <option value="">Select Discount Price ...</option>
+                                                    <c:set var="replacementsByProduct" value="${actionBean.potentialSapReplacements.get(billingIndex.product)}"/>
+                                                    <c:forEach items="${replacementsByProduct}" var="deliveryConditions">
+                                                        <option value="${deliveryConditions.conditionName}"> ${deliveryConditions.displayName}</option>
+                                                    </c:forEach>
+                                                </select>
+                                    </c:if>
                                 </c:if>
                             <c:choose>
                                 <c:when test="${actionBean.productOrder.hasSapQuote()}">
@@ -1095,10 +1158,6 @@
                             </c:if>
                         </td>
                     </c:forEach>
-                    <c:if test="${actionBean.ledgerData[info.sample.samplePosition].sapOrder && actionBean.ledgerData[info.sample.samplePosition].deliveryConditionAvailable}">
-                        <input type="checkbox" name="ledgerData[${info.sample.samplePosition}].primaryReplacement"
-                               data-rownum = "${info.sample.samplePosition}">
-                    </c:if>
 
                     <td style="text-align: center">
                         <c:if test="${info.sample.completelyBilled}">

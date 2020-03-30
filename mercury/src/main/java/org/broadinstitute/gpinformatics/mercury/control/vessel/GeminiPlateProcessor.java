@@ -299,6 +299,11 @@ public class GeminiPlateProcessor extends TableProcessor {
             return true;
         }
 
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
+
         /**
          * Lookup all ColumnHeaders matching column names.
          *

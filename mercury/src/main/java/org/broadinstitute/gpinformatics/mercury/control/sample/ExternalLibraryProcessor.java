@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.products.PipelineDataType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
@@ -62,7 +63,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
     private Map<String, ReagentDesign> baitMap = new HashMap<>();
     private Map<String, MolecularIndexingScheme> molecularIndexingSchemeMap = new HashMap<>();
     private Map<String, ReferenceSequence> referenceSequenceMap = new HashMap<>();
-    private Map<String, String> aggregationDataTypeMap = new HashMap<>();
+    private Map<String, PipelineDataType> pipelineDataTypeMap = new HashMap<>();
     private Set<Object> entitiesToUpdate = new HashSet<>();
     private List<Boolean> requiredValuesPresent = new ArrayList<>();
     private List<String> aggregationParticles = new ArrayList<>();
@@ -159,6 +160,11 @@ public class ExternalLibraryProcessor extends TableProcessor {
         @Override
         public boolean isStringColumn() {
             return true;
+        }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
         }
 
         public DataPresence getDataPresenceIndicator() {
@@ -310,7 +316,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             }
 
             if (StringUtils.isNotBlank(dto.getAggregationDataType()) &&
-                    aggregationDataTypeMap.get(dto.getAggregationDataType()) == null) {
+                pipelineDataTypeMap.get(dto.getAggregationDataType()) == null) {
                 messages.addError(String.format(SampleInstanceEjb.UNKNOWN, dto.getRowNumber(),
                         Headers.AGGREGATION_DATA_TYPE.getText(), "Mercury"));
             }
@@ -701,7 +707,7 @@ public class ExternalLibraryProcessor extends TableProcessor {
             MercurySample mercurySample) {
 
         SampleInstanceEntity sampleInstanceEntity = new SampleInstanceEntity();
-        sampleInstanceEntity.setAggregationDataType(dto.getAggregationDataType());
+        sampleInstanceEntity.setPipelineDataType(pipelineDataTypeMap.get(dto.getAggregationDataType()));
         sampleInstanceEntity.setAggregationParticle(dto.getAggregationParticle());
         sampleInstanceEntity.setAnalysisType(analysisTypeMap.get(dto.getAnalysisTypeName()));
         sampleInstanceEntity.setBaitName(dto.getBait());
@@ -845,8 +851,8 @@ public class ExternalLibraryProcessor extends TableProcessor {
         return molecularIndexingSchemeMap;
     }
 
-    public Map<String, String> getAggregationDataTypeMap() {
-        return aggregationDataTypeMap;
+    public Map<String, PipelineDataType> getPipelineDataTypeMap() {
+        return pipelineDataTypeMap;
     }
 
     /**

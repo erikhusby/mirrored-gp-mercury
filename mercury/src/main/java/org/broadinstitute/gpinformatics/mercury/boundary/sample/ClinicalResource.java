@@ -7,11 +7,13 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -66,12 +68,16 @@ public class ClinicalResource {
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
 
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+
     @SuppressWarnings("unused")
     public ClinicalResource() {}
 
-    public ClinicalResource(UserBean userBean, ManifestSessionEjb manifestSessionEjb) {
+    public ClinicalResource(UserBean userBean, ManifestSessionEjb manifestSessionEjb, MercurySampleDao mercurySampleDaoIn) {
         this.userBean = userBean;
         this.manifestSessionEjb = manifestSessionEjb;
+        this.mercurySampleDao = mercurySampleDaoIn;
     }
 
     /**
@@ -99,7 +105,29 @@ public class ClinicalResource {
                         clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit(),
                         clinicalResourceBean.getSamples());
 
+        List<MercurySample> mercurySamples =
+                mercurySampleDao.findBySampleKeys(extractSampleIdsFromSamples(clinicalResourceBean.getSamples()));
+
+        updateMetadataSource(mercurySamples);
+
         return manifestSession.getManifestSessionId();
+    }
+
+    private void updateMetadataSource(List<MercurySample> mercurySamples) {
+        for (MercurySample mercurySample : mercurySamples) {
+            mercurySample.changeMetadataSourceToCrspPortal();
+            mercurySampleDao.persist(mercurySample);
+        }
+    }
+
+    private List<String> extractSampleIdsFromSamples(List<Sample> samples) {
+        List<String> sampleIds = new ArrayList<>(samples.size());
+        for (Sample sample : samples) {
+            Metadata.Key metadataKey = Metadata.Key.BROAD_SAMPLE_ID;
+            sampleIds.add(metadataKey.getValueFor(sample));
+        }
+
+        return sampleIds;
     }
 
     private void validateSamples(Collection<Sample> samples) {
