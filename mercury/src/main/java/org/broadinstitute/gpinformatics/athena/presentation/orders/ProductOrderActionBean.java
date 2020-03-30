@@ -2940,10 +2940,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException, SAPIntegrationException {
         SapQuote sapQuote = null;
-        if(StringUtils.isNotBlank(quoteIdentifier)) {
-            if (StringUtils.isNumeric(quoteIdentifier)) {
-                sapQuote = sapService.findSapQuote(quoteIdentifier);
-            }
+        if (editOrder.hasSapQuote()) {
+            sapQuote = editOrder.getSapQuote(sapService);
         }
         JSONObject customizationJson = new JSONObject(customizationJsonString);
 
