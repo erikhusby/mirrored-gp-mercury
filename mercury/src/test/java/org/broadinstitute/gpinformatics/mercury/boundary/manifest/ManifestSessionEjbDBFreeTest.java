@@ -423,7 +423,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void covidResearchProjectNotFound() throws Exception {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory);
+                labVesselFactory, null, null);
         try {
             String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/PHS_manifest_03232020.csv");
             InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
