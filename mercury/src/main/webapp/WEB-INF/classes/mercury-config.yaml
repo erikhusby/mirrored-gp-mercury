@@ -316,7 +316,7 @@ covidManifestGoogleStorage:
         bucketName: covid-19-test-input-staging
     PROD:
         credentialFilename: serviceAccountKeys/covid-19-testing.json
-        bucketName: covid-19-test
+        bucketName: covid-19-test-input-prod
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
