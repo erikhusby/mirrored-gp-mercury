@@ -18,9 +18,10 @@ public class CovidHeader implements AccessioningColumnHeader {
     public static CovidHeader DATE_COLLECTED = new CovidHeader("time_collected", Metadata.Key.COLLECTION_DATE, true, false);
     public static CovidHeader INSTITUTION_ID = new CovidHeader("institution_id", Metadata.Key.INSTITUTE_ID, true, false);
     public static CovidHeader SAMPLE_ID = new CovidHeader("sample_id", Metadata.Key.SAMPLE_ID, true, false);
+    public static CovidHeader MATRIX_ID = new CovidHeader("matrix_id", Metadata.Key.BROAD_2D_BARCODE, false, false);
     ;
 
-    public static CovidHeader[] headerValues = Stream.of(PATIENT_ID, REQUESTING_PHYSICIAN, DATE_COLLECTED, INSTITUTION_ID, SAMPLE_ID)
+    public static CovidHeader[] headerValues = Stream.of(PATIENT_ID, REQUESTING_PHYSICIAN, DATE_COLLECTED, INSTITUTION_ID, SAMPLE_ID, MATRIX_ID)
             .toArray(CovidHeader[]::new);
 
     private final String columnName;
@@ -110,15 +111,22 @@ public class CovidHeader implements AccessioningColumnHeader {
      */
     public static CovidHeader fromColumnName(String columnHeader) {
         CovidHeader searchResult = null;
-        for (CovidHeader manifestHeader : CovidHeader.values()) {
-            if (manifestHeader.getColumnName().equals(columnHeader)) {
-                searchResult = manifestHeader;
+        if (columnHeader != null) {
+            for (CovidHeader manifestHeader : CovidHeader.values()) {
+                if (manifestHeader.getColumnName().equals(columnHeader)) {
+                    searchResult = manifestHeader;
+                }
+            }
+            if (searchResult==null) {
+                searchResult = new CovidHeader(columnHeader, Metadata.Key.NA, false, true);
             }
         }
-        if (searchResult==null) {
-            return new CovidHeader(columnHeader, Metadata.Key.NA, false, true);
+
+        if (searchResult == null) {
+            throw new IllegalArgumentException(AccessioningColumnHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
+        } else {
+            return searchResult;
         }
-        return searchResult;
     }
 
     /**

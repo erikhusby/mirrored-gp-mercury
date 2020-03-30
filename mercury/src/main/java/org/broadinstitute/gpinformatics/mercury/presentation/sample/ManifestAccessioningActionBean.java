@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -106,7 +107,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     private ManifestStatus statusValues;
     private String scanErrors;
-    private String scanMessages;
+    private List<String> scanMessages = new ArrayList<>();
 
     private String receiptKey;
 
@@ -283,7 +284,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
         try {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
-        } catch (TubeTransferException | InformaticsServiceException e) {
+        } catch (InformaticsServiceException e) {
             addGlobalValidationError(e.getMessage());
             logger.error(e);
             result = getContext().getSourcePageResolution();
@@ -295,6 +296,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(SCAN_ACCESSION_SOURCE_ACTION)
     public Resolution scanAccessionSource() {
 
+        ManifestSession manifestSession = null;
         try {
             if(!selectedSession.isCovidSession()) {
                 if (selectedSession.isFromSampleKit()) {
@@ -305,14 +307,19 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                     manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
                 }
             }
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
-            scanMessages = String.format("Sample %s scanned successfully", accessionSource);
+            manifestSession = manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
+            scanMessages.add(String.format("Sample %s and destination tube %s scanned successfully", accessionSource, accessionTube));
         } catch (Exception e) {
             scanErrors = e.getMessage();
             logger.error(scanErrors);
         }
         statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-        return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        ForwardResolution forwardResolution = new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE);
+        forwardResolution.addParameter(SELECTED_SESSION_ID, selectedSessionId);
+        if(manifestSession != null && manifestSession.getStatus() == ManifestSession.SessionStatus.COMPLETED) {
+            scanMessages.add(String.format("The session %s has successfully been marked as completed", selectedSession.getSessionName()));
+        }
+        return forwardResolution;
     }
 
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
@@ -334,7 +341,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             logger.error(e);
-            return getContext().getSourcePageResolution();
+            return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
         }
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
@@ -440,7 +447,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return scanErrors;
     }
 
-    public String getScanMessages() {
+    public List<String> getScanMessages() {
         return scanMessages;
     }
 

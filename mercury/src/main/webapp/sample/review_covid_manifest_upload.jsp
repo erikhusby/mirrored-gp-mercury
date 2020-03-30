@@ -31,6 +31,7 @@
                         {"bSortable": true, "sType": "date"}, // collection Date
                         {"bSortable": true}, // Institution
                         {"bSortable": true}, // Collaborator
+                        {"bSortable": true}, // matrix id
                     ]
                 }).fnSetFilteringDelay(300);
             });
@@ -43,6 +44,7 @@
         <c:set var="sampleIdKey" value="<%= Key.SAMPLE_ID %>"/>
         <c:set var="collectionDateKey" value="<%= Key.COLLECTION_DATE%>"/>
         <c:set var="instituteKey" value="<%= Key.INSTITUTE_ID%>"/>
+        <c:set var="matrixIdKey" value="<%= Key.BROAD_2D_BARCODE%>"/>
 
         <table id="sampleList" class="table simple">
             <thead>
@@ -54,6 +56,7 @@
                 <th width="100px">${collectionDateKey.displayName}</th>
                 <th width="50px">${instituteKey.displayName}</th>
                 <th width="120px">${sampleIdKey.displayName}</th>
+                <th width="120px">${matrixIdKey.displayName}</th>
             </tr>
             </thead>
 
@@ -82,6 +85,9 @@
                     </td>
                     <td>
                             ${record.getValueByKey(sampleIdKey)}
+                    </td>
+                    <td>
+                            ${record.getValueByKey(matrixIdKey)}
                     </td>
                 </tr>
             </c:forEach>
