@@ -4,11 +4,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
-import org.broadinstitute.gpinformatics.athena.entity.project.BillingTrigger;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.MayoManifestEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
@@ -27,10 +25,8 @@ import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -718,34 +714,6 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = false)
-    public void gplim6698_billingTriggerValueMappings() throws Exception {
-        utx.begin();
-        userBean.loginOSUser();
-        String fixupCommentary = "GPLIM-6698: All of Us Billing Triggers";
-        List<AttributeArchetype> archetypes = new ArrayList<>();
-
-        Arrays.asList(KeyValueMapping.AOU_PDO_WGS, KeyValueMapping.AOU_PDO_ARRAY).forEach(groupName -> {
-            AttributeDefinition attributeDefinition = attributeArchetypeDao
-                .findSingle(AttributeDefinition.class, AttributeDefinition_.group, groupName);
-            AttributeArchetype archetype = attributeArchetypeDao
-                .findKeyValueByKeyAndMappingName(MayoManifestEjb.BILLING_TRIGGERS, groupName);
-
-            if (archetype == null) {
-                System.out.println("Adding new " + groupName + " key " + MayoManifestEjb.BILLING_TRIGGERS);
-                archetype = new KeyValueMapping(groupName, MayoManifestEjb.BILLING_TRIGGERS,
-                    Collections.singleton(attributeDefinition));
-                String attributeValue = StringUtils
-                    .join(Arrays.asList(BillingTrigger.ADDONS_ON_RECEIPT.name(), BillingTrigger.DATA_REVIEW.name()), ",");
-                archetype.addOrSetAttribute("theValue", attributeValue);
-            }
-            archetypes.add(archetype);
-        });
-        attributeArchetypeDao.persistAll(archetypes);
-        attributeArchetypeDao.persist(new FixupCommentary(fixupCommentary));
-
-        utx.commit();
-    }
 
     /**
      * Deletes key-value archetypes and attributes. All must have the same key-value mapping name.
