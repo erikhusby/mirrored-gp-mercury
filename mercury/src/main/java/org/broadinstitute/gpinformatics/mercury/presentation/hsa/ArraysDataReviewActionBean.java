@@ -133,7 +133,12 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
                 arraysQc.stream().collect(Collectors.toMap(ArraysQc::getChipWellBarcode, Function.identity()));
 
         for (WaitForReviewTask task: tasks) {
-            LabVessel labVessel = task.getState().getLabVessels().iterator().next();
+            Set<LabVessel> labVessels = task.getState().getLabVessels();
+            if (labVessels.isEmpty()) {
+                // Sequencing Data Review
+                continue;
+            }
+            LabVessel labVessel = labVessels.iterator().next();
             PlateWell plateWell = OrmUtil.proxySafeCast(labVessel, PlateWell.class);
             createDto(plateWell, mapChipWellToMetric.get(toChipWell(plateWell.getLabel())));
         }
