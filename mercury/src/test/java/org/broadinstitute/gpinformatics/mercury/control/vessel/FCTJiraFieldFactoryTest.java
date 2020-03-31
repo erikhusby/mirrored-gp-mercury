@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -123,7 +122,6 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         FlowcellDesignationEjb flowcellDesignationEjb = mock(FlowcellDesignationEjb.class);
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         when(flowcellDesignationEjb.getFlowcellDesignations(labBatch)).thenReturn(Collections.emptyList());
 

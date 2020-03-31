@@ -354,6 +354,13 @@ MayoManifestGoogleStorage:
         writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
         dailyCredentialRenewal: true
+covidManifestGoogleStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/covid-19-testing.json
+        bucketName: covid-19-test-input-staging
+    PROD:
+        credentialFilename: serviceAccountKeys/covid-19-testing.json
+        bucketName: covid-19-test-input-prod
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
@@ -377,6 +384,7 @@ mercury:
       decoder: DEV
       dragen: DEV
       MayoManifestGoogleStorage: DEV
+      covidManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
@@ -396,6 +404,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: DEV
+      covidManifestGoogleStorage: DEV
       dragen: DEV
 
     TEST:
@@ -416,6 +425,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: TEST
+      covidManifestGoogleStorage: DEV
       dragen: DEV
 
     QA:
@@ -435,6 +445,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: QA
+      covidManifestGoogleStorage: DEV
       dragen: QA
 
     RC:
@@ -455,6 +466,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: RC
+      covidManifestGoogleStorage: DEV
       dragen: QA
 
 
@@ -476,5 +488,6 @@ mercury:
       sap:  PROD
       decoder: PROD
       MayoManifestGoogleStorage: PROD
+      covidManifestGoogleStorage: PROD
       dragen: PROD
 

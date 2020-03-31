@@ -48,7 +48,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BillingSessionActionBeanTest {
 
     private static final String WORK_ITEM_ID = "1234";

@@ -256,7 +256,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
+                        mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory,
+                        null, null);
     }
 
     /**
@@ -295,7 +296,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory, null, null);
     }
 
     /**
@@ -399,7 +400,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory, null, null);
 
         return holder;
     }
@@ -411,7 +412,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory);
+                labVesselFactory, null, null);
         try {
             ejb.uploadManifest(null, null, null, ManifestSessionEjb.AccessioningProcessType.CRSP, false);
             Assert.fail();
@@ -422,7 +423,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void covidResearchProjectNotFound() throws Exception {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory);
+                labVesselFactory, null, null);
         try {
             String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/PHS_manifest_03232020.csv");
             InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
@@ -854,7 +855,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory);
+                labVesselFactory, null, null);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();

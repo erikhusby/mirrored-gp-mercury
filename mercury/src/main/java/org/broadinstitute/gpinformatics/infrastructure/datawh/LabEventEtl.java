@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -13,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
@@ -41,7 +41,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();
     private SequencingSampleFactEtl sequencingSampleFactEtl;
-    private WorkflowConfig workflowConfig;
     public static final String NONE = "NONE";
     public static final String MULTIPLE = "MULTIPLE";
     public final String ancestorFileName = "library_ancestry";
@@ -52,11 +51,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao,
-                       SequencingSampleFactEtl sequencingSampleFactEtl, WorkflowConfig workflowConfig, BSPUserList bspUserList) {
+            SequencingSampleFactEtl sequencingSampleFactEtl, BSPUserList bspUserList) {
         super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
-        this.workflowConfig = workflowConfig;
         this.bspUserList = bspUserList;
     }
 
@@ -153,7 +151,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
-        this.eventAncestryEtlUtil = new EventAncestryEtlUtil(workflowConfig);
+        this.eventAncestryEtlUtil = new EventAncestryEtlUtil(WorkflowLoader.getWorkflowConfig());
 
         try {
             // Deletion records only contain the entityId field.
@@ -462,7 +460,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         // Supports testing of just this method in a DBFree test
         if( eventAncestryEtlUtil == null ) {
-            eventAncestryEtlUtil = new EventAncestryEtlUtil(workflowConfig);
+            eventAncestryEtlUtil = new EventAncestryEtlUtil(WorkflowLoader.getWorkflowConfig());
         }
 
         // Sanity check bail out

@@ -882,7 +882,7 @@ function updateFundsRemaining() {
 
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey+"&originalQuote=" + originalQuote,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier,
             dataType: 'json',
             success: updateFunds
         });

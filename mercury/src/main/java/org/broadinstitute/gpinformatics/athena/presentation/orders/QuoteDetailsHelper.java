@@ -12,10 +12,10 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.quote.FundingDetail;
 import org.broadinstitute.sap.entity.quote.FundingStatus;
 import org.broadinstitute.sap.entity.quote.QuoteStatus;
 import org.broadinstitute.sap.entity.quote.SapQuote;
@@ -70,7 +71,7 @@ public class QuoteDetailsHelper {
         this.sapService = sapService;
     }
 
-    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier, String originalQuote)
+    protected JSONObject getQuoteDetailsJson(ProductOrderActionBean actionBean, String quoteIdentifier)
         throws Exception {
         Map<String, Object> rootMap = new HashMap<>();
         QuoteDetail quoteDetails = getQuoteDetails(quoteIdentifier, actionBean);
@@ -88,6 +89,13 @@ public class QuoteDetailsHelper {
     protected QuoteDetail getQuoteDetails(String quoteIdentifier,
                                           ProductOrderActionBean actionBean) throws Exception {
         QuoteDetail quoteDetail = new QuoteDetail();
+
+        if (QuoteService.isDevQuote(quoteIdentifier)) {
+            quoteDetail = new QuoteDetail();
+            quoteDetail.setQuoteIdentifier(quoteIdentifier);
+            quoteDetail.addFundingInfo(FundingInfo.excludedQuote(quoteIdentifier, actionBean.getQuoteUrl(quoteIdentifier)));
+            return quoteDetail;
+        }
 
         try {
             quoteDetail.setQuoteIdentifier(quoteIdentifier);
@@ -114,9 +122,9 @@ public class QuoteDetailsHelper {
                     if (CollectionUtils.isEmpty(quoteFunding.getFundingLevel())) {
                         quoteDetail.setError("This quote has no active Funding Sources.");
                     } else {
-                        quoteFunding.getFundingLevel().forEach(fundingLevel -> {
+                        for (FundingLevel fundingLevel : quoteFunding.getFundingLevel()) {
                             if (fundingLevel.getFunding() != null) {
-                                fundingLevel.getFunding().forEach(funding -> {
+                                for (Funding funding : fundingLevel.getFunding()) {
                                     if (funding != null && funding.isFundsReservation()) {
                                         if (StringUtils.isNotBlank(funding.getCostObject())) {
                                             FundingInfo fundingInfo = FundingInfo.fundsReservationFunding(
@@ -130,9 +138,9 @@ public class QuoteDetailsHelper {
                                             .purchaseOrderFunding(funding.getPurchaseOrderNumber(),
                                                 FundingStatus.APPROVED.getStatusText()));
                                     }
-                                });
+                                }
                             }
-                        });
+                        }
                     }
                 } else if (quoteSource.isSapType()) {
                     final SapQuote quote;
@@ -142,17 +150,17 @@ public class QuoteDetailsHelper {
                         throw new SAPIntegrationException(String.format("Quote '%s' not found", quoteIdentifier), e);
                     }
 
-                    Optional<FundingStatus> fundingHeaderStatus =
-                        Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus());
+                    FundingStatus fundingHeaderStatus =
+                        Optional.ofNullable(quote.getQuoteHeader().getFundingHeaderStatus()).orElse(null);
 
                     Optional<OrderCalculatedValues> sapOrderCalculatedValues =
                             Optional.ofNullable(sapService.calculateOpenOrderValues(0, quote, null));
 
                     quoteDetail.setQuoteType(quoteSource);
-                    fundingHeaderStatus.ifPresent(status -> {
+                    if (fundingHeaderStatus != null) {
                         quoteDetail.setStatus(quote.getQuoteHeader().getQuoteStatus().getStatusText());
-                        quoteDetail.setOverallFundingStatus(status.getStatusText());
-                    });
+                        quoteDetail.setOverallFundingStatus(fundingHeaderStatus.getStatusText());
+                    }
 
                     BigDecimal fundsRemaining = quote.getQuoteHeader().fundsRemaining();
                     if(sapOrderCalculatedValues.isPresent()) {
@@ -172,7 +180,7 @@ public class QuoteDetailsHelper {
                     if (CollectionUtils.isEmpty(quote.getFundingDetails())) {
                         quoteDetail.setError("This quote has no active Funding Sources.");
                     } else {
-                        quote.getFundingDetails().forEach(fundingDetail -> {
+                        for (FundingDetail fundingDetail : quote.getFundingDetails()) {
                             try {
                                 Optional<SapIntegrationClientImpl.FundingType> fundingType =
                                     Optional.ofNullable(fundingDetail.getFundingType());
@@ -202,7 +210,7 @@ public class QuoteDetailsHelper {
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
-                        });
+                        }
                     }
                 }
             }
@@ -212,7 +220,7 @@ public class QuoteDetailsHelper {
             logger.error(quoteServerError);
             quoteDetail.setError(StringEscapeUtils.escapeHtml4(quoteServerError));
         } catch (Exception ex) {
-            logger.error("Error occured calculating quote funding", ex);
+            logger.error("Error occurred calculating quote funding", ex);
             try {
                 quoteDetail.setError("Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
@@ -255,6 +263,20 @@ public class QuoteDetailsHelper {
             return fundingInfo;
         }
 
+        /**
+         * Since DEV Quotes are cached we should not show quote details since they will not be up-to-date.
+         * For these quotes create a link to the Quote Server.
+         */
+        public static FundingInfo excludedQuote(String quoteIdentifier, String quoteUrl) {
+            FundingInfo fundingInfo = new FundingInfo(Funding.FUNDS_RESERVATION);
+            fundingInfo.setQuoteWarning(false);
+            String quoteLink =
+                String.format("<a href=\"%s\" class=\"external\" target=\"QUOTE\">%s</a>", quoteUrl, quoteIdentifier);
+            fundingInfo.setFundingInfoString(String
+                .format("Quote Details not available for this quote. See %s for funding details.", quoteLink));
+            return fundingInfo;
+        }
+
         public static FundingInfo fundsReservationFunding(String fundsReservationNumber, String costObject,
                                                           String status, Date expirationDate, boolean isApproved) {
             FundingInfo fundingInfo = new FundingInfo(Funding.FUNDS_RESERVATION);
@@ -264,8 +286,6 @@ public class QuoteDetailsHelper {
 
             boolean grantActive = FundingLevel.isGrantActiveForDate(todayTruncated, expirationDate);
             long daysUntilExpired = DateUtils.getNumDaysBetween(todayTruncated, expirationDate);
-
-
             String expiresString = "Expires " + DateUtils.getDate(expirationDate);
             if (daysUntilExpired > 0 && daysUntilExpired < 45) {
                 expiresString = String.format(

@@ -132,7 +132,7 @@ public class MayoManifestEjbTest extends Arquillian {
                 "BiobankId_SampleId", "Collection_Date", "BiobankId", "Sex_At_Birth",
                 "Age", "Sample_Type", "Treatments", "Quantity(ul)", "Total_Concentration(ng/ul)",
                 "Total_Dna(ng)", "Visit_Description", "Sample_Source", "Study", "Tracking_Number",
-                "Contact", "Email", "Requesting_Physician", "Test_Name", "NY_State(Y/N)"));
+                "Contact", "Email", "Test_Name", "NY_State(Y/N)"));
 
         int tubeIndex = 0;
         for (String rackBarcode : rackBarcodeToNumberTubes.keySet()) {
@@ -144,7 +144,7 @@ public class MayoManifestEjbTest extends Arquillian {
                         "PS-" + iSuffix, "BiS-" + iSuffix, "02/03/2019", "Bi-" + iSuffix, (i % 2 == 0 ? "M":"F"),
                         "22", "DNA", "", String.valueOf(100 - tubeIndex), (100 + tubeIndex) + ".13",
                         "333", "Followup", "Whole Blood", "StudyXYZ", "Tk-" + testSuffix,
-                        "Minnie Me", "mm@none.org", "Dr Evil", "All Tests", (i %2 == 0 ? "Y":"N")));
+                        "Minnie Me", "mm@none.org", "aou_array", (i %2 == 0 ? "Y":"N")));
             }
         }
         return cellGrid;
