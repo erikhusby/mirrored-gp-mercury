@@ -227,7 +227,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
 
     public static final List<String> EXCLUDED_QUOTES_FROM_VALUE = Stream.of("GP87U", "CRSPEVR", "GPSPGR7").collect(Collectors.toList());
-    public static final String ENTER_THE_QUOTE_ID = "Enter the Quote ID for this order";
 
     private String sampleSummary;
     private State state;
@@ -2940,7 +2939,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void buildJsonObjectFromEditOrderProductCustomizations(String quoteId) throws JSONException, SAPIntegrationException {
-        quoteId = ENTER_THE_QUOTE_ID.equals(quoteId) ? null : quoteId;
         SapQuote sapQuote = null;
         if (StringUtils.isNotBlank(quoteId)) {
             if (StringUtils.isNumeric(this.quoteIdentifier)) {
