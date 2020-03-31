@@ -93,20 +93,18 @@ public class EventHandlerSelector {
         case BLOOD_BUFFY_COAT_TRANSFER:
             bspNewRootHandler.handleEvent(targetEvent, stationEvent);
             break;
-        case ARRAY_PLATING_DILUTION:
-            createLabBatchHandler.handleEvent(targetEvent, stationEvent);
-            queueEventHandler.handleEvent(targetEvent, stationEvent);
-            break;
         case INFINIUM_XSTAIN:
         case INFINIUM_XSTAIN_HD:
             createArraysStateMachineHandler.handleEvent(targetEvent, stationEvent);
             break;
+        case ARRAY_PLATING_DILUTION:
+        case AUTO_DAUGHTER_PLATE_CREATION:
+            createLabBatchHandler.handleEvent(targetEvent, stationEvent);
         case VOLUME_MEASUREMENT:
         case PICO_DILUTION_TRANSFER_FORWARD_BSP:
         case PICO_TRANSFER:
         case FINGERPRINTING_ALIQUOT:
         case FINGERPRINTING_ALIQUOT_FORWARD_BSP:
-        case AUTO_DAUGHTER_PLATE_CREATION:
             queueEventHandler.handleEvent(targetEvent, stationEvent);
             break;
         }

@@ -50,8 +50,9 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     private static final long serialVersionUID = 8458283723746937096L;
 
-    @Inject
     private QuoteConfig quoteConfig;
+
+    private QuotesCache quotesCache;
 
     static final String WORK_ITEM_ID = "workItemId\t";
 
@@ -66,9 +67,12 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.
+     * @param quotesCache
      */
-    public QuoteServiceImpl(QuoteConfig quoteConfig) {
+    @Inject
+    public QuoteServiceImpl(QuoteConfig quoteConfig, QuotesCache quotesCache) {
         this.quoteConfig = quoteConfig;
+        this.quotesCache = quotesCache;
     }
 
     enum Endpoint {
@@ -278,7 +282,12 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
+        return getQuoteByAlphaId(alphaId, false);
+    }
+
+    @Override
+    public Quote getQuoteByAlphaId(String alphaId, boolean isCacheRefresh) throws QuoteServerException, QuoteNotFoundException {
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE), isCacheRefresh);
     }
 
     @Override
@@ -297,9 +306,30 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
     * @throws QuoteServerException Any other error with the quote server.
     **/
     private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
-        Quote quote;
+        return getSingleQuoteById(id, url, false);
+    }
+
+    /**
+    * private method to get a single quote. Can be overridden by mocks.
+    *
+    * @param id The quote identifier.
+    * @param url The url to use for the quote server.
+     *
+    * @return The quote found.
+    * @throws QuoteNotFoundException Error when quote is not found.
+    * @throws QuoteServerException Any other error with the quote server.
+    **/
+    private Quote getSingleQuoteById(String id, String url, boolean isCacheRefresh) throws QuoteNotFoundException, QuoteServerException {
         if (StringUtils.isEmpty(id)) {
             return (null);
+        }
+        Quote quote = null;
+
+        if (QuoteService.isDevQuote(id) && !isCacheRefresh) {
+            quote = quotesCache.getQuote(id);
+            if (quote != null) {
+                return quote;
+            }
         }
 
         final String ENCODING = "UTF-8";
@@ -454,5 +484,15 @@ public class QuoteServiceImpl extends AbstractJaxRsClientService implements Quot
         }
 
         return priceList;
+    }
+
+    /**
+     * Method for subclasses to retrieve the {@link Client} for making webservice calls.
+     * <p>
+     * <b>Overridden for testing</b>
+     */
+    @Override
+    protected Client getJaxRsClient() {
+        return super.getJaxRsClient();
     }
 }

@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -19,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -46,10 +46,11 @@ public class WorkflowDiagrammer implements Serializable {
                                                    "images" + File.separator + "workflow" + File.separator;
 
     public WorkflowDiagrammer() {
+        workflowConfig = WorkflowLoader.getWorkflowConfig();
     }
 
-    @Inject
-    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+    /** Setter used for testing purposes. */
+    void setWorkflowConfig(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
     }
 
@@ -70,10 +71,6 @@ public class WorkflowDiagrammer implements Serializable {
      */
     List<Graph> createGraphs() throws Exception {
         List<Graph> graphs = new ArrayList<>();
-        if (workflowConfig == null) {
-            return graphs;
-        }
-
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             String workflowName = workflowDef.getName();
 
