@@ -2975,7 +2975,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                         formatedPrice = new BigDecimal(priceListItem.getPrice());
                     }
                 }
-                customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
+                if (formatedPrice != null) {
+                    customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
+                }
             }
 
             customizedProductInfo.setUnits(product.getUnitsDisplay());
