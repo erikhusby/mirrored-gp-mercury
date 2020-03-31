@@ -79,6 +79,7 @@
                             text: "Accept Scan",
                             id: "acceptScnId",
                             click: function() {
+                                $j('#covidAccessionScanVerificationDialog').dialog("close");
                                 performAccessionScan();
                             }
                         },
@@ -132,7 +133,6 @@
                     datatype: 'html',
                     success: function (html) {
                         <c:if test="${actionBean.covidProcess}">
-                        $j('#covidAccessionScanVerificationDialog').dialog.close();
                         </c:if>
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
