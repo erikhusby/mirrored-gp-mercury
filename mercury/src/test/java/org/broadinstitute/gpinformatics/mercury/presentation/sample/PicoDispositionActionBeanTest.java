@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -68,7 +69,7 @@ public class PicoDispositionActionBeanTest {
         tube = new BarcodedTube("1194638817");
         tube.setVolume(BigDecimal.valueOf(51));
         tube.addSample(new MercurySample("SM-JACU1", MercurySample.MetadataSource.MERCURY));
-        labMetric = new LabMetric(BigDecimal.valueOf(3.66), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, "A01", now);
+        labMetric = new LabMetric(BigDecimal.valueOf(3.66), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, VesselPosition.A01, now);
         labMetric.setLabVessel(tube);
         decision = new LabMetricDecision(LabMetricDecision.Decision.REPEAT, now, 01L, labMetric);
         decision.setReworkDisposition(MetricReworkDisposition.BAD_TRIP_READS);
@@ -81,7 +82,7 @@ public class PicoDispositionActionBeanTest {
         tube = new BarcodedTube("1194638806");
         tube.setVolume(BigDecimal.valueOf(50));
         tube.addSample(new MercurySample("SM-JACVO", MercurySample.MetadataSource.MERCURY));
-        labMetric = new LabMetric(BigDecimal.valueOf(7.36), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, "A02", now);
+        labMetric = new LabMetric(BigDecimal.valueOf(7.36), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, VesselPosition.A02, now);
         labMetric.setLabVessel(tube);
         decision = new LabMetricDecision(LabMetricDecision.Decision.PASS, now, 01L, labMetric);
         decision.setReworkDisposition(MetricReworkDisposition.PASS);
@@ -94,7 +95,7 @@ public class PicoDispositionActionBeanTest {
         tube = new BarcodedTube("1194638519");
         tube.setVolume(BigDecimal.valueOf(54));
         tube.addSample(new MercurySample("SM-JADAI", MercurySample.MetadataSource.MERCURY));
-        labMetric = new LabMetric(BigDecimal.valueOf(101.00), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, "A08", now);
+        labMetric = new LabMetric(BigDecimal.valueOf(101.00), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, VesselPosition.A08, now);
         labMetric.setLabVessel(tube);
         decision = new LabMetricDecision(LabMetricDecision.Decision.REPEAT, now, 01L, labMetric);
         decision.setReworkDisposition(MetricReworkDisposition.NORM_IN_TUBE);
@@ -107,7 +108,7 @@ public class PicoDispositionActionBeanTest {
         tube = new BarcodedTube("1194638853");
         tube.setVolume(BigDecimal.valueOf(100));
         tube.addSample(new MercurySample("SM-JACVI", MercurySample.MetadataSource.MERCURY));
-        labMetric = new LabMetric(BigDecimal.valueOf(3.00), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, "H01", now);
+        labMetric = new LabMetric(BigDecimal.valueOf(3.00), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.NG_PER_UL, VesselPosition.H01, now);
         labMetric.setLabVessel(tube);
         decision = new LabMetricDecision(LabMetricDecision.Decision.REPEAT, now, 01L, labMetric);
         decision.setReworkDisposition(MetricReworkDisposition.UNDILUTED);
@@ -159,7 +160,7 @@ public class PicoDispositionActionBeanTest {
                     rackType = null;
             }
             Assert.assertEquals(item.getDestinationRackType(), rackType);
-            Assert.assertEquals(item.getPosition(), metric.getVesselPosition());
+            Assert.assertEquals(item.getPosition(), metric.getVesselPosition().name());
             Assert.assertEquals(item.getSampleId(), metric.getLabVessel().getMercurySamples().iterator().next().getSampleKey());
             Assert.assertTrue(item.getVolume().compareTo(metric.getLabVessel().getVolume()) == 0);
             Assert.assertTrue(item.getConcentration().compareTo(metric.getValue()) == 0);

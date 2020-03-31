@@ -499,7 +499,7 @@ public class PicoDispositionActionBean extends CoreActionBean {
                         break;
                     }
                 }
-                ListItem listItem = new ListItem(labMetric.getLabMetricId(), labMetric.getVesselPosition(),
+                ListItem listItem = new ListItem(labMetric.getLabMetricId(), labMetric.getVesselPosition().name(),
                         metricVessel.getLabel(), metricVessel.getVolume(),
                         sampleId, labMetric.getValue(), labMetricDecision, srcRackBarcode);
                 listItems.add(listItem);

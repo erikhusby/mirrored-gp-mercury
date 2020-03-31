@@ -7,13 +7,22 @@
 
     <changeSet id="GPLIM_6976_create_accessioning_type_field" author="scottmat">
         <addColumn tableName="MANIFEST_SESSION" schemaName="MERCURY">
-            <column name="ACCESSIONING_PROCESS_TYPE" type="varchar(255)" />
+            <column name="ACCESSIONING_PROCESS_TYPE" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 
     <changeSet id="GPLIM_6976_create_accessioning_type_field_aud_table" author="scottmat">
         <addColumn tableName="MANIFEST_SESSION_AUD" schemaName="MERCURY">
-            <column name="ACCESSIONING_PROCESS_TYPE" type="varchar(255)" />
+            <column name="ACCESSIONING_PROCESS_TYPE" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-6250" author="jsacco">
+        <addColumn schemaName="MERCURY" tableName="LAB_METRIC_DECISION">
+            <column name="REWORK_DISPOSITION" type="VARCHAR2(64)"/>
+        </addColumn>
+        <addColumn schemaName="MERCURY" tableName="LAB_METRIC_DECISION_AUD">
+            <column name="REWORK_DISPOSITION" type="VARCHAR2(64)"/>
         </addColumn>
     </changeSet>
 

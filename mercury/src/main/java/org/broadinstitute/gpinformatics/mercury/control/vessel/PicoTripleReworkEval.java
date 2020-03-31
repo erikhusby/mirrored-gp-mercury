@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -32,7 +33,7 @@ public class PicoTripleReworkEval {
             LabMetric mostRecentConcentration = tube.getMostRecentConcentration();
             quant = mostRecentConcentration != null ? mostRecentConcentration.getValue() : BigDecimal.ZERO;
             labMetric = new LabMetric(quant, metricType, metricType.getLabUnit(),
-                    tubePosition, runStarted);
+                    VesselPosition.getByName(tubePosition), runStarted);
 
             LabMetricDecision decision = new LabMetricDecision(
                     LabMetricDecision.Decision.REPEAT, new Date(), decidingUser, labMetric, note);
@@ -48,14 +49,14 @@ public class PicoTripleReworkEval {
             float resultB = concList.get(1).floatValue();
             quant = MathUtils.scaleTwoDecimalPlaces(new BigDecimal((resultA + resultB) / 2));
             labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    tubePosition, runStarted);
+                    VesselPosition.getByName(tubePosition), runStarted);
             tooFarApart = MathUtils.areTooFarApart(resultA, resultB, maxPercentDiff);
         } else if (originalReadCount == 3) {
             tooFarApart = evalReadsForDeterminingCurve(concList, maxPercentDiff);
             // Note: Read values may have a bad value outlier removed
             quant = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(concList.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0.00)));
             labMetric = new LabMetric(quant, metricType, LabMetric.LabUnit.NG_PER_UL,
-                    tubePosition, runStarted);
+                    VesselPosition.getByName(tubePosition), runStarted);
         } else {
             throw new IllegalStateException("Evaluation of greater than 3 reads not handled.");
         }
