@@ -170,7 +170,7 @@ public class QueueEventHandler extends AbstractEventHandler {
     get
      */
     @NotNull
-    private Set<LabVessel> getVesselsPreferTubes(LabEvent labEvent, Direction direction) {
+    public static Set<LabVessel> getVesselsPreferTubes(LabEvent labEvent, Direction direction) {
         Set<LabVessel> labVessels = direction == Direction.SOURCE ? labEvent.getSourceVesselTubes() :
                 labEvent.getTargetVesselTubes();
         if (labVessels.isEmpty()) {
