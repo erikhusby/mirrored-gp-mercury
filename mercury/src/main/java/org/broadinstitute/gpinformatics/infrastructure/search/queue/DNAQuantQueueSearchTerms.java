@@ -129,7 +129,7 @@ public class DNAQuantQueueSearchTerms extends AbstractQueueSearchTerms {
                 public String evaluate(Object entity, SearchContext context) {
                     QueueEntity queueEntity = (QueueEntity) entity;
 
-                    return queueEntity.getQueueStatus().getName();
+                    return queueEntity.getQueueStatus().getDisplayName();
                 }
             });
 

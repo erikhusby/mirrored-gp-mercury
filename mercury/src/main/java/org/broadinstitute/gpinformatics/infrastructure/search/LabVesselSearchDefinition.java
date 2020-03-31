@@ -513,7 +513,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> statuses = new HashSet<>();
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
-                    statuses.add(queueEntity.getQueueStatus().getName());
+                    statuses.add(queueEntity.getQueueStatus().getDisplayName());
                 }
 
                 return statuses;
@@ -526,7 +526,7 @@ public class LabVesselSearchDefinition {
                 Set<String> types = (Set<String>) value;
                 StringBuilder result = new StringBuilder();
                 for (String type : types) {
-                    result.append(QueueStatus.valueOf(type).getName()).append(" ");
+                    result.append(QueueStatus.valueOf(type).getDisplayName()).append(" ");
                 }
                 return result.toString();
             }
@@ -650,7 +650,7 @@ public class LabVesselSearchDefinition {
                 Set<String> statuses = new HashSet<>();
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
                     if (queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType() == QueueType.DNA_QUANT) {
-                        statuses.add(queueEntity.getQueueStatus().getName());
+                        statuses.add(queueEntity.getQueueStatus().getDisplayName());
                     }
                 }
 
@@ -664,7 +664,7 @@ public class LabVesselSearchDefinition {
                 Set<String> types = (Set<String>) value;
                 StringBuilder result = new StringBuilder();
                 for (String type : types) {
-                    result.append(QueueStatus.valueOf(type).getName()).append(" ");
+                    result.append(QueueStatus.valueOf(type).getDisplayName()).append(" ");
                 }
                 return result.toString();
             }

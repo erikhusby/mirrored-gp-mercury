@@ -365,7 +365,7 @@ public class SearchDefinitionFactory {
         public static List<ConstrainedValue> getConstrainedValues() {
             List<ConstrainedValue> constrainedValues = new ArrayList<>();
             for (QueueStatus queueStatus : QueueStatus.values()) {
-                constrainedValues.add(new ConstrainedValue(queueStatus.toString(), queueStatus.getName()));
+                constrainedValues.add(new ConstrainedValue(queueStatus.getDisplayName(), queueStatus.getDisplayName()));
             }
             Collections.sort(constrainedValues);
             return constrainedValues;

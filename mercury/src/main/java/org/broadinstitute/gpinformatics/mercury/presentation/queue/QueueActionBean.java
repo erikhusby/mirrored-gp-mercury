@@ -333,8 +333,8 @@ public class QueueActionBean extends CoreActionBean {
 
                             // If we are at the position for the 'queue status' then check to see if it's 'active' or 'repeat'
                             if (cellCounter == queueStatusPosition && StringUtils.isNotBlank(cell)) {
-                                if (cell.compareToIgnoreCase(QueueStatus.Active.getName()) == 0
-                                    || cell.compareToIgnoreCase(QueueStatus.Repeat.getName()) == 0) {
+                                if (cell.compareToIgnoreCase(QueueStatus.ACTIVE.getDisplayName()) == 0
+                                    || cell.compareToIgnoreCase(QueueStatus.REPEAT.getDisplayName()) == 0) {
                                     rowsToRemove.add(resultRow);
                                 }
                             }

@@ -17,4 +17,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-6433-1" author="jameslee">
+        <createIndex tableName="QUEUE_ENTITY" indexName="IX_VESSEL_QUEUE_ENTITY">
+            <column name="LAB_VESSEL_ID"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
