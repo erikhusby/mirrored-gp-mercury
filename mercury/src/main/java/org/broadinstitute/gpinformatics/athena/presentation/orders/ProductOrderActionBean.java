@@ -632,7 +632,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // adding customizations in order to allow it to be validated against the quote.
         if (StringUtils.isNotBlank(customizationJsonString)) {
-            buildJsonObjectFromEditOrderProductCustomizations(editOrder.getQuoteId());
+            buildJsonObjectFromEditOrderProductCustomizations();
             editOrder.updateCustomSettings(productCustomizations);
         }
 
@@ -2933,16 +2933,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(OPEN_CUSTOM_VIEW_ACTION)
     public Resolution openCustomView() throws Exception {
-        buildJsonObjectFromEditOrderProductCustomizations(quoteIdentifier);
+        buildJsonObjectFromEditOrderProductCustomizations();
 
         return new ForwardResolution(CUSTOMIZE_PRODUCT_ASSOCIATIONS);
     }
 
-    private void buildJsonObjectFromEditOrderProductCustomizations(String quoteId) throws JSONException, SAPIntegrationException {
+    private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException, SAPIntegrationException {
         SapQuote sapQuote = null;
-        if (StringUtils.isNotBlank(quoteId)) {
-            if (StringUtils.isNumeric(this.quoteIdentifier)) {
-                sapQuote = sapService.findSapQuote(this.quoteIdentifier);
+        if(StringUtils.isNotBlank(quoteIdentifier)) {
+            if (StringUtils.isNumeric(quoteIdentifier)) {
+                sapQuote = sapService.findSapQuote(quoteIdentifier);
             }
         }
         JSONObject customizationJson = new JSONObject(customizationJsonString);
