@@ -2251,6 +2251,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    @Test(enabled = false)
     public void cleanupAccidentalProductionOrderCreation() throws Exception {
         userBean.loginOSUser();
 
