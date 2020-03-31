@@ -210,7 +210,4 @@ public class FiniteStateMachineEngine implements Serializable {
         this.stateManager = stateManager;
     }
 
-    public TaskManager getTaskManager() {
-        return taskManager;
-    }
 }
