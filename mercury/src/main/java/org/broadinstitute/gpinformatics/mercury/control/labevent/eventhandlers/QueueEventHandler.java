@@ -81,6 +81,7 @@ public class QueueEventHandler extends AbstractEventHandler {
             }
             // dilution plate is input to pico, then input to fingerprinting
             // Determine: whether All of Us; source or dest; queue or dequeue; queue type
+            case PICO_DILUTION_TRANSFER:
             case PICO_DILUTION_TRANSFER_FORWARD_BSP: {
                 if (isAllOfUs(labEvent)) {
                     try {

@@ -360,6 +360,7 @@ public class FiniteStateMachineFactory {
             AggregationTask aggregationTask = null;
             String taskname = "Agg_" + sampleKey + "_" + System.currentTimeMillis();
             String outputFilePrefix = CramFileNameBuilder.process(mercurySample, cramFilenameFormat);
+            File cramFile = new File(outputDir, outputFilePrefix + ".cram");
             if (useConfig) {
                 aggregationTask = new AggregationTask(referenceFile, fastQList, sampleKey,
                         outputDir, intermediateResults, outputFilePrefix, sampleKey, contaminationFile, bedFile, bed2File,
@@ -379,7 +380,6 @@ public class FiniteStateMachineFactory {
                 CrosscheckFingerprintState crosscheckFingerprintState = new CrosscheckFingerprintState(
                         "Crosscheck_" + mercurySample.getSampleKey(), mercurySample, aggregationStateMachine, aggregationChambers);
 
-                File cramFile = new File(outputDir, sampleKey + ".cram");
                 File haplotypeDatabase = new File(referenceGenome.getHaplotypeDatabase());
                 File refSeq = new File(referenceGenome.getFasta());
                 File outputFilePrefixFp = new File(outputDir, sampleKey + ".crosscheck.txt");
@@ -398,6 +398,27 @@ public class FiniteStateMachineFactory {
                 transition.setToState(crosscheckFingerprintState);
                 aggregationStateMachine.setTransitions(Collections.singletonList(transition));
             }
+            List<Transition> transitions = new ArrayList<>();
+
+            FingerprintState fingerprintState = new FingerprintState("FP_" + sampleKey, mercurySample,
+                    aggregationStateMachine, aggregationChambers);
+
+            File vcfFile = new File(outputDir, outputFilePrefix + ".vcf.gz");
+            FingerprintTask fpTask = new FingerprintTask(
+                    cramFile, vcfFile,
+                    new File(referenceGenome.getHaplotypeDatabase()), outputFilePrefix,
+                    referenceFile);
+            taskname = "FP_" + sampleKey + "_" + System.currentTimeMillis();
+            fpTask.setTaskName(taskname);
+            fingerprintState.addTask(fpTask);
+
+
+            Transition transition = new Transition("AggToFp", aggregationStateMachine);
+            transition.setFromState(aggregationState);
+            transition.setToState(fingerprintState);
+            transitions.add(transition);
+
+            states.add(fingerprintState);
 
             String waitForReview = "DataReview";
             GenericState dataReviewState = new GenericState(waitForReview, aggregationStateMachine);
@@ -406,15 +427,13 @@ public class FiniteStateMachineFactory {
             dataReviewState.addTask(waitForReviewTask);
             states.add(dataReviewState);
 
-            List<Transition> transitions = new ArrayList<>();
-            Transition aggToReview = new Transition("AggToReview_" + sampleKey, aggregationStateMachine);
-            aggToReview.setFromState(aggregationState);
-            aggToReview.setToState(dataReviewState);
-            transitions.add(aggToReview);
+            Transition fpToReview = new Transition("FPToReview_" + sampleKey, aggregationStateMachine);
+            fpToReview.setFromState(fingerprintState);
+            fpToReview.setToState(dataReviewState);
+            transitions.add(fpToReview);
 
             State uploadState = new GenericState("Upload_" + sampleKey, aggregationStateMachine, Collections.emptySet());
             String gsBucket = dragenConfig.getGsBucket();
-            File cramFile = new File(outputDir, outputFilePrefix + ".cram");
             GsUtilTask gsUtilTask = GsUtilTask.cp(cramFile, gsBucket);
             uploadState.addTask(gsUtilTask);
             states.add(uploadState);
@@ -637,7 +656,7 @@ public class FiniteStateMachineFactory {
 
             MercurySample mercurySample = mapIdToMercurySample.get(dto.getSampleKey());
             // TODO Fix this
-            FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine, null);
+            FingerprintState fingerprintState = new FingerprintState(stateName, mercurySample, finiteStateMachine, Collections.emptySet());
             fingerprintState.setStartState(true);
             fingerprintState.setAlive(true);
             states.add(fingerprintState);
@@ -646,7 +665,7 @@ public class FiniteStateMachineFactory {
             File outputFilePrefix = new File(outputDir, "Fingerprint");
             FingerprintTask fpTask = new FingerprintTask(new File(dto.getBamFile()), new File(dto.getVcfFile()),
                     new File(dto.getHaplotypeDatabase()), outputFilePrefix.getPath(),
-                    new File(AggregationActionBean.ReferenceGenome.HG38.getFasta()));
+                    new File(dto.getFasta()));
             fpTask.setTaskName(name);
             fingerprintState.addTask(fpTask);
 

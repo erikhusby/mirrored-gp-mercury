@@ -15,11 +15,12 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Entity
@@ -173,6 +174,13 @@ public class FiniteStateMachine {
     public void removeState(State state) {
         states.remove(state);
         state.setFiniteStateMachine(null);
+    }
+
+    public <T extends State> Optional<T> getMostRecentCompleteStateOfType(Class<T> clazz) {
+        return getStates().stream()
+                .filter(state -> OrmUtil.proxySafeIsInstance(state, clazz) && state.isComplete())
+                .map(state -> OrmUtil.proxySafeCast(state, clazz))
+                .max(Comparator.comparing(State::getEndTime));
     }
 
     public <T extends Task> List<T> fetchAllTasksOfType(Class<T> clazz) {

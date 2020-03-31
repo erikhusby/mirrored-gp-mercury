@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,20 +35,26 @@ public class ManifestTestFactory {
 
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
                                                        BspUser createdBy, int numberOfRecords,
-                                                       ManifestRecord.Status defaultStatus, boolean fromSampleKit) {
+                                                       ManifestRecord.Status defaultStatus, boolean fromSampleKit,
+                                                       ManifestSessionEjb.AccessioningProcessType accessioningProcessType) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
-                createdBy, fromSampleKit);
+                createdBy, fromSampleKit, accessioningProcessType);
 
-        EnumSet<Metadata.Key> excludeKeys = EnumSet.of(Metadata.Key.BROAD_2D_BARCODE);
-        if(fromSampleKit){
-            excludeKeys.add(Metadata.Key.SAMPLE_ID);
+        EnumSet<Metadata.Key> excludeKeys = EnumSet.noneOf(Metadata.Key.class);
+        if(accessioningProcessType != ManifestSessionEjb.AccessioningProcessType.COVID) {
+            excludeKeys.add(Metadata.Key.BROAD_2D_BARCODE);
+            if(fromSampleKit){
+                excludeKeys.add(Metadata.Key.SAMPLE_ID);
+            }
+        } else {
+            excludeKeys.add(Metadata.Key.BROAD_SAMPLE_ID);
         }
 
         for (int i = 1; i <= numberOfRecords; i++) {
             ManifestRecord manifestRecord = buildManifestRecord(i, excludeKeys);
-            manifestRecord.setStatus(defaultStatus);
             manifestSession.addRecord(manifestRecord);
+            manifestRecord.setStatus(defaultStatus);
         }
         return manifestSession;
     }
@@ -94,8 +99,8 @@ public class ManifestTestFactory {
                                  ManifestRecord.Status status, Map<Metadata.Key, String> initialData,
                                  EnumSet<Metadata.Key> excludeKeys) {
         ManifestRecord record = buildManifestRecord(20, initialData, excludeKeys);
-        record.setStatus(status);
         session.addRecord(record);
+        record.setStatus(status);
 
 
         if (errorStatus != null) {

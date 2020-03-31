@@ -407,8 +407,16 @@ public class QuoteImportItem {
         Optional<String> reduce = Optional.empty();
 
         if(productOrder.hasSapQuote()) {
-            replacementResult = ledgerItems.stream().map(LedgerEntry::getSapReplacement)
-                    .reduce((a, b) -> null).map(DeliveryCondition::fromConditionName).orElse(null);
+            replacementResult = null;
+            for(LedgerEntry entry:ledgerItems) {
+                if(StringUtils.isNotBlank(entry.getSapReplacement())) {
+                    // The aggregation that creates the Quote Import Items includes SAP Replacement so all ledger
+                    // entries in the Quote Inport Item should have the same sap Replacement.  Therefore, we only need
+                    // to grab the first one that we find.
+                    replacementResult = DeliveryCondition.fromConditionName(entry.getSapReplacement());
+                    break;
+                }
+            }
         }
 
         return replacementResult;

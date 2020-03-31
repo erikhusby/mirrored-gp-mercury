@@ -32,6 +32,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -72,6 +73,45 @@ public class AggregationStateDao extends GenericDao {
         return resultList.stream()
                 .sorted(new State.StateStartComparator().reversed())
                 .collect(Collectors.toList());
+    }
+
+    public List<AggregationState> findCompletedAggregationsForSample(Collection<MercurySample> samples) {
+        if (samples == null || samples.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<AggregationState> resultList = new ArrayList<>();
+
+        Set<String> sampleAlias = samples.stream().map(MercurySample::getSampleKey).collect(Collectors.toSet());
+
+        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<AggregationState> query = cb.createQuery(AggregationState.class);
+        Root<AggregationState> root = query.from(AggregationState.class);
+
+        final SetJoin<AggregationState, MercurySample> setJoin =
+                root.join(AggregationState_.mercurySamples);
+
+        // Select states with completed tasks only
+        Subquery<State> sq = query.subquery(State.class);
+        Root<Task> subRoot = sq.from(Task.class);
+        sq.select(subRoot.get(Task_.state));
+        Predicate taskStatePred = cb.equal(root.get(State_.stateId), subRoot.get(Task_.state));
+        Predicate taskComplete = cb.equal(subRoot.get(Task_.status), Status.COMPLETE);
+        sq.where(cb.and(taskStatePred, taskComplete));
+        Path<Long> stateId = root.get(AlignmentState_.stateId);
+        Predicate subQueryPredicate = stateId.in(sq);
+
+        Expression<String> parentExpression = setJoin.get(MercurySample_.sampleKey);
+        Predicate parentPredicate = parentExpression.in(sampleAlias);
+
+        query.where(cb.and(parentPredicate, subQueryPredicate));
+        try {
+            resultList.addAll(getEntityManager().createQuery(query).getResultList());
+        } catch (NoResultException ignored) {
+            return resultList;
+        }
+
+        return resultList;
     }
 
     public List<AggregationState> findBySample(MercurySample mercurySample) {

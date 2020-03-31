@@ -53,8 +53,7 @@ public class SlurmController implements SchedulerController {
 
         String dragenCmd = "";
         if (processTask.requiresDragenPrefix()) {
-            dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(),
-                    dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
+            dragenCmd = String.format("--wrap=\"%s%s\"", dragenConfig.getDragenPath(), processTask.getCommandLineArgument());
         } else {
             if (processTask.hasProlog()) {
                 File prologFolder = new File(dragenConfig.getPrologScriptFolder());

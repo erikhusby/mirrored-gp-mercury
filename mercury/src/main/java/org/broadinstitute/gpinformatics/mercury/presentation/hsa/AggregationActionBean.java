@@ -341,7 +341,9 @@ public class AggregationActionBean extends CoreActionBean {
                 "/seq/dragen/references/GRCh38dh/current/acmg59_allofus_19dec2019.GRC38.wGenes.bed",
                 "/seq/dragen/references/GRCh38dh/current/PGx_singleSite_GRCh38_ActualTableToSendToFDA_21jan2020.bed"),
         HS37D5("hs37d5", "/seq/dragen/references/hs37d5/current/",
-                null, null, "/seq/dragen/references/hs37d5/current/SNP_NCBI_hs37d5.vcf",
+                "/seq/references/Homo_sapiens_assembly19/v1/Homo_sapiens_assembly19.haplotype_database.txt",
+                "/seq/dragen/references/fasta_references/AoU_hs37d5/hs37d5.fa",
+                "/seq/dragen/references/hs37d5/current/SNP_NCBI_hs37d5.vcf",
                 "/seq/dragen/references/hs37d5/current/wgs_coverage_regions.hs37d5_minus_N.interval_list.bed",
                 "/seq/dragen/references/hs37d5/current/acmg59_allofus_19dec2019.bed",
                 "/seq/dragen/references/hs37d5/current/PGx_singleSite_GRCh37_ActualTableToSendToFDA_21jan2020.annotated.bed");
