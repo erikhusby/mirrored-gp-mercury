@@ -16,13 +16,29 @@
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
                     if (!($j(this).val() === '' || $j("#accessionTubeText").val() === '')) {
+                        <c:choose>
+                        <c:when test="${actionBean.covidProcess}">
+                        updateScanAlert();
+                        displayVerificationDialog();
+                        </c:when>
+                        <c:otherwise>
                         performAccessionScan();
+                        </c:otherwise>
+                        </c:choose>
                     }
                 });
 
                 $j("#accessionTubeText").blur(function () {
                     if ($j(this).val() !== '' && $j("#accessionSourceText").val() !== '') {
+                        <c:choose>
+                        <c:when test="${actionBean.covidProcess}">
+                        updateScanAlert();
+                        displayVerificationDialog();
+                        </c:when>
+                        <c:otherwise>
                         performAccessionScan();
+                        </c:otherwise>
+                        </c:choose>
                     }
                 });
 
@@ -52,7 +68,33 @@
                     showAssociateReceiptDialog();
                 });
                 </c:if>
+                <c:if test="${actionBean.covidProcess}">
+                $j('#covidAccessionScanVerificationDialog').dialog({
+                    modal: true,
+                    autoOpen: false,
+                    width: 600,
+                    position: {my: "center top", at: "center top", of: window},
+                    buttons: {
+                        "AcceptScan": {
+                            text: "Accept Scan",
+                            id: "acceptScnId",
+                            click: function() {
+                                performAccessionScan();
+                            }
+                        },
+                        "RejectScan": {
+                            text: "Reject Scan",
+                            click: function() {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    }
+                });
 
+                function displayVerificationDialog() {
+                    $j("#covidAccessionScanVerificationDialog").dialog("open");
+                }
+                </c:if>
 
                 // Prevent posting the form for an enter key press in the accession source field.  Also
                 // blur out of the accession source field so an enter key press essentially behaves the
@@ -89,6 +131,9 @@
                     },
                     datatype: 'html',
                     success: function (html) {
+                        <c:if test="${actionBean.covidProcess}">
+                        $j('#covidAccessionScanVerificationDialog').dialog.close();
+                        </c:if>
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
                         <c:if test="${actionBean.selectedSession.fromSampleKit || actionBean.covidProcess}">
@@ -97,6 +142,13 @@
                         $j('#accessionSourceText').focus();
                     }
                 });
+            }
+
+            function updateScanAlert() {
+                var scannedSampleId = $j("#accessionSourceText").val();
+                var scannedDestinationTube = $j("#accessionTubeText").val();
+                $j("#scanAlert").html("You scanned source sample " + scannedSampleId +
+                    " with a destination tube of " + scannedDestinationTube + ".  Is this Correct?");
             }
 
             function showPreviewSessionCloseDialog() {
@@ -150,6 +202,13 @@
             <div id="associateReceiptDialog" title="Find and Associate Receipt Ticket" style="width:600px; display:none">
             </div>
             </c:if>
+            <c:if test="${actionBean.covidProcess}">
+                <div id="covidAccessionScanVerificationDialog" title="Validate Accessioned Values" style="...">
+                    <div id="scanAlert">
+
+                    </div>
+                </div>
+            </c:if>
 
             <div id="scanResults" width="300px">
                 <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
@@ -193,7 +252,6 @@
                                 </div>
                             </div>
                         </c:if>
-                <c:if test="${!actionBean.selectedSession.sessionComplete}">
                 <div class="actionButtons">
                 <stripes:submit id="previewSessionClose"
                                     name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>"
@@ -207,7 +265,6 @@
                         Exit Session
                     </stripes:link>
                 </div>
-                </c:if>
             </div>
 
         </stripes:form>
