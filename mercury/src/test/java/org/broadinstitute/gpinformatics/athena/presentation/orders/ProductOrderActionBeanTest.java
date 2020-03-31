@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
+import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -156,6 +157,8 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.collection.IsMapWithSize.aMapWithSize;
+import static org.hamcrest.collection.IsMapWithSize.anEmptyMap;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
@@ -1588,7 +1591,7 @@ public class ProductOrderActionBeanTest {
         mockPDOListAnswer.clear();
         mockPDOListAnswer.addAll(allOrders);
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuoteIdentifier)) {
+        if (!QuoteService.isDevQuote(testQuoteIdentifier)) {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString()))
                     .thenAnswer(new Answer<List<ProductOrder>>() {
                         @Override
@@ -1608,7 +1611,7 @@ public class ProductOrderActionBeanTest {
         sapOrderValues.add(new OrderValue("Test_listed_3", new BigDecimal(49)));
 
         final BigDecimal extraOrderValues;
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuoteIdentifier)) {
+        if (!QuoteService.isDevQuote(testQuoteIdentifier)) {
             extraOrderValues = getCalculatedOrderValue(priceList, extraOrder1, quoteSource, testQuote)
                     .add(getCalculatedOrderValue(priceList, extraOrder2, quoteSource, testQuote))
                     .add(getCalculatedOrderValue(priceList, extraOrder3, quoteSource, testQuote));
@@ -1653,7 +1656,7 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(testOrder);
 
         BigDecimal calculatedOrderValue = BigDecimal.ZERO;
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1671,7 +1674,7 @@ public class ProductOrderActionBeanTest {
         }
         testQuote.setQuoteItems(quoteItems);
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1690,7 +1693,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1718,7 +1721,7 @@ public class ProductOrderActionBeanTest {
 
         testOrder.setProduct(seqProduct);
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1749,7 +1752,7 @@ public class ProductOrderActionBeanTest {
         abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1777,7 +1780,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1804,7 +1807,7 @@ public class ProductOrderActionBeanTest {
             actionBean.clearValidationErrors();
         }
 
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuote.getAlphanumericId())) {
+        if (!QuoteService.isDevQuote(testQuote)) {
             calculatedOrderValue = getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote);
         }
         if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
@@ -1975,10 +1978,19 @@ public class ProductOrderActionBeanTest {
             actionBean.validateSapQuoteDetails(mockSAPService.findSapQuote(testOrder.getQuoteId()), 0);
         }
 
-        Assert.assertFalse(actionBean.getContext().getValidationErrors().isEmpty(),
-                "Errors occurred validating Quote details.  Funds remaining is "
-                +testQuote.getQuoteFunding().getFundsRemaining() + " and price is " + priceItemPrice +
-                " Calculated Value is " + getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote));
+        String errorMessage =
+            String.format(
+                "Errors occurred validating Quote details. Funds remaining is %s and price is %s Calculated Value is %s",
+                testQuote.getQuoteFunding().getFundsRemaining(), priceItemPrice,
+                getCalculatedOrderValue(priceList, testOrder, quoteSource, testQuote));
+
+        if (quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER && QuoteService.DEV_QUOTES
+            .contains(quoteName)) {
+            assertThat(errorMessage, actionBean.getContext().getValidationErrors(), anEmptyMap());
+        } else {
+            assertThat(errorMessage, actionBean.getContext().getValidationErrors(), aMapWithSize(1));
+        }
+
     }
 
     /**
@@ -2464,15 +2476,9 @@ public class ProductOrderActionBeanTest {
         mockPDOListAnswer.clear();
         mockPDOListAnswer.addAll(allOrdersMinusTestOrder);
 
-
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuoteIdentifier)) {
+        if (!QuoteService.isDevQuote(testQuoteIdentifier)) {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenAnswer(
-                    new Answer<List<ProductOrder>>() {
-                        @Override
-                        public List<ProductOrder> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                            return mockPDOListAnswer;
-                        }
-                    });
+                (Answer<List<ProductOrder>>) invocationOnMock -> mockPDOListAnswer);
         } else {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString()))
                     .thenThrow(new RuntimeException("Find orders with common quote should not be thrown at this time"));
@@ -2488,7 +2494,7 @@ public class ProductOrderActionBeanTest {
 
 
         final BigDecimal extraOrderValues;
-        if(!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuoteIdentifier)) {
+        if(!QuoteService.isDevQuote(testQuoteIdentifier)) {
             extraOrderValues = getCalculatedOrderValue(priceList, extraOrder1, quoteSource, testQuote)
                     .add(getCalculatedOrderValue(priceList, extraOrder2, quoteSource, testQuote))
                     .add(getCalculatedOrderValue(priceList, extraOrder3, quoteSource, testQuote));
@@ -2887,6 +2893,9 @@ public class ProductOrderActionBeanTest {
                     .getPrice();
 
             if(quoteSource == ProductOrder.QuoteSourceType.QUOTE_SERVER) {
+                if (QuoteService.isDevQuote(testQuote)) {
+                    return BigDecimal.ZERO;
+                }
                 final QuoteItem cachedQuoteItem =
                         testQuote.findCachedQuoteItem(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
                                 testOrder.getProduct().getPrimaryPriceItem().getCategory(),
@@ -2984,7 +2993,7 @@ public class ProductOrderActionBeanTest {
             Mockito.when(mockSapClient.findQuoteDetails(Mockito.anyString()))
                     .thenThrow(new SAPIntegrationException("Sap should not be called for Quote Server Quote"));
         }
-        if (!ProductOrderActionBean.EXCLUDED_QUOTES_FROM_VALUE.contains(testQuoteIdentifier)) {
+        if (!QuoteService.isDevQuote(testQuoteIdentifier)) {
             Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(
                     testOrder));
         } else {
@@ -3528,6 +3537,34 @@ public class ProductOrderActionBeanTest {
         QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
         assertThat(quoteDetails.getError(), is("Unable to complete evaluating order values:  null"));
         assertThat(quoteDetails.getQuoteIdentifier(), is(quoteId));
+    }
+
+    public void testQuoteOptionsGP87U() throws Exception {
+        String quoteId = "GP87U";
+        testOrder = new ProductOrder();
+        FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        funding.setGrantNumber("1234");
+        funding.setGrantStartDate(new Date());
+        Date oneWeek = DateUtils.getOneWeek();
+        funding.setGrantEndDate(oneWeek);
+        funding.setFundsReservationNumber("CO-1234");
+        funding.setGrantStatus("Active");
+        fundingLevel.setFunding(Collections.singleton(funding));
+        fundingLevel.setPercent("100");
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding("100", fundingLevelCollection);
+        Quote testQuote = buildSingleTestQuote(quoteId, "2");
+        testQuote.setQuoteFunding(quoteFunding);
+        actionBean.setQuoteLink(Mockito.mock(QuoteLink.class));
+        TemplateEngine templateEngine = new TemplateEngine();
+        templateEngine.postConstruct();
+
+        QuoteDetailsHelper quoteDetailsHelper =
+            new QuoteDetailsHelper(mockQuoteService, mockSAPService, templateEngine);
+        QuoteDetailsHelper.QuoteDetail quoteDetails = quoteDetailsHelper.getQuoteDetails(quoteId, actionBean);
+
+        Mockito.verify(mockQuoteService, Mockito.never()).getQuoteByAlphaId(Mockito.anyString());
     }
 
     public void testSapQuoteOptionsNoFunding() throws Exception {
