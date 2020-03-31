@@ -4101,7 +4101,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public boolean canOverrideAgp() {
-        return userBean.isDeveloperUser() || userBean.isPDMUser();
+        return (userBean.isPDMOrDev() || userBean.isPMUser() && editOrder.getProductOrderId()==null );
     }
 
     public boolean canEditProduct() {return editOrder.getOrderStatus().canPlace() || userBean.isPDMOrDev() ;}

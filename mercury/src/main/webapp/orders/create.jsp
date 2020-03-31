@@ -996,27 +996,22 @@
 
         function updateAggregationParticleField(data) {
             var $aggregationParticle = $j("#customAggregationParticle");
-            var canOverrideAgp = ${actionBean.canOverrideAgp()};
-            var productAgpIsDefault = (!$aggregationParticle.val());
-            var agpsDiffer = $aggregationParticle.text() !== data.productAgp;
+            if (! ${actionBean.canOverrideAgp()}) {
+                return;
+            }
+            var selectedValue = $aggregationParticle.val();
+            var agpsDiffer = selectedValue !== (data.productAgp ?? "");
             if (agpsDiffer) {
-                if (canOverrideAgp && productAgpIsDefault && $j("#orderId").length === 0) {
-                        $aggregationParticle.val(data.productAgp);
-                        var agpModalMessage = modalMessages("info", {
-                            onClose: function () {
-                                $j($aggregationParticle).removeClass("changed")
-                            }
-                        });
-                        $j($aggregationParticle).addClass("changed");
-                        agpModalMessage
-                            .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
-                                + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
-                } else {
-                    modalMessages("info", "AGP_CHANGED").clear();
-                }
-                if (!canOverrideAgp) {
-                    $aggregationParticle.val(data.productAgp);
-                }
+                $aggregationParticle.val(data.productAgp);
+                var agpModalMessage = modalMessages("info", {
+                    onClose: function () {
+                        $j($aggregationParticle).removeClass("changed")
+                    }
+                });
+                $j($aggregationParticle).addClass("changed");
+                agpModalMessage
+                    .add("The selected product defines a default aggregation particle. This order will now aggregate on '"
+                        + $aggregationParticle.find(":selected").text() + "' unless you override this manually.", "AGP_CHANGED");
             }
         }
 
@@ -1700,7 +1695,7 @@
 
                 <c:set var="agpDisabled" value="disabled"/>
                 <c:set var="selectTitleText" value="The aggregation particle can only be customized by a product manager."/>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
                     <c:set var="agpDisabled" value=""/>
                     <c:set var="selectTitleText"
                            value="Select the custom aggregation particle which the pipleine will appended to their default aggregation. By default the pipeline aggregates on the research project."/>
