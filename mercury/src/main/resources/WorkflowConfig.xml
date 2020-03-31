@@ -5582,7 +5582,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <batchJiraIssueType>CUSTOM_DESIGN_HYBSEL</batchJiraIssueType>
             <effectiveDate>2018-06-15T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
