@@ -8,11 +8,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -37,8 +37,6 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
     private LabVesselDao labVesselDao;
     @Inject
     private UserTransaction utx;
-    @Inject
-    private WorkflowConfig workflowConfig;
     @Inject
     private ProductOrderDao productOrderDao;
     @Inject
@@ -66,7 +64,8 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
         ProductOrder order = productOrderDao.findByBusinessKey("PDO-107");   //183
 
         if (order != null) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(order.getProduct().getWorkflowName());
+            ProductWorkflowDef workflowDef =
+                    WorkflowLoader.getWorkflowConfig().getWorkflow(order.getProduct().getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             WorkflowBucketDef workingBucketIdentifier = null;
             for (WorkflowBucketDef bucketDef : workflowVersion.getBuckets()) {

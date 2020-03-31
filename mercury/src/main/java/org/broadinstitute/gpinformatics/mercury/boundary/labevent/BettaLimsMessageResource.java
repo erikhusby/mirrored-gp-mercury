@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -95,16 +96,10 @@ public class BettaLimsMessageResource {
     @Inject
     private UserBean userBean;
 
-    @Inject
-    private WorkflowConfig workflowConfig;;
+    private WorkflowConfig workflowConfig;
 
     public BettaLimsMessageResource() {
-    }
-
-    /** Constructor used for test purposes. */
-    public BettaLimsMessageResource(WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
-        postConstructor();
+        workflowConfig = WorkflowLoader.getWorkflowConfig();
     }
 
     @PostConstruct
