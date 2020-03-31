@@ -84,6 +84,11 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
+    public void updateAssignee(String key, String name) {
+        logger.info("Dummy jira service! Updating assignee " + key);
+    }
+
+    @Override
     public void addComment(String key, String body) throws IOException {
         logger.info("Dummy jira service! " + body + " for " + key);
     }

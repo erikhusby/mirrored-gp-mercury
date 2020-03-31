@@ -18,6 +18,9 @@ public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
 
+    CONTRACT_CLIENT_QUEUES("Contract Client Queues", PreferenceScope.GLOBAL, 1,
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+
     GLOBAL_LAB_VESSEL_SEARCH_INSTANCES("Global Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_VESSEL_COLUMN_SETS("Global Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
@@ -95,7 +98,7 @@ public enum PreferenceType {
     USER_EXT_LIBRARY_SEARCH_INSTANCES("User External Library Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_EXT_LIBRARY_COLUMN_SETS("User External Library Column Sets", PreferenceScope.USER, 1,
-            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator())
     ;
 
     private final String preferenceTypeName;

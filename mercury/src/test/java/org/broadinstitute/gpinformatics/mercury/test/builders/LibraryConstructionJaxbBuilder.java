@@ -28,7 +28,6 @@ public class LibraryConstructionJaxbBuilder {
     private final String p7IndexPlateBarcode;
     private final String p5IndexPlateBarcode;
     private int numSamples;
-    private TargetSystem targetSystem;
 
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
@@ -60,13 +59,6 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType wgsPCRCleanupJaxb;
     private PlateEventType cellFreePCRCleanupJaxb;
 
-    public enum TargetSystem {
-        /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
-        SQUID_VIA_MERCURY,
-        /** Mercury doesn't pre-register machines and reagent types, so the messages have fewer constraints. */
-        MERCURY_ONLY
-    }
-
     public enum PondType {
         PCR_FREE("PCRFreePondRegistration"),
         PCR_PLUS("PCRPlusPondRegistration"),
@@ -89,7 +81,7 @@ public class LibraryConstructionJaxbBuilder {
     // todo jmt why do the reagents need to be parameters?  All callers supply the same values.
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             String shearCleanPlateBarcode, String p7IndexPlateBarcode,
-            String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
+            String p5IndexPlateBarcode, int numSamples,
             List<Triple<String, String, Integer>> endRepairReagents,
             List<Triple<String, String, Integer>> endRepairCleanupReagents,
             List<Triple<String, String, Integer>> pondEnrichmentReagents,
@@ -100,7 +92,6 @@ public class LibraryConstructionJaxbBuilder {
         this.p7IndexPlateBarcode = p7IndexPlateBarcode;
         this.p5IndexPlateBarcode = p5IndexPlateBarcode;
         this.numSamples = numSamples;
-        this.targetSystem = targetSystem;
         this.endRepairReagents = endRepairReagents;
         this.endRepairCleanupReagents = endRepairCleanupReagents;
         this.pondEnrichmentReagents = pondEnrichmentReagents;
@@ -215,18 +206,15 @@ public class LibraryConstructionJaxbBuilder {
         if (pondType == PondType.PCR_FREE_HYPER_PREP || pondType == PondType.PCR_PLUS_HYPER_PREP ||
             pondType == PondType.CELL_FREE) {
             endRepairAbaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair_ABase", shearCleanPlateBarcode,
-                    targetSystem == TargetSystem.MERCURY_ONLY ?
-                            BettaLimsMessageTestFactory.reagentList(endRepairReagents) : Collections.EMPTY_LIST);
+                    BettaLimsMessageTestFactory.reagentList(endRepairReagents));
             bettaLimsMessageTestFactory.addMessage(messageList, endRepairAbaseJaxb);
         } else {
             endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode,
-                    targetSystem == TargetSystem.MERCURY_ONLY ?
-                            BettaLimsMessageTestFactory.reagentList(endRepairReagents) : Collections.EMPTY_LIST);
+                    BettaLimsMessageTestFactory.reagentList(endRepairReagents));
             bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
 
             endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode,
-                    targetSystem == TargetSystem.MERCURY_ONLY ?
-                            BettaLimsMessageTestFactory.reagentList(endRepairCleanupReagents) : Collections.EMPTY_LIST);
+                    BettaLimsMessageTestFactory.reagentList(endRepairCleanupReagents));
             bettaLimsMessageTestFactory.addMessage(messageList, endRepairCleanupJaxb);
 
             aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
@@ -259,8 +247,7 @@ public class LibraryConstructionJaxbBuilder {
 
         if (p5IndexPlateBarcode == null) {
             pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode,
-                    targetSystem == TargetSystem.MERCURY_ONLY ?
-                            BettaLimsMessageTestFactory.reagentList(pondEnrichmentReagents) : Collections.EMPTY_LIST);
+                    BettaLimsMessageTestFactory.reagentList(pondEnrichmentReagents));
 
             bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
         } else {

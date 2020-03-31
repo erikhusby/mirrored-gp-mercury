@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,8 +23,13 @@ import java.util.Map;
 public class SpreadsheetCreator {
     private static final int MAX_ROW_NUMBER = 65536;
 
-    public static Workbook createEmptySpreadsheet() {
-        return new HSSFWorkbook();
+    public enum Type {
+        XLS,
+        XLSX
+    }
+
+    public static Workbook createEmptySpreadsheet(Type type) {
+        return type == Type.XLSX ? new XSSFWorkbook() : new HSSFWorkbook();
     }
 
     /**
@@ -32,34 +38,35 @@ public class SpreadsheetCreator {
      *
      * @return the workbook
      */
-    public static Workbook createSpreadsheet(String sheetName, Object[][] rows) {
+    public static Workbook createSpreadsheet(String sheetName, Object[][] rows, Type type) {
         // Create a new workbook.
-        Workbook workbook = createEmptySpreadsheet();
+        Workbook workbook = createEmptySpreadsheet(type);
         createSheet(sheetName, rows, workbook);
         return workbook;
     }
 
     public static void createSpreadsheet(String sheetName, Object[][] rows,
-            OutputStream out) throws IOException {
+            OutputStream out, Type type) throws IOException {
         // create a new workbook
-        Workbook workbook = createSpreadsheet(sheetName, rows);
+        Workbook workbook = createSpreadsheet(sheetName, rows, type);
 
         workbook.write(out);
         // relies on the caller to close the output stream!!
     }
 
-    public static Workbook createSpreadsheet(Map<String, Object[][]> allSheets) {
+    public static Workbook createSpreadsheet(Map<String, Object[][]> allSheets, Type type) {
         String[] orderedSheetNames = new String[allSheets.size()];
         int count = 0;
         for (String sheetName : allSheets.keySet()) {
             orderedSheetNames[count++] = sheetName;
         }
-        return createSpreadsheet(orderedSheetNames, allSheets);
+        return createSpreadsheet(orderedSheetNames, allSheets, type);
     }
 
-    private static Workbook createSpreadsheet(String[] orderedSheetNames, Map<String, Object[][]> allSheets) {
+    private static Workbook createSpreadsheet(String[] orderedSheetNames, Map<String, Object[][]> allSheets,
+            Type type) {
         // create a new workbook
-        Workbook workbook = createEmptySpreadsheet();
+        Workbook workbook = createEmptySpreadsheet(type);
 
         if (orderedSheetNames.length == 0 || allSheets.isEmpty()) {
             throw new RuntimeException("No sheets were found to write out.");
@@ -72,16 +79,17 @@ public class SpreadsheetCreator {
     }
 
     public static void createSpreadsheet(Map<String, Object[][]> allSheets,
-            OutputStream out) throws IOException {
-        Workbook workbook = createSpreadsheet(allSheets);
+            OutputStream out, Type type) throws IOException {
+        Workbook workbook = createSpreadsheet(allSheets, type);
         workbook.write(out);
     }
 
 
     public static void createSpreadsheet(String[] orderedSheetNames,
             Map<String, Object[][]> allSheets,
-            OutputStream out) throws IOException {
-        Workbook workbook = createSpreadsheet(orderedSheetNames, allSheets);
+            OutputStream out,
+            Type type) throws IOException {
+        Workbook workbook = createSpreadsheet(orderedSheetNames, allSheets, type);
         // write the workbook to the output stream
         workbook.write(out);
         // replies on the caller to close the output stream!!

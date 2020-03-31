@@ -1,16 +1,28 @@
--- GPLIM-6212 requires indexes on array_process_flow table
-DROP INDEX IDX_ARRAY_PROCESS_FLOW_PDO_ETL;
 
-CREATE INDEX IDX_ARRAY_PROCESS_FLOW_ETL
-ON ARRAY_PROCESS_FLOW( BATCH_NAME, LCSET_SAMPLE_NAME );
-
--- GPLIM-4108 add column for sap delivery document
-alter table ledger_entry add sap_delivery_document varchar2(255);
-alter table im_ledger_entry add sap_delivery_document varchar2(255);
-
-alter table ledger_entry add product_id numeric(19);
-alter table im_ledger_entry add product_id numeric(19);
-
--- GPLIM-6508 add column for order type
-alter table product_order add order_type varchar2(255);
-alter table im_product_order add order_type varchar2(255);
+-- GPLIM-6706 Force use of enum for LAB_METRIC.VESSEL_POSITION (vs.String)
+SET SERVEROUTPUT ON;
+DECLARE
+    CURSOR CUR_UPD IS
+        select LAB_METRIC_ID
+        from LAB_METRIC
+        where REGEXP_INSTR(RACK_POSITION, '[A-Z][0-9]$') = 1;
+    TYPE V_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+    V_PK_ARR V_ARR_TY;
+BEGIN
+    OPEN CUR_UPD;
+    FETCH CUR_UPD BULK COLLECT INTO V_PK_ARR;
+    CLOSE CUR_UPD;
+    IF (V_PK_ARR.COUNT > 0) THEN
+        FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC
+            SET RACK_POSITION = SUBSTR(RACK_POSITION, 1, 1) || '0' || SUBSTR(RACK_POSITION, 2, 1)
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+    END IF;
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR OCCURRED: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
+END;
+/

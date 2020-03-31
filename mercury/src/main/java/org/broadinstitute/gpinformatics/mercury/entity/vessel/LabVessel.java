@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -521,6 +522,26 @@ public abstract class LabVessel implements Serializable {
         return metricList.get(0);
     }
 
+    @Nullable
+    public LabMetricRun getMostRecentLabMetricRunForType(LabMetric.MetricType metricType) {
+        if(labMetrics != null) {
+            Set<LabMetric> metrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName()== metricType) {
+                    metrics.add(labMetric);
+                }
+            }
+            if (metrics.isEmpty()) {
+                return null;
+            }
+            List<LabMetric> metricList = new ArrayList<>(metrics);
+            metricList.sort(Collections.reverseOrder());
+            return metricList.get(0).getLabMetricRun();
+        }
+
+        return null;
+    }
+
     public StorageLocation getStorageLocation() {
         return storageLocation;
     }
@@ -814,7 +835,7 @@ public abstract class LabVessel implements Serializable {
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestMetricOfType(metricType);
+            return getContainerRole().getNearestMetricOfType(metricType, traversalDirection);
         } else {
             TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
                     new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
@@ -858,6 +879,10 @@ public abstract class LabVessel implements Serializable {
                 new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
+    }
+
+    public Triple<RackOfTubes, VesselPosition, String> findStorageContainer() {
+        return null;
     }
 
     public enum ContainerType {
@@ -1220,6 +1245,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addSample(MercurySample mercurySample) {
+        mercurySample.getLabVessel().add(this);
         mercurySamples.add(mercurySample);
         if (mercurySamplesCount == null) {
             mercurySamplesCount = 0;

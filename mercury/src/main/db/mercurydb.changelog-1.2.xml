@@ -1539,6 +1539,196 @@
 /
         </sql>
     </changeSet>
+    <changeSet id="GPLIM-5743-1" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue">
+            <column name="queue_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_queue" />
+            </column>
+            <column name="queue_type" type="varchar2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_name" type="varchar2(255)" />
+            <column name="queue_description" type="varchar2(500)" />
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5743-2" author="pdunlea">
+        <addUniqueConstraint tableName="queue" constraintName="uk_queue_queue_name" schemaName="mercury"
+                             columnNames="queue_name" />
+        <addUniqueConstraint tableName="queue" constraintName="uk_queue_queue_type" schemaName="mercury"
+                             columnNames="queue_type" />
+    </changeSet>
+    <changeSet id="GPLIM-5743-3" author="pdunlea">
+        <createSequence sequenceName="seq_queue" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-5743-4" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_grouping">
+            <column name="queue_grouping_Id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_queue_grouping_id" />
+            </column>
+            <column name="queue_group_text" type="varchar2(200)" />
+            <column name="queue_id" type="number(19,0)" />
+            <column name="sort_order" type="number(19,0)" />
+            <column name="version" type="number(5)" />
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5743-6" author="pdunlea">
+        <addForeignKeyConstraint constraintName="fk_queue_queue_group" baseTableSchemaName="mercury" baseTableName="queue_grouping"
+                                 baseColumnNames="queue_id" referencedTableSchemaName="mercury"
+                                 referencedTableName="queue" referencedColumnNames="queue_id" />
+    </changeSet>
+    <changeSet id="GPLIM-5743-7" author="pdunlea">
+        <createSequence sequenceName="seq_queue_grouping" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-5743-8" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_entity">
+            <column name="queue_entity_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_queue_entity" />
+            </column>
+            <column name="queue_grouping_id" type="number(19,0)" />
+            <column name="queue_status" type="varchar(255)" />
+            <column name="lab_vessel_id" type="number(19,0)" />
+            <column name="completed_on" type="timestamp" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743_9" author="pdunlea">
+        <addForeignKeyConstraint constraintName="fk_queue_group_q_entity" baseTableSchemaName="mercury" baseTableName="queue_entity"
+                                 baseColumnNames="queue_grouping_id" referencedTableSchemaName="mercury"
+                                 referencedTableName="queue_grouping" referencedColumnNames="queue_grouping_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-5743_10" author="pdunlea">
+        <addForeignKeyConstraint constraintName="fk_queue_group_lab_vessel" baseTableSchemaName="mercury" baseTableName="queue_entity"
+                                 baseColumnNames="lab_vessel_id" referencedTableSchemaName="mercury" referencedTableName="lab_vessel"
+                                 referencedColumnNames="lab_vessel_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-11" author="pdunlea">
+        <createSequence sequenceName="seq_queue_entity" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-12" author="pdunlea">
+        <createTable schemaName="mercury" tableName="product_queue">
+            <column name="product_queue_id" type="number">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_product_queue_id" />
+            </column>
+            <column name="product_id" type="number(19,0)" />
+            <column name="queue_id" type="number(19,0)" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-13" author="pdunlea">
+        <addForeignKeyConstraint constraintName="fk_product_queue_product_id" baseTableSchemaName="mercury"
+                                 baseTableName="product_queue" baseColumnNames="product_id"
+                                 referencedTableSchemaName="athena" referencedTableName="product"
+                                 referencedColumnNames="product_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-14" author="pdunlea">
+        <addForeignKeyConstraint constraintName="product_queue_queue_id" baseTableSchemaName="mercury"
+                                 baseTableName="product_queue" baseColumnNames="queue_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="queue"
+                                 referencedColumnNames="queue_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-15" author="pdunlea">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'DNA_QUANT', 'DNA Quant Queue',
+            'DNA Quant Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-16" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_priority_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-18" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_grouping_aud">
+            <column name="queue_grouping_Id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_group_text" type="varchar2(200)" />
+            <column name="queue_id" type="number(19,0)" />
+            <column name="sort_order" type="number(19,0)" />
+            <column name="version" type="number(5)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-19" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_entity_aud">
+            <column name="queue_entity_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_grouping_id" type="number(19,0)" />
+            <column name="queue_status" type="varchar(255)" />
+            <column name="lab_vessel_id" type="number(19,0)" />
+            <column name="completed_on" type="timestamp" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-20" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_priority_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-21" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_specialization" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-22" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_specialization" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-23" author="pdunlea">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_origin" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-24" author="pdunlea">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_origin" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-5743-25" author="pdunlea">
+        <createTable schemaName="mercury" tableName="queue_aud">
+            <column name="queue_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_type" type="varchar2(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="queue_name" type="varchar2(255)" />
+            <column name="queue_description" type="varchar2(500)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
 
     <changeSet id="GPLIM-4712-200" author="epolk">
         <dropForeignKeyConstraint baseTableName="sample_instance_entity" constraintName="FK_SAMPL_INST_RESEARCH_PROJ"/>
@@ -1941,6 +2131,7 @@
             <column name="abandoned_by" type="number(19,0)"/>
         </addColumn>
     </changeSet>
+
     <changeSet id="GPLIM-6078" author="jsacco">
         <createIndex tableName="BUCKET_ENTRY" indexName="IX_BUCKET_BATCH_FK">
             <column name="LAB_BATCH"/>
@@ -2320,6 +2511,17 @@
 	    tableName="sample_instance_entity" columnNames="lab_vessel, library_name"/>
     </changeSet>
 
+    <changeSet id="GPLIM-6372-1" author="thompson">
+        <addColumn tableName="queue_grouping" schemaName="mercury">
+            <column name="queue_status" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6372-2" author="thompson">
+        <addColumn tableName="queue_grouping_aud" schemaName="mercury">
+            <column name="queue_status" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
     <changeSet id="GPLIM-6005-001" author="epolk">
         <dropNotNullConstraint columnName="research_project_id" schemaName="mercury" tableName="manifest_session"/>
     </changeSet>
@@ -2445,6 +2647,35 @@
         <addUniqueConstraint tableName="quarantined" columnNames="item_source, item_type, item"
                              constraintName="u_quarantined" schemaName="mercury" />
     </changeSet>
+
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="PIPELINE_DATA_TYPE" schemaName="MERCURY" tableName="sample_instance_entity"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="MERCURY" tableName="sample_instance_entity">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5521-10-ADDCOLUMN_AUD" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="MERCURY" columnName="PIPELINE_DATA_TYPE"
+                              tableName="SAMPLE_INSTANCE_ENTITY_AUD"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="PIPELINE_DATA_TYPE" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+<!--    <changeSet id="GPLIM-5521-05-ADDFK" author="dryan">-->
+<!--        <addForeignKeyConstraint constraintName="FK_SAMPINST_ENT_DATA_TYPE"-->
+<!--                                 baseTableSchemaName="MERCURY" baseTableName="sample_instance_entity"-->
+<!--                                 baseColumnNames="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedTableSchemaName="ATHENA" referencedTableName="PIPELINE_DATA_TYPE"-->
+<!--                                 referencedColumnNames="PIPELINE_DATA_TYPE_ID"/>-->
+<!--    </changeSet>-->
 
     <changeSet id="GPLIM-6643_1" author="jowalsh">
         <createIndex indexName="IX_FSM_AUD" tableName="FINITE_STATE_MACHINE_AUD" schemaName="MERCURY">
@@ -2624,5 +2855,118 @@
             <column name="ancillary_target_vessel"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-6706" author="jsacco">
+        <sql splitStatements="false">
+            DECLARE
+            CURSOR CUR_UPD IS
+            select LAB_METRIC_ID
+            from LAB_METRIC
+            where REGEXP_INSTR( VESSEL_POSITION, '[A-Z][0-9]$' ) = 1;
+            TYPE V_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+            V_PK_ARR V_ARR_TY;
+            BEGIN
+            OPEN CUR_UPD;
+            FETCH CUR_UPD BULK COLLECT INTO V_PK_ARR;
+            CLOSE CUR_UPD;
+            IF( V_PK_ARR.COUNT > 0 ) THEN
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
 
+            FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+            UPDATE LAB_METRIC_AUD
+            SET VESSEL_POSITION = SUBSTR( VESSEL_POSITION, 1, 1 ) || '0' || SUBSTR( VESSEL_POSITION, 2, 1 )
+            WHERE LAB_METRIC_ID = V_PK_ARR(IDX);
+            END IF;
+            COMMIT;
+            EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('ERROR OCCURRED: ' || SQLERRM );
+            ROLLBACK;
+            RAISE;
+            END;
+        </sql>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-6080-1">
+        <addColumn schemaName="mercury" tableName="mercury_control">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-2">
+        <addColumn schemaName="mercury" tableName="mercury_control_aud">
+            <column name="CONCORDANCE_SAMPLE_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-6080-3">
+        <addForeignKeyConstraint constraintName="FK_MC_MERCURY_SAMPLE"
+                baseTableSchemaName="mercury" baseTableName="mercury_control" baseColumnNames="CONCORDANCE_SAMPLE_ID"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'VOLUME_CHECK', 'Volume Check Queue',
+            'Volume Check Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-2" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'FINGERPRINTING', 'Fingerprinting Queue',
+            'Fingerprinting Queue for newly received or extracted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-3" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'ARRAY_PLATING', 'Array Plating Queue',
+            'Array Plating Queue for quanted samples.');
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-6677-4" author="thompson">
+        <sql>
+            insert into mercury.queue(queue_id, queue_type, queue_name, queue_description)
+            values (mercury.seq_queue.nextval, 'SEQ_PLATING', 'Seq Plating Queue',
+            'Seq Plating Queue for quanted samples.');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-6372-3" author="thompson">
+        <addPrimaryKey tableName="QUEUE_AUD" schemaName="mercury" columnNames="rev, queue_id"
+                       constraintName="PK_QUEUE_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-4" author="thompson">
+        <addPrimaryKey tableName="QUEUE_ENTITY_AUD" schemaName="mercury" columnNames="rev, queue_entity_id"
+                       constraintName="PK_QUEUE_ENTITY_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-5" author="thompson">
+        <addPrimaryKey tableName="QUEUE_GROUPING_AUD" schemaName="mercury" columnNames="rev, queue_grouping_id"
+                       constraintName="PK_QUEUE_GROUPING_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-6372-6" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_AUD" indexName="IDX_QA_QUEUE_ID" >
+            <column name="QUEUE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-7" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_ENTITY_AUD" indexName="IDX_QEA_QUEUE_ENTITY_ID" >
+            <column name="QUEUE_ENTITY_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6372-8" author="thompson">
+        <createIndex schemaName="mercury" tableName="QUEUE_GROUPING_AUD" indexName="IDX_QGA_QUEUE_GROUPING_ID" >
+            <column name="QUEUE_GROUPING_ID"/>
+        </createIndex>
+    </changeSet>
+    <!--
+   ##################################################################
+   ##################################################################
+
+                NO MORE CHANGES FOR THIS FILE
+                Continued in mercurydb.changelog-1.3.xml
+   ##################################################################
+   ##################################################################
+    -->
 </databaseChangeLog>

@@ -35,13 +35,11 @@ public class CrspPipelineUtilsTest {
 
     private ProductOrderSample nonCrspSampleWithGSSRMetadata;
 
-    private ProductOrderSample nonCrspSampleWithUnknownMetadata;
-
     private ProductOrderSample nonCrspSampleWithBSPMetadata;
 
     private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
 
-    private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
+    private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.emptySet());
 
     private ProductOrderSample createPdoSample(MercurySample.MetadataSource metadataSource, String sampleName) {
         ProductOrder pdo = ProductOrderTestFactory.buildProductOrder(0, "SM-", Workflow.ICE_CRSP);
@@ -69,7 +67,6 @@ public class CrspPipelineUtilsTest {
         setRegulatoryDesignation(crspSample, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         nonCrspSampleWithGSSRMetadata = createPdoSample(null,"123.5");
         setRegulatoryDesignation(nonCrspSampleWithGSSRMetadata, ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
-        nonCrspSampleWithUnknownMetadata = createPdoSample(null,"Crazy Sample!");
         nonCrspSampleWithBSPMetadata = createPdoSample(MercurySample.MetadataSource.BSP,"SM-WHATEVER");
     }
 
@@ -79,16 +76,6 @@ public class CrspPipelineUtilsTest {
             sampleInstances.add(new TestSampleInstance(pdoSample).getSampleInstance());
         }
         return sampleInstances;
-    }
-
-    public void testGSSRMetadatasource() {
-        Assert.assertEquals(MercurySample.GSSR_METADATA_SOURCE,
-                            nonCrspSampleWithGSSRMetadata.getMercurySample().getMetadataSourceForPipelineAPI());
-    }
-
-    public void testOtherMetadatasource() {
-        Assert.assertEquals(MercurySample.OTHER_METADATA_SOURCE,
-                            nonCrspSampleWithUnknownMetadata.getMercurySample().getMetadataSourceForPipelineAPI());
     }
 
     public void testBSPMetadatasource() {
@@ -133,7 +120,7 @@ public class CrspPipelineUtilsTest {
 
     public void testSetFieldsSetsTestTypeToSomatic() {
         LibraryBean libraryBean = new LibraryBean();
-        SampleData sampleData = new MercurySampleData("sampleId", Collections.<Metadata>emptySet());
+        SampleData sampleData = new MercurySampleData("sampleId", Collections.emptySet());
 
         crspPipelineAPIUtils.setFieldsForCrsp(libraryBean, sampleData, "bait");
 

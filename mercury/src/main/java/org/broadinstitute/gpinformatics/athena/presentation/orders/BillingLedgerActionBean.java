@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirstMetFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -48,20 +49,25 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.material.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -172,6 +178,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
     boolean redirectOnSuccess=false;
     private List<Product> products;
 
+    private Map<Product, List<DeliveryCondition>> potentialSapReplacements = new HashMap<>();
+
     /**
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
      * All of this data is needed for rendering the billing ledger UI.
@@ -181,6 +189,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         loadProductOrder();
         try {
             gatherPotentialBillables();
+            gatherPotentialSapReplacements();
         } catch (SAPIntegrationException e) {
             addGlobalValidationError(e.getMessage());
         }
@@ -327,6 +336,40 @@ public class BillingLedgerActionBean extends CoreActionBean {
         }
     }
 
+    private void gatherPotentialSapReplacements() throws SAPIntegrationException {
+        if(productOrder.hasSapQuote()) {
+            final String salesOrg;
+            if(StringUtils.equals(productOrder.getSapQuote(sapService).getQuoteHeader().getSalesOrganization(),
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization())) {
+                salesOrg = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization();
+            } else {
+                salesOrg = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization();
+            }
+            final Product primaryProduct = productOrder.getProduct();
+            addPotentialSapReplacement(salesOrg, primaryProduct);
+
+            productOrder.getAddOns().forEach(productOrderAddOn -> {
+                addPotentialSapReplacement(salesOrg, primaryProduct);
+            });
+        }
+    }
+
+    private void addPotentialSapReplacement(String salesOrg, Product primaryProduct) {
+        Product.setMaterialOnProduct(primaryProduct, productPriceCache);
+        Optional<SAPMaterial> sapMaterial = Optional.ofNullable(primaryProduct.getSapMaterials().get(salesOrg));
+        sapMaterial.ifPresent(material -> {
+            material.getPossibleDeliveryConditions().entrySet().stream()
+                    .filter(deliveryConditionBigDecimalEntry ->
+                            deliveryConditionBigDecimalEntry.getValue().compareTo(BigDecimal.ZERO) != 0)
+                    .forEach(deliveryConditionEntry -> {
+                if(!potentialSapReplacements.containsKey(primaryProduct)) {
+                    potentialSapReplacements.put(primaryProduct, new ArrayList<>());
+                }
+                potentialSapReplacements.get(primaryProduct).add(deliveryConditionEntry.getKey());
+            });
+        });
+    }
+
     private void loadViewData() {
         // Load sample data
         ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
@@ -439,7 +482,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             productOrder.hasSapQuote());
                     ProductOrderSampleQuantities quantities = entry.getValue();
                     ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(quantityIndex);
-                    double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+                    BigDecimal currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : BigDecimal.ZERO;
 
                     ProductOrderSample.LedgerUpdate ledgerUpdate;
                     if(data.sapOrder) {
@@ -449,13 +492,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             data.setDeliveryConditionAvailable(true);
                         }
                         ledgerUpdate = new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), product,
-                                quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
-                                data.getWorkCompleteDate(), data.isPrimaryReplacement());
+                                new BigDecimal(quantities.originalQuantity), currentQuantity, new BigDecimal(quantities.submittedQuantity),
+                                data.getWorkCompleteDate(),
+                                DeliveryCondition.fromConditionName(quantities.replacementCondition));
 
                     } else {
                         ledgerUpdate =
                                 new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,product,
-                                        quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                        new BigDecimal(quantities.originalQuantity), currentQuantity, new BigDecimal(quantities.submittedQuantity),
                                         data.getWorkCompleteDate());
                     }
                     ledgerUpdates.put(productOrderSample, ledgerUpdate);
@@ -494,7 +538,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         } else {
             result.put(ledgerEntry.getPriceItem().getName());
         }
-        result.put(Double.valueOf(ledgerEntry.getQuantity()));
+        result.put(ledgerEntry.getQuantity());
         result.put(ledgerEntry.getQuoteId());
         result.put(new SimpleDateFormat("MMM d, yyyy").format(ledgerEntry.getWorkCompleteDate()));
         BillingSession billingSession = ledgerEntry.getBillingSession();
@@ -588,6 +632,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
         this.products = products;
     }
 
+    public Map<Product, List<DeliveryCondition>> getPotentialSapReplacements() {
+        return potentialSapReplacements;
+    }
+
     /**
      * Data used to render the billing ledger UI.
      */
@@ -596,6 +644,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Date coverageFirstMet;
         private Date workCompleteDate;
         private Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantities;
+        private Map<ProductLedgerIndex, String> replacementsByProduct = new HashMap<>();
         private ListMultimap<ProductLedgerIndex, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
         private boolean anyQuantitySet = false;
@@ -613,9 +662,26 @@ public class BillingLedgerActionBean extends CoreActionBean {
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
             for(Map.Entry<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> quantityEntry: ledgerQuantities.entrySet()) {
-                if(quantityEntry.getValue().getTotal()>0) {
+                if(quantityEntry.getValue().getTotal().compareTo(BigDecimal.ZERO)>0) {
                     anyQuantitySet = true;
                 }
+            }
+
+            if (productOrderSample.getProductOrder().hasSapQuote()) {
+                productOrderSample.getLedgerItems().stream()
+                        .filter(ledgerEntry -> !ledgerEntry.isBilled() || !productOrderSample.isToBeBilled())
+                        .sorted((ledger1, ledger2) -> {
+                            Optional<String> deliveryDocument1 = Optional.ofNullable(ledger1.getSapDeliveryDocumentId());
+                            Optional<String> deliveryDocument2 = Optional.ofNullable(ledger2.getSapDeliveryDocumentId());
+                            return deliveryDocument1.orElse("").compareTo(deliveryDocument2.orElse(""));
+                        }).forEach(ledgerEntry -> {
+                    ProductLedgerIndex key = ProductLedgerIndex
+                            .create(ledgerEntry.getProduct(), ledgerEntry.getPriceItem(),
+                                    productOrderSample.getProductOrder().hasSapQuote());
+                    if (!replacementsByProduct.containsKey(key)) {
+                        replacementsByProduct.put(key, ledgerEntry.getSapReplacement());
+                    }
+                });
             }
 
             boolean primaryBilled = false;
@@ -656,14 +722,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
-        public double getTotalForPriceIndex(ProductLedgerIndex index) {
+        public BigDecimal getTotalForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
-            return quantities != null ? quantities.getTotal() : 0;
+            return quantities != null ? quantities.getTotal() : BigDecimal.ZERO;
         }
 
-        public double getBilledForPriceIndex(ProductLedgerIndex index) {
+        public BigDecimal getBilledForPriceIndex(ProductLedgerIndex index) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(index);
-            return quantities != null ? quantities.getBilled() : 0;
+            return quantities != null ? quantities.getBilled() : BigDecimal.ZERO;
+        }
+
+        public String getReplacementForPriceIndex(ProductLedgerIndex index) {
+            List<LedgerEntry> ledgerEntries = ledgerEntriesByPriceItem.get(index);
+            String sapReplacement =
+                    ledgerEntries.stream().map(LedgerEntry::getSapReplacement).collect(CommonUtils.toSingleton());
+            return sapReplacement;
         }
 
         public int getAutoFillQuantity() {
@@ -672,6 +745,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public boolean isAnyQuantitySet() {
             return anyQuantitySet;
+        }
+
+        public Map<ProductLedgerIndex, String> getReplacementsByProduct() {
+            return replacementsByProduct;
         }
     }
 
@@ -683,7 +760,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         private Date workCompleteDate;
         private boolean sapOrder;
         private Map<Long, ProductOrderSampleQuantities> quantities;
-        private boolean primaryReplacement;
         private boolean deliveryConditionAvailable;
 
         public String getSampleName() {
@@ -718,14 +794,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.quantities = quantities;
         }
 
-        public boolean isPrimaryReplacement() {
-            return primaryReplacement;
-        }
-
-        public void setPrimaryReplacement(boolean primaryReplacement) {
-            this.primaryReplacement = primaryReplacement;
-        }
-
         public boolean isDeliveryConditionAvailable() {
             return deliveryConditionAvailable;
         }
@@ -739,23 +807,32 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * Quantity data for a single price item posted from the billing ledger UI.
      */
     public static class ProductOrderSampleQuantities {
-        private double originalQuantity;
-        private double submittedQuantity;
+        private String originalQuantity;
+        private String submittedQuantity;
+        private String replacementCondition;
 
-        public double getOriginalQuantity() {
+        public String getOriginalQuantity() {
             return originalQuantity;
         }
 
-        public void setOriginalQuantity(double originalQuantity) {
+        public void setOriginalQuantity(String originalQuantity) {
             this.originalQuantity = originalQuantity;
         }
 
-        public double getSubmittedQuantity() {
+        public String getSubmittedQuantity() {
             return submittedQuantity;
         }
 
-        public void setSubmittedQuantity(double submittedQuantity) {
+        public void setSubmittedQuantity(String submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
+        }
+
+        public String getReplacementCondition() {
+            return replacementCondition;
+        }
+
+        public void setReplacementCondition(String replacementCondition) {
+            this.replacementCondition = replacementCondition;
         }
     }
 

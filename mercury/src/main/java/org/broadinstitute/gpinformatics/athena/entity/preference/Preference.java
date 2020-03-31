@@ -217,7 +217,7 @@ public class Preference {
 
     public void markModified(@Nonnull String data) {
         this.data = data;
-        this.modifiedDate = new Date();
+        setModifiedDate(new Date());
     }
 
     public void update(long object1Id, @Nullable Long object2Id, @Nonnull String data) {

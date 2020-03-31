@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemOfRecord;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -74,7 +73,7 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
-        expectedRouting = SystemRouter.System.MERCURY;
+        expectedRouting = SystemOfRecord.System.MERCURY;
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                 String.valueOf(runDate.getTime()),
                 BARCODE_SUFFIX, true);
@@ -109,11 +108,11 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, BigDecimal.valueOf(16.22f), denatureTube, workflowBatch.getBatchName(),
+                vesselPositions1, new BigDecimal("16.22"), denatureTube, workflowBatch.getBatchName(),
                 productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BigDecimal.valueOf(12.22f), denatureTube, workflowBatch.getBatchName(),
+                vesselPositions2, new BigDecimal("12.22"), denatureTube, workflowBatch.getBatchName(),
                 productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
@@ -124,7 +123,7 @@ public class FCTJiraFieldFactoryTest extends BaseEventTest {
 
         FlowcellDesignationEjb flowcellDesignationEjb = mock(FlowcellDesignationEjb.class);
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
-        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
         when(flowcellDesignationEjb.getFlowcellDesignations(labBatch)).thenReturn(Collections.emptyList());
 

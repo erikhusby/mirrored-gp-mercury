@@ -236,7 +236,7 @@ public class ExtractTransformDbFreeTest {
     public void testOnDemandIncr1() {
         long startEtl = 1364411920L;
 
-        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(new TreeMap<Long, Date>());
+        expect(auditReaderDao.fetchAuditIds(eq(startEtl - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND), anyLong())).andReturn(new TreeMap<Long, Date>());
         auditReaderDao.clear();
         expectLastCall();
         replay(mocks);
@@ -255,7 +255,7 @@ public class ExtractTransformDbFreeTest {
         long endEtl = 1364411930L;
         String endEtlStr = ExtractTransform.formatTimestamp(new Date(endEtl * 1000L));
 
-        expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(new TreeMap<Long, Date>());
+        expect(auditReaderDao.fetchAuditIds(startEtl - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND, endEtl)).andReturn(new TreeMap<Long, Date>());
         auditReaderDao.clear();
         expectLastCall();
         replay(mocks);
@@ -341,7 +341,7 @@ public class ExtractTransformDbFreeTest {
     public void testOnDemandIncrementalNoChanges() {
         final long startEtlSec = 1360000000L;
         SortedMap<Long, Date> revs = new TreeMap<>();
-        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND), anyLong())).andReturn(revs);
         auditReaderDao.clear();
         expectLastCall();
 
@@ -356,7 +356,7 @@ public class ExtractTransformDbFreeTest {
         final long startEtlSec = 1360000000L;
         SortedMap<Long, Date> revs = new TreeMap<>();
         revs.put(1L, new Date(startEtlSec));
-        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec - ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND), anyLong())).andReturn(revs);
         Set<Long> revIds = revs.keySet();
         expect(productEtl.doIncrementalEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doIncrementalEtl(eq(revIds), (String) anyObject())).andReturn(0);

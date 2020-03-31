@@ -185,7 +185,7 @@ do
     do
 	echo "Processing ${DAT_FILE}"
 
-	TABLE_NAME=`echo ${DAT_FILE} | sed -e "s!.*/${TIMESTAMP}_!!" | sed -e 's/.dat//'`
+	TABLE_NAME=`echo ${DAT_FILE} | sed -e "s!.*/${TIMESTAMP}_!!" | sed -e 's/.dat$//'`
 
 	CTL_FILE=${CONTROL_DIR}/${TABLE_NAME}.ctl
 	# Control file for the load table must exist.

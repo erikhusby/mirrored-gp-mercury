@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -41,11 +42,11 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for LimsQueries boundary interface.
@@ -225,12 +226,12 @@ public class LimsQueriesTest {
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         LabMetric quantMetric = new LabMetric(new BigDecimal("44.44"), LabMetric.MetricType.POND_PICO,
-                LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
+                LabMetric.LabUnit.UG_PER_ML, VesselPosition.D04, gregorianCalendar.getTime());
         tube.addMetric(quantMetric);
 
         gregorianCalendar.add(Calendar.HOUR, 1);
         quantMetric = new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO,
-                LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
+                LabMetric.LabUnit.UG_PER_ML, VesselPosition.D04, gregorianCalendar.getTime());
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", "Pond Pico");
@@ -245,7 +246,7 @@ public class LimsQueriesTest {
 
         LabMetric quantMetric =
                 new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML,
-                        "D04", new Date());
+                        VesselPosition.D04, new Date());
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
@@ -280,7 +281,7 @@ public class LimsQueriesTest {
         //Should not find Final Library Size since its not a concentration
         LabMetric finalLibrarySizeMetric =
                 new LabMetric(new BigDecimal(224), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
-                        "A01", new Date());
+                        VesselPosition.A01, new Date());
         tube.addMetric(finalLibrarySizeMetric);
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
                 limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
@@ -293,7 +294,7 @@ public class LimsQueriesTest {
         BigDecimal labMetricQuant = BigDecimal.valueOf(22.21);
         LabMetric quantMetric =
                 new LabMetric(labMetricQuant, LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
-                        "A02", new Date());
+                        VesselPosition.A02, new Date());
         tube.addMetric(quantMetric);
         BigDecimal volume = BigDecimal.valueOf(40.04);
         tube.setVolume(volume);

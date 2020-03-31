@@ -168,37 +168,6 @@ deckMsgs:
     PROD:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
-
-bettaLimsServer:
-
-    DEV:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    TEST:
-        wsHost: vbettalimsqa1
-        wsPort: 9997
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.test
-
-    QA:
-        wsHost: vbettalimsqa1
-        wsPort: 9998
-        jmsHost: vbettalimsqa1
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.qa
-
-    PROD:
-        wsHost: seqlims
-        wsPort: 9998
-        jmsHost: seqlims
-        jmsPort: 61616
-        jmsQueue: broad.queue.bettalims
-
 datawhEtl:
 
     DEV:
@@ -299,13 +268,6 @@ sap:
       sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
       sapSupportEmailSubjectPrefix: "TEST SAP Order"
       url:  https://quote-qa.broadinstitute.org
-    QA:
-      #Maps to the Old SAP QA environment.  Previously used as a parallel SAP environment.  Defunct and Not used by us anymore.
-      login:      GPCOMU
-      password:   SAPERQ300!
-      sapSupportEmail: Mercury-QA-Notifications@broadinstitute.org
-      sapSupportEmailSubjectPrefix: "TEST SAP Order"
-      url:  https://quote-qa.broadinstitute.org
     RC:
       #Maps to the primary SAP QA 400 environment.  Used for testing with Mercury DEV and Mercury QA environments
       login:      GPCOMU
@@ -348,6 +310,13 @@ MayoManifestGoogleStorage:
         writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
         dailyCredentialRenewal: true
+covidManifestGoogleStorage:
+    DEV:
+        credentialFilename: serviceAccountKeys/covid-19-testing.json
+        bucketName: covid-19-test-input-staging
+    PROD:
+        credentialFilename: serviceAccountKeys/covid-19-testing.json
+        bucketName: covid-19-test-input-prod
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
@@ -363,7 +332,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -371,6 +339,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: DEV
+      covidManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
@@ -383,7 +352,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -391,6 +359,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: DEV
+      covidManifestGoogleStorage: DEV
 
     TEST:
 
@@ -403,7 +372,6 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
-      bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
       submission: DEV
@@ -411,6 +379,7 @@ mercury:
       sap:  RC
       decoder: DEV
       MayoManifestGoogleStorage: TEST
+      covidManifestGoogleStorage: DEV
 
     QA:
       app:      QA
@@ -422,7 +391,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -430,6 +398,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: QA
+      covidManifestGoogleStorage: DEV
 
     RC:
 
@@ -442,7 +411,6 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-      bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
       submission: DEV
@@ -450,6 +418,7 @@ mercury:
       sap:  RC
       decoder: QA
       MayoManifestGoogleStorage: RC
+      covidManifestGoogleStorage: DEV
 
     PROD:
 
@@ -462,7 +431,6 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-      bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
       submission: PROD
@@ -470,3 +438,4 @@ mercury:
       sap:  PROD
       decoder: PROD
       MayoManifestGoogleStorage: PROD
+      covidManifestGoogleStorage: PROD

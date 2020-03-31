@@ -81,7 +81,7 @@ public class FingerprintingPlateFactory {
             }
             // Validates the units of measure.
             if (labMetric != null && labMetric.getUnits() != LabMetric.LabUnit.UG_PER_ML &&
-                labMetric.getUnits() != LabMetric.LabUnit.NG_PER_UL) {
+                    labMetric.getUnits() != LabMetric.LabUnit.NG_PER_UL) {
                 errorMessages.add(position.name() + " has incompatible unit of measure for the concentration.");
                 continue;
             }
@@ -260,7 +260,7 @@ public class FingerprintingPlateFactory {
         sheets.put(sheetNames[0], participantsCells);
         sheets.put(sheetNames[1], plateCells);
 
-        return SpreadsheetCreator.createSpreadsheet(sheets);
+        return SpreadsheetCreator.createSpreadsheet(sheets, SpreadsheetCreator.Type.XLS);
     }
 
 

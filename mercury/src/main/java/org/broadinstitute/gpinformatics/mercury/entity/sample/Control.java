@@ -11,6 +11,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -104,6 +106,13 @@ public class Control {
     @Index(name = "ix_mc_sample_key")
     private ControlState state = ControlState.ACTIVE;
 
+    /**
+     * Which aliquot's fingerprint to use for concordance checking.
+     */
+    @ManyToOne
+    @JoinColumn(name = "CONCORDANCE_SAMPLE_ID")
+    private MercurySample concordanceMercurySample;
+
     public Control() {
     }
 
@@ -142,5 +151,13 @@ public class Control {
 
     public boolean isActive() {
         return this.state == ControlState.ACTIVE;
+    }
+
+    public MercurySample getConcordanceMercurySample() {
+        return concordanceMercurySample;
+    }
+
+    public void setConcordanceMercurySample(MercurySample concordanceMercurySample) {
+        this.concordanceMercurySample = concordanceMercurySample;
     }
 }

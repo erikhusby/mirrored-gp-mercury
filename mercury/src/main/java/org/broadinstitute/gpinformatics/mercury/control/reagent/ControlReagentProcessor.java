@@ -171,6 +171,11 @@ public class ControlReagentProcessor extends TableProcessor {
         public boolean isStringColumn() {
             return isDate != IsDate.YES;
         }
+
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
     }
 
     public Map<String, ControlDto> getMapTubeBarcodeToControl() {

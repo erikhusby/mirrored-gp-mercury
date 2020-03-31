@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.broadinstitute.gpinformatics.infrastructure.parsers.AccessioningColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
@@ -22,7 +23,7 @@ import java.util.Map;
 /**
  * This enum holds header information for sample metadata manifests.
  */
-public enum ManifestHeader implements ColumnHeader {
+public enum ManifestHeader implements AccessioningColumnHeader {
     SPECIMEN_NUMBER("Specimen_Number", Metadata.Key.SAMPLE_ID),
     SEX("Sex", Metadata.Key.GENDER),
     PATIENT_ID("Patient_ID", Metadata.Key.PATIENT_ID),
@@ -34,29 +35,12 @@ public enum ManifestHeader implements ColumnHeader {
     private final String columnName;
     private final Metadata.Key metadataKey;
 
-    public static final String NO_MANIFEST_HEADER_FOUND_FOR_COLUMN =
-            "No ManifestHeader found for columnHeader: ";
-
     ManifestHeader(String columnName, Metadata.Key metadataKey) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
     }
 
-    /**
-     * Convenience method for retrieving ColumnHeader text given an list of headers
-     *
-     * @param columnHeaders Array of ColumnHeaders you would like the text for.
-     *
-     * @return a List of header names.
-     */
-    public static List<String> headerNames(ColumnHeader... columnHeaders) {
-        List<String> allHeaderNames = new ArrayList<>(columnHeaders.length);
-        for (ColumnHeader manifestHeader : columnHeaders) {
-            allHeaderNames.add(manifestHeader.getText());
-        }
-        return allHeaderNames;
-    }
-
+    @Override
     public Metadata.Key getMetadataKey() {
         return metadataKey;
     }
@@ -66,6 +50,7 @@ public enum ManifestHeader implements ColumnHeader {
         return getColumnName();
     }
 
+    @Override
     public String getColumnName() {
         return columnName;
     }
@@ -94,6 +79,11 @@ public enum ManifestHeader implements ColumnHeader {
     @Override
     public boolean isStringColumn() {
         return true;
+    }
+
+    @Override
+    public boolean isIgnoreColumn() {
+        return false;
     }
 
     /**
@@ -134,7 +124,7 @@ public enum ManifestHeader implements ColumnHeader {
                 return manifestHeader;
             }
         }
-        throw new IllegalArgumentException(NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
+        throw new IllegalArgumentException(AccessioningColumnHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
     }
 
     /**

@@ -106,4 +106,62 @@
             <column name="REV"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-5521-Fix_Audit_Constraint" author="dryan">
+        <dropPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"/>
+        <addPrimaryKey constraintName="PK_PIPELINE_DT_AUD" tableName="PIPELINE_DATA_TYPE_AUD"
+                       columnNames="rev, PIPELINE_DATA_TYPE_ID" schemaName="athena"/>
+        <createIndex tableName="PIPELINE_DATA_TYPE_AUD" indexName="IDX_PIPELINE_DATA_TYPE_AUD">
+            <column name="PIPELINE_DATA_TYPE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-6607-change-addon-adjustment-quantity-type" author="scottmat">
+        <modifyDataType tableName="PDO_ADDON_PRICE_ADJUSTMENT" columnName="ADJUSTMENT_QUANTITY"
+                        newDataType="number(23,4)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-6607-change-addon-adjustment-aud-quantity-type" author="scottmat">
+        <modifyDataType tableName="PDO_ADDON_PRICE_ADJUSTMENT_AUD" columnName="ADJUSTMENT_QUANTITY"
+                        newDataType="number(23,4)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-6607-change-adjustment-quantity-type" author="scottmat">
+        <modifyDataType tableName="PDO_PRICE_ADJUSTMENT" columnName="ADJUSTMENT_QUANTITY"
+                        newDataType="number(23,4)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-6607-change-adjustment-aud-quantity-type" author="scottmat">
+        <modifyDataType tableName="PDO_PRICE_ADJUSTMENT_AUD" columnName="ADJUSTMENT_QUANTITY"
+                        newDataType="number(23,4)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-6681-make-PDO-lanes-fractional" author="scottmat">
+        <modifyDataType tableName="PRODUCT_ORDER" columnName="count" newDataType="number(14,4)" schemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-6681-make-PDO-lanes-fractional-aud" author="scottmat">
+        <modifyDataType tableName="PRODUCT_ORDER_AUD" columnName="count" newDataType="number(14,4)" schemaName="ATHENA" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-6677-1" author="thompson">
+        <sql>
+            <![CDATA[
+            insert into athena.pref_preference(PREFERENCE_ID, USER_ID, PREFERENCE_TYPE, DATA, CREATED_DATE, CREATED_BY)
+            values (athena.seq_preference.nextval, -1, 'CONTRACT_CLIENT_QUEUES',
+            '<nameValuePreferenceDefinition><dataMap><entry><key>MAYO</key><value>DNA_QUANT</value></entry></dataMap></nameValuePreferenceDefinition>', sysdate, -1);
+            ]]>
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-6779-sap-ledger-replacement" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-6779-sap-ledger-replacement_aud" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="SAP_REPLACEMENT_CONDITION" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

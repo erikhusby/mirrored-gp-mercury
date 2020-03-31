@@ -182,6 +182,11 @@ public class BucketEntry {
         return poBusinessKey;
     }
 
+    @Deprecated
+    public void setPoBusinessKey(String pdoBusinessKey) {
+        this.poBusinessKey = pdoBusinessKey;
+    }
+
     public ProductOrder getProductOrder() {
         return productOrder;
     }

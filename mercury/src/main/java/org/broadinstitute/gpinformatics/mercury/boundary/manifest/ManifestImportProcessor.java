@@ -12,7 +12,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.CommonUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
@@ -42,15 +44,35 @@ public class ManifestImportProcessor extends TableProcessor {
     public static final String NO_DATA_ERROR = "The uploaded Manifest has no data.";
     private ColumnHeader[] columnHeaders;
     private List<ManifestRecord> manifestRecords = new ArrayList<>();
+    private ManifestSessionEjb.AccessioningProcessType accessioningProcess;
+    private String importFileName;
     List<String> errors = new ArrayList<>();
 
-    protected ManifestImportProcessor() {
-        super(null, IgnoreTrailingBlankLines.YES);
+    private FileType uploadFileType = FileType.EXCEL;
+
+    public enum FileType {
+        EXCEL, CSV
     }
 
+    private ManifestImportProcessor() {
+        this(ManifestSessionEjb.AccessioningProcessType.CRSP, "");
+    }
+
+    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType,
+                                   String importFileName) {
+        this(processType, importFileName, FileType.EXCEL);
+    }
+
+    public ManifestImportProcessor(ManifestSessionEjb.AccessioningProcessType processType,
+                                   String importFileName, FileType parserFileType) {
+        super(null, IgnoreTrailingBlankLines.YES);
+        accessioningProcess = processType;
+        this.importFileName = importFileName;
+        this.uploadFileType = parserFileType;
+    }
     @Override
     public List<String> getHeaderNames() {
-        return ManifestHeader.headerNames(columnHeaders);
+        return ColumnHeader.headerNames(columnHeaders);
     }
 
     /**
@@ -61,8 +83,12 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     @Override
     public void processHeader(List<String> headers, int rowIndex) {
-        Collection<? extends ColumnHeader> foundHeaders =
-                ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        Collection<? extends ColumnHeader> foundHeaders = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            foundHeaders = ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        } else if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            foundHeaders = CovidHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        }
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
     }
 
@@ -76,7 +102,12 @@ public class ManifestImportProcessor extends TableProcessor {
 
         validateRow(dataRow, rowIndex);
 
-        ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        ManifestRecord manifestRecord = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        } else if (accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID){
+            manifestRecord = new ManifestRecord(CovidHeader.toMetadata(dataRow));
+        }
         manifestRecord.setManifestRecordIndex(rowIndex);
         manifestRecords.add(manifestRecord);
     }
@@ -121,7 +152,13 @@ public class ManifestImportProcessor extends TableProcessor {
 
     @Override
     protected ColumnHeader[] getColumnHeaders() {
-        return ManifestHeader.values();
+        ColumnHeader[] values = null;
+        if(accessioningProcess == ManifestSessionEjb.AccessioningProcessType.CRSP) {
+            values = ManifestHeader.values();
+        } else if (accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID) {
+            values = CovidHeader.values();
+        }
+        return values;
     }
 
     @Override
@@ -160,6 +197,22 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     public List<String> processSingleWorksheet(InputStream inputStream)
             throws InvalidFormatException, IOException, ValidationException {
-        return PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+        List<String> strings = new ArrayList<>();
+        if(uploadFileType == FileType.CSV) {
+            final XSSFWorkbook convertedWorkbook = CommonUtils.csvToXLSX(inputStream, this.importFileName);
+            strings = PoiSpreadsheetParser.processSingleWorksheet(convertedWorkbook, this);
+        } else {
+            strings = PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+        }
+        return strings;
+    }
+
+    public ManifestSessionEjb.AccessioningProcessType getAccessioningProcess() {
+        return accessioningProcess;
+    }
+
+    @Override
+    public boolean allowExtraHeaders() {
+        return accessioningProcess == ManifestSessionEjb.AccessioningProcessType.COVID;
     }
 }

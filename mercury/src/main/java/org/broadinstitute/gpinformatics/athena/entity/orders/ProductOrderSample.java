@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
@@ -42,6 +43,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -127,6 +129,35 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     private String aggregationParticle;
 
+    public static ProductOrderSample cloneProductOrderSample(ProductOrderSample sampleToClone) {
+        ProductOrderSample newSample = new ProductOrderSample(sampleToClone.sampleName, sampleToClone.getSampleData());
+
+        newSample.setSampleComment(sampleToClone.sampleComment);
+        sampleToClone.getMercurySample().addProductOrderSample(newSample);
+        newSample.setAggregationParticle(sampleToClone.aggregationParticle);
+        newSample.setAliquotId(sampleToClone.aliquotId);
+        newSample.setDeliveryStatus(sampleToClone.deliveryStatus);
+
+        Set<RiskItem> clonedRiskItems = new HashSet<>();
+
+        // "Clone" risk items to the new sample
+        sampleToClone.getRiskItems().forEach(riskItem -> clonedRiskItems.add(new RiskItem(riskItem.getRiskCriterion(),
+                riskItem.getComparedValue(),riskItem.getRemark())));
+        newSample.setRiskItems(clonedRiskItems);
+
+        // "Clone" sample receipt validations for the new sample
+        sampleToClone.getSampleReceiptValidations()
+                .forEach(sampleReceiptValidation ->
+                        newSample.addValidation(new SampleReceiptValidation(newSample,
+                                sampleReceiptValidation.getCreatedBy(), sampleReceiptValidation.getStatus(),
+                                sampleReceiptValidation.getValidationType(), sampleReceiptValidation.getReason())));
+
+        // Clone Ledger items for the new sample
+        sampleToClone.getLedgerItems().forEach(ledgerEntry -> newSample.addClonedLedgerItem(LedgerEntry.cloneLedgerEntryToNewSample(ledgerEntry, newSample)));
+
+        return newSample;
+    }
+
     /**
      * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
      * reference would otherwise keep this sample alive.
@@ -176,6 +207,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             throw new RuntimeException("Unable to find a product associated with the given price item");
         }
         return result;
+    }
+
+    /**
+     * Rolls up visibility of the samples availability from just the sample data
+     */
+    public boolean isSampleAvailable() {
+        boolean available;
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            available = getMetadataSource().sourceSpecificAvailabilityCheck(this);
+        }
+        return available;
     }
 
     /**
@@ -362,19 +406,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
          * quantities actually billed and also separates the quantities depending on price item type.
          */
-        Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities = new HashMap<>();
-        Map<ProductLedgerIndex, Double> addOnQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, BigDecimal> primaryAndReplacementQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, BigDecimal> addOnQuantities = new HashMap<>();
         collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
 
-        for (Map.Entry<ProductLedgerIndex, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+        for (Map.Entry<ProductLedgerIndex, BigDecimal> entry : primaryAndReplacementQuantities.entrySet()) {
             ProductLedgerIndex ledgerIndex = entry.getKey();
-            Double quantity = entry.getValue();
+            BigDecimal quantity = entry.getValue();
 
             // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
             if (addOnQuantities.containsKey(ledgerIndex)) {
-                quantity += addOnQuantities.get(ledgerIndex);
+                quantity.add(addOnQuantities.get(ledgerIndex));
             }
-            if (quantity > 0) {
+            if (quantity.compareTo(BigDecimal.ZERO) > 0) {
                 return true;
             }
         }
@@ -388,13 +432,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
          * quantities actually billed and also separates the quantities depending on price item type.
          */
-        Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities = new HashMap<>();
-        Map<ProductLedgerIndex, Double> addOnQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, BigDecimal> primaryAndReplacementQuantities = new HashMap<>();
+        Map<ProductLedgerIndex, BigDecimal> addOnQuantities = new HashMap<>();
 
         List<String> results = new ArrayList<>();
 
         collectLedgerEntryDetails(primaryAndReplacementQuantities, addOnQuantities);
-        for (Map.Entry<ProductLedgerIndex, Double> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
+        for (Map.Entry<ProductLedgerIndex, BigDecimal> priceItemDoubleEntry : primaryAndReplacementQuantities.entrySet()) {
             String doubleEntryIndexName = "";
 
             String resultsMessage = String.format("Billed %s samples for " + priceItemDoubleEntry.getKey()
@@ -402,21 +446,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             results.add(resultsMessage);
         }
 
-        for (Map.Entry<ProductLedgerIndex, Double> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
+        for (Map.Entry<ProductLedgerIndex, BigDecimal> addOnPriceItemDoubleEntry : addOnQuantities.entrySet()) {
             results.add("Billed "+addOnPriceItemDoubleEntry.getValue() + " samples for " + addOnPriceItemDoubleEntry.getKey().getDisplayValue());
         }
 
         return results;
     }
 
-    public void collectLedgerEntryDetails(Map<ProductLedgerIndex, Double> primaryAndReplacementQuantities,
-                                          Map<ProductLedgerIndex, Double> addOnQuantities) {
+    public void collectLedgerEntryDetails(Map<ProductLedgerIndex, BigDecimal> primaryAndReplacementQuantities,
+                                          Map<ProductLedgerIndex, BigDecimal> addOnQuantities) {
         for (LedgerEntry item : ledgerItems) {
             if (item.isBilled()) {
 
                 // Guard against some initial testing data that is billed but doesn't have a price item type.
                 if (item.getPriceItemType() != null) {
-                    Map<ProductLedgerIndex, Double> typeSpecificQuantities = null;
+                    Map<ProductLedgerIndex, BigDecimal> typeSpecificQuantities = null;
                     switch (item.getPriceItemType()) {
                     case PRIMARY_PRICE_ITEM:
                     case REPLACEMENT_PRICE_ITEM:
@@ -429,11 +473,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
                     ProductLedgerIndex priceItem = ProductLedgerIndex.create(item.getProduct(), item.getPriceItem(),
                             item.getProductOrderSample().productOrder.hasSapQuote());
-                    Double currentQuantity = typeSpecificQuantities.get(priceItem);
+                    BigDecimal currentQuantity = typeSpecificQuantities.get(priceItem);
                     if (currentQuantity == null) {
-                        currentQuantity = 0.0;
+                        currentQuantity = BigDecimal.ZERO;
                     }
-                    typeSpecificQuantities.put(priceItem, currentQuantity + item.getQuantity());
+                    typeSpecificQuantities.put(priceItem, currentQuantity.add(item.getQuantity()));
                 }
             }
         }
@@ -449,13 +493,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Override
     public SampleData makeSampleData() {
-        SampleData sampleData;
-        if(mercurySample != null) {
-            sampleData = mercurySample.makeSampleData();
-        } else {
-            sampleData = new BspSampleData();
-        }
-        return sampleData;
+        return mercurySample != null ? mercurySample.makeSampleData() : new BspSampleData();
     }
 
     @Override
@@ -715,7 +753,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param completedDate completion date for billing
      * @param quantity      quantity for billing
      */
-    public void autoBillSample(Date completedDate, double quantity) {
+    public void autoBillSample(Date completedDate, BigDecimal quantity) {
         Date now = new Date();
         Map<ProductLedgerIndex, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
         Product product = getProductOrder().getProduct();
@@ -730,7 +768,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
             if(getProductOrder().hasSapQuote()) {
-                addAutoLedgerItem(completedDate, product, quantity, now, false);
+                addAutoLedgerItem(completedDate, product, quantity, now, null);
             } else {
                 addAutoLedgerItem(completedDate, nullablePriceItem.orElse(null), quantity, now);
             }
@@ -745,7 +783,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 priceItemName = priceItem.getName();
             }
 
-            if (quantities.getBilled() != 0) {
+            if (quantities.getBilled().compareTo(BigDecimal.ZERO) != 0) {
                 log.debug(MessageFormat.format(
                         "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}, Product: [3]",
                         productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName()));
@@ -759,7 +797,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
                 // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
                 // the PDM can be warned about downloading the spreadsheet AFTER this change.
-                if (quantities.getBilled() != 0) {
+                if (quantities.getBilled().compareTo(BigDecimal.ZERO) != 0) {
                     log.debug(MessageFormat.format(
                             "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}, Product: [3]",
                             productOrder.getJiraTicketKey(), sampleName, priceItemName, product.getDisplayName()));
@@ -807,17 +845,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         /**
          * The quantity uploaded to Mercury that is pending billing (not yet in a billing session).
          */
-        private double uploaded;
+        private BigDecimal uploaded = BigDecimal.ZERO;
 
         /**
          * The quantity currently in active billing sessions but not yet billed externally.
          */
-        private double inProgress;
+        private BigDecimal inProgress = BigDecimal.ZERO;
 
         /**
          * The total quantity that has been billed externally (Broad Quotes, SAP, etc.).
          */
-        private double billed;
+        private BigDecimal billed = BigDecimal.ZERO;
 
         public LedgerQuantities(String sampleName, String priceItemName, String partNumber) {
             this.sampleName = sampleName;
@@ -832,15 +870,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @param quantity    the quantity that has been uploaded for billing
          */
-        public void addToUploaded(double quantity) {
-            if (uploaded != 0) {
+        public void addToUploaded(BigDecimal quantity) {
+            if (BigDecimal.ZERO.compareTo(uploaded) != 0) {
                 throw new RuntimeException(String.format(
                         "There should only be one unbilled LedgerEntry for sample %s, price item %s, and product %s. "
                         + "This needs to be corrected in the database to avoid data inconsistencies and possible "
                         + "double-billing.",
                         sampleName, priceItemName, productPartNumber));
             }
-            uploaded += quantity;
+            uploaded = uploaded.add(quantity);
         }
 
         /**
@@ -852,15 +890,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param quantity    the quantity currently being billed
          * @throws RuntimeException
          */
-        public void addToInProgress(double quantity) {
-            if (inProgress != 0) {
+        public void addToInProgress(BigDecimal quantity) {
+            if (inProgress.compareTo(BigDecimal.ZERO) != 0) {
                 throw new RuntimeException(String.format(
                         "There should only be one in-progress LedgerEntry for sample %s, price item %s, "
                         + "and product %s. This needs to be corrected in the database to avoid data inconsistencies "
                         + "and possible double-billing.",
                         sampleName, priceItemName, productPartNumber));
             }
-            inProgress += quantity;
+            inProgress = inProgress.add(quantity);
         }
 
         /**
@@ -869,8 +907,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @param quantity    the quantity that was billed
          */
-        public void addToBilled(double quantity) {
-            billed += quantity;
+        public void addToBilled(BigDecimal quantity) {
+            billed = billed.add(quantity);
         }
 
         /**
@@ -878,7 +916,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return the quantity successfully billed
          */
-        public double getBilled() {
+        public BigDecimal getBilled() {
             return billed;
         }
 
@@ -888,12 +926,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return the total quantity for billing
          */
-        public double getTotal() {
-            return billed + inProgress + uploaded;
+        public BigDecimal getTotal() {
+            return billed.add(inProgress).add(uploaded);
         }
 
         public boolean isBeingBilled() {
-            return inProgress != 0.0;
+            return inProgress.compareTo(BigDecimal.ZERO) != 0;
         }
     }
 
@@ -1009,19 +1047,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         /**
          * The total quantity that the user was viewing when deciding what the new quantity should be.
          */
-        private double oldQuantity;
+        private BigDecimal oldQuantity = BigDecimal.ZERO;
 
         /**
          * The current quantity loaded from the database at the time the update request was received. This may be
          * different than oldQuantity if it was changed by another user/process while this user was making billing
          * decisions.
          */
-        private double currentQuantity;
+        private BigDecimal currentQuantity = BigDecimal.ZERO;
 
         /**
          * The new total quantity being requested.
          */
-        private double newQuantity;
+        private BigDecimal newQuantity = BigDecimal.ZERO;
 
         /**
          * The work complete date for any new or updated ledger entries. Used as a bill date when billing to
@@ -1029,7 +1067,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private Date workCompleteDate;
 
-        private boolean replacementUsed;
+        private DeliveryCondition replacementUsed;
 
         /**
          * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
@@ -1041,8 +1079,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param newQuantity         the requested quantity
          * @param workCompleteDate    the date that work was completed
          */
-        public LedgerUpdate(String sampleName, PriceItem priceItem, Product product, double oldQuantity, double currentQuantity,
-                            double newQuantity, Date workCompleteDate) {
+        public LedgerUpdate(String sampleName, PriceItem priceItem, Product product, BigDecimal oldQuantity, BigDecimal currentQuantity,
+                            BigDecimal newQuantity, Date workCompleteDate) {
             this.sampleName = sampleName;
             this.priceItem = priceItem;
             this.product = product;
@@ -1061,8 +1099,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @param workCompleteDate    the date that work was completed
          * @param replacementUsed
          */
-        public LedgerUpdate(String sampleName, Product product, double oldQuantity, double currentQuantity,
-                            double newQuantity, Date workCompleteDate, boolean replacementUsed) {
+        public LedgerUpdate(String sampleName, Product product, BigDecimal oldQuantity, BigDecimal currentQuantity,
+                            BigDecimal newQuantity, Date workCompleteDate, DeliveryCondition replacementUsed) {
             this.sampleName = sampleName;
             this.product = product;
             this.currentQuantity = currentQuantity;
@@ -1079,7 +1117,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the user requested a change; false otherwise
          */
         public boolean isQuantityChangeIntended() {
-            return newQuantity != oldQuantity;
+            return !newQuantity.equals(oldQuantity);
         }
 
         /**
@@ -1089,7 +1127,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the quantity submitted is different than the current quantity; false otherwise
          */
         public boolean isQuantityChangeNeeded() {
-            return newQuantity != currentQuantity;
+            return !newQuantity.equals(currentQuantity);
         }
 
         /**
@@ -1099,7 +1137,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the change request is based on current data; false otherwise
          */
         public boolean isChangeRequestCurrent() {
-            return oldQuantity == currentQuantity;
+            return oldQuantity.equals(currentQuantity);
         }
 
         /**
@@ -1118,8 +1156,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return the quantity to apply in a ledger entry
          */
-        public double getQuantityDelta() {
-            return newQuantity - oldQuantity;
+        public BigDecimal getQuantityDelta() {
+            return newQuantity.subtract(oldQuantity);
         }
 
         public String getSampleName() {
@@ -1134,15 +1172,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             return product;
         }
 
-        public double getOldQuantity() {
+        public BigDecimal getOldQuantity() {
             return oldQuantity;
         }
 
-        public double getCurrentQuantity() {
+        public BigDecimal getCurrentQuantity() {
             return currentQuantity;
         }
 
-        public double getNewQuantity() {
+        public BigDecimal getNewQuantity() {
             return newQuantity;
         }
 
@@ -1195,17 +1233,22 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
 
             // Update quantity, adding a new ledger entry if needed.
+            Optional<DeliveryCondition> replacementUsed = Optional.ofNullable(ledgerUpdate.replacementUsed);
+            String deliveryCondtionName = null;
+            if(replacementUsed.isPresent()) {
+                deliveryCondtionName = replacementUsed.get().getConditionName();
+            }
             if (ledgerUpdate.isQuantityChanging()) {
                 if (ledgerUpdate.isChangeRequestCurrent()) {
 
-                    double quantityDelta = ledgerUpdate.getQuantityDelta();
+                    BigDecimal quantityDelta = ledgerUpdate.getQuantityDelta();
 
                     if (!haveExistingEntry) {
 
                         if(ledgerUpdate.getPriceItem() == null) {
 
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getProduct(), quantityDelta,
-                                    ledgerUpdate.replacementUsed);
+                                    deliveryCondtionName);
                         } else {
                             addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(),
                                     quantityDelta);
@@ -1217,8 +1260,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                                     "Cannot change quantity for sample that is currently being billed.");
                         }
 
-                        double newQuantity = existingLedgerEntry.getQuantity() + quantityDelta;
-                        if (newQuantity == 0) {
+                        BigDecimal newQuantity = existingLedgerEntry.getQuantity().add(quantityDelta);
+                        if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
                             ledgerItems.remove(existingLedgerEntry);
                         } else {
                             existingLedgerEntry.setQuantity(newQuantity);
@@ -1232,7 +1275,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             // Update work complete date for existing entry, whether or not the quantity is changing.
             if (haveExistingEntry) {
                 existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
-                existingLedgerEntry.setSapReplacementPricing(ledgerUpdate.replacementUsed);
+                existingLedgerEntry.setSapReplacement(deliveryCondtionName);
             }
         }
     }
@@ -1246,7 +1289,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param delta            The plus or minus value to bill to the quote server.
      * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
      */
-    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate) {
+    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, BigDecimal delta, Date currentDate) {
         addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
     }
 
@@ -1260,8 +1303,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
      * @param sapReplacement
      */
-    public void addAutoLedgerItem(Date workCompleteDate, Product product, double delta, Date currentDate,
-                                  Boolean sapReplacement) {
+    public void addAutoLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, Date currentDate,
+                                  String sapReplacement) {
         addLedgerItem(workCompleteDate, product, delta, currentDate, sapReplacement);
     }
 
@@ -1273,7 +1316,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param priceItem        The price item to charge.
      * @param delta            The plus or minus value to bill to the quote server.
      */
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, BigDecimal delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);
     }
 
@@ -1286,11 +1329,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param delta            The plus or minus value to bill to the quote server.
      * @param sapReplacement
      */
-    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Boolean sapReplacement) {
+    public void addLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, String sapReplacement) {
         addAutoLedgerItem(workCompleteDate, product, delta, null, sapReplacement);
     }
 
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp) {
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, BigDecimal delta, Date autoLedgerTimestamp) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
         ledgerItems.add(ledgerEntry);
@@ -1303,15 +1346,24 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 sampleName, productOrder.getBusinessKey(), priceItemName , delta));
     }
 
-    public void addLedgerItem(Date workCompleteDate, Product product, double delta, Date autoLedgerTimestamp,
-                              Boolean sapReplacement) {
+    public void addLedgerItem(Date workCompleteDate, Product product, BigDecimal delta, Date autoLedgerTimestamp,
+                              String sapReplacement) {
         LedgerEntry ledgerEntry = new LedgerEntry(this, product, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
-        ledgerEntry.setSapReplacementPricing(sapReplacement);
+        ledgerEntry.setSapReplacement(sapReplacement);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(
                 "Added LedgerEntry item for sample {0} to PDO {1} for partNumber: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), product.getName(), delta));
+    }
+
+    /**
+     * Added primarily for the purpose of fixup tests
+     * @param clonedLedgerItem
+     */
+    public void addClonedLedgerItem(LedgerEntry clonedLedgerItem) {
+        ledgerItems.add(clonedLedgerItem);
+
     }
 
     /**
@@ -1390,38 +1442,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
-    /**
-     * Rolls up visibility of the samples availability from just the sample data
-     *
-     * If the metadata is essentially BSP,
-     */
-    public boolean isSampleAvailable() {
-        boolean available;
-        if(!isMetadataSourceInitialized()) {
-            available = false;
-        } else {
-            switch (getMetadataSource()) {
-            case BSP:
-                available = isSampleReceived();
-                break;
-            case MERCURY:
-                available = isSampleAccessioned() && isSampleReceived();
-                break;
-            default:
-                throw new IllegalStateException("The metadata Source is undetermined");
-            }
-        }
-        return available;
-    }
-
-    private boolean isMetadataSourceInitialized() {
+    public boolean isMetadataSourceInitialized() {
         return mercurySample != null || metadataSource != null ;
     }
 
     /**
      * Exposes if a sample has been Accessioned.
      */
-    private boolean isSampleAccessioned() {
+    public boolean isSampleAccessioned() {
         boolean sampleAccessioned = false;
         if (mercurySample != null) {
             sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
