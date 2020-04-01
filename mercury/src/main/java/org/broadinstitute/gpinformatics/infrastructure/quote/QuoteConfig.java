@@ -14,6 +14,7 @@ import java.io.Serializable;
 @ConfigKey("quote")
 @ApplicationScoped
 public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Serializable {
+    private static final long serialVersionUID = 5898661842209313864L;
     private String login;
 
     private String password;

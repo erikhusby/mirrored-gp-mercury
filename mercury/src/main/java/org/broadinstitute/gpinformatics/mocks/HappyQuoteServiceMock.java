@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+
 /**
  * Mock that returns you a new quote with some
  * funds remaining when you call #getQuoteByAlphaId.
@@ -58,6 +59,11 @@ public class HappyQuoteServiceMock implements QuoteService {
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return getQuoteByAlphaId(alphaId, false);
+    }
+
+    @Override
+    public Quote getQuoteByAlphaId(String alphaId, boolean isCacheRefresh) throws QuoteServerException, QuoteNotFoundException {
         Quote q = new Quote();
         q.setAlphanumericId(alphaId);
         QuoteFunding funding = new QuoteFunding("99999");
@@ -82,13 +88,13 @@ public class HappyQuoteServiceMock implements QuoteService {
 
     @Override
     public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
-            throws QuoteServerException, QuoteNotFoundException {
+        throws QuoteServerException, QuoteNotFoundException {
         return null;
     }
 
     @Override
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
-            throws QuoteServerException, QuoteNotFoundException {
+        throws QuoteServerException, QuoteNotFoundException {
         return getAllPriceItems();
     }
 }

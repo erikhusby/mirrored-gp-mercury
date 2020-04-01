@@ -463,7 +463,7 @@ public class ProductOrderEjbTest {
                         BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
 
         Assert.assertTrue(conversionPdo.getPriorToSAP1_5());
@@ -473,19 +473,19 @@ public class ProductOrderEjbTest {
 
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"2");
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
         Assert.assertFalse(conversionPdo.getPriorToSAP1_5());
 
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"2");
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 2);
 
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"3");
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
@@ -504,7 +504,7 @@ public class ProductOrderEjbTest {
 
         conversionPdo.setQuoteId(SapIntegrationServiceImplDBFreeTest.SAP_QUOTE_ID+"4");
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         Mockito.verify(mockEmailSender, Mockito.times(((quoteSwapsForBadQuote)?1:0))).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
@@ -521,7 +521,7 @@ public class ProductOrderEjbTest {
 
         TestUtils.billSampleOut(conversionPdo, conversionPdo.getSamples().iterator().next(), conversionPdo.getSamples().size());
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         Mockito.verify(mockEmailSender, Mockito.times(((quoteSwapsForBadQuote)?1:0))).sendHtmlEmail(Mockito.eq(mockAppConfig),
                 Mockito.anyString(),
                 Mockito.<String>anyList(),
@@ -598,7 +598,7 @@ public class ProductOrderEjbTest {
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection());
         conversionPdo.setPriorToSAP1_5(true);
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
@@ -681,7 +681,7 @@ public class ProductOrderEjbTest {
                         BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection());
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
@@ -764,7 +764,7 @@ public class ProductOrderEjbTest {
 
         Mockito.when(mockSapClient.findMaterials(Mockito.anyString(), Mockito.anyString())).thenReturn(returnMaterials);
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection(), true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, new MessageCollection());
 
         final SAPAccessControl control = new SAPAccessControl();
         AccessItem orderAccessItem = new AccessItem(conversionPdo.getProduct().getPrimaryPriceItem().getName());
@@ -851,7 +851,7 @@ public class ProductOrderEjbTest {
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
         int sampleCount = 0;
@@ -869,7 +869,7 @@ public class ProductOrderEjbTest {
         childPdoOne.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3URTST"));
         childPdoOne.setJiraTicketKey(childOneJiraTicketKey);
         childPdoOne.updateQuoteItems(sapService.findSapQuote(childPdoOne.getQuoteId()));
-        productOrderEjb.publishProductOrderToSAP(childPdoOne, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(childPdoOne, messageCollection);
 
         ProductOrder childPdoTwo = ProductOrder.cloneProductOrder(conversionPdo, false);
 
@@ -878,7 +878,7 @@ public class ProductOrderEjbTest {
         childPdoTwo.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3BRTST"));
         childPdoTwo.setJiraTicketKey(childtwoJiraTicketKey);
         childPdoTwo.updateQuoteItems(sapService.findSapQuote(childPdoTwo.getQuoteId()));
-        productOrderEjb.publishProductOrderToSAP(childPdoTwo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(childPdoTwo, messageCollection);
 
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
@@ -998,7 +998,7 @@ public class ProductOrderEjbTest {
                         BigDecimal.valueOf(10000), BigDecimal.valueOf(1000000),conversionPdo,
                         TestUtils.SapQuoteTestScenario.PRODUCTS_MATCH_QUOTE_ITEMS,companyCode.getSalesOrganization()));
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
 
         int sampleCount = 0;
@@ -1113,7 +1113,7 @@ public class ProductOrderEjbTest {
 
         MessageCollection messageCollection = new MessageCollection();
 
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection);
         assertThat(conversionPdo.getBusinessKey(), is(equalTo(jiraTicketKey)));
         assertThat(messageCollection.getErrors(), is(not(Matchers.<String>empty())));
         assertThat(conversionPdo.isSavedInSAP(), is(false));

@@ -2432,7 +2432,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void checkQuoteValidity(Quote quote, Date date) throws QuoteServerException {
         final Date todayTruncated = DateUtils.truncate(date, Calendar.DATE);
         final Set<String> errors = new HashSet<>();
-        if (Objects.nonNull(quote)) {
+        if (Objects.nonNull(quote) && !QuoteService.isDevQuote(quote)) {
             quote.getFunding().stream()
                 .filter(Funding::isFundsReservation)
                 .filter(funding -> !FundingLevel.isGrantActiveForDate(todayTruncated, funding.getGrantEndDate()))

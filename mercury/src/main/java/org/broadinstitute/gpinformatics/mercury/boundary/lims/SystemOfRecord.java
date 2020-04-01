@@ -3,14 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MultiMap;
-import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -27,12 +26,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,16 +49,14 @@ public class SystemOfRecord implements Serializable {
     }
 
     private LabVesselDao labVesselDao;
-    private WorkflowConfig workflowConfig;
     private BSPExportsService bspExportsService;
 
     SystemOfRecord() {
     }
 
     @Inject
-    public SystemOfRecord(LabVesselDao labVesselDao, WorkflowConfig workflowConfig, BSPExportsService bspExportsService) {
+    public SystemOfRecord(LabVesselDao labVesselDao, BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
-        this.workflowConfig = workflowConfig;
         this.bspExportsService = bspExportsService;
     }
 
@@ -227,6 +221,7 @@ public class SystemOfRecord implements Serializable {
     @DaoFree
     public Set<System> workflowRoutingRules(Collection<LabVessel> vessels) {
         Set<System> routingOptions = EnumSet.noneOf(System.class);
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
         for (LabVessel vessel : vessels) {
             if (vessel == null) {
                 routingOptions.add(System.SQUID);
@@ -239,8 +234,8 @@ public class SystemOfRecord implements Serializable {
                         if (!sampleInstance.isReagentOnly()) {
                             for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
                                 String workflowName = batch.getWorkflowName();
-                                ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
-                                        batch.getCreatedOn());
+                                ProductWorkflowDefVersion productWorkflowDef =
+                                        workflowConfig.getWorkflowVersionByName(workflowName, batch.getCreatedOn());
                                 if (productWorkflowDef.getInValidation() && batch.isValidationBatch() ||
                                         productWorkflowDef.getRoutingRule() ==
                                                 ProductWorkflowDefVersion.RoutingRule.MERCURY) {
@@ -257,10 +252,4 @@ public class SystemOfRecord implements Serializable {
         }
         return routingOptions;
     }
-
-    /** Returns the workflowDef for the given workflowName and date. */
-    private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, @Nonnull Date effectiveDate) {
-        return workflowConfig.getWorkflowVersionByName(workflowName, effectiveDate);
-    }
-
 }
