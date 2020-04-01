@@ -82,8 +82,7 @@ public class WorkflowMatcherTest {
         m1.addInPlaceEvent(addUnmatchedReagent);
 
         WorkflowMatcher workflowMatcher = new WorkflowMatcher();
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
                 workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION, new Date()),

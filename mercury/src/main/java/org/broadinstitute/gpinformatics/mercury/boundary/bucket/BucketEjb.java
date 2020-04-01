@@ -64,7 +64,6 @@ public class BucketEjb {
     private BucketDao bucketDao;
     private LabVesselDao labVesselDao;
     private BucketEntryDao bucketEntryDao;
-    private WorkflowLoader workflowLoader;
     private BSPUserList bspUserList;
     private LabVesselFactory labVesselFactory;
     private MercurySampleDao mercurySampleDao;
@@ -82,14 +81,14 @@ public class BucketEjb {
 
     @Inject
     public BucketEjb(LabEventFactory labEventFactory,
-                     JiraService jiraService,
-                     BucketDao bucketDao,
-                     BucketEntryDao bucketEntryDao,
-                     LabVesselDao labVesselDao,
-                     LabVesselFactory labVesselFactory,
-                     BSPSampleDataFetcher bspSampleDataFetcher,
-                     BSPUserList bspUserList,
-                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
+            JiraService jiraService,
+            BucketDao bucketDao,
+            BucketEntryDao bucketEntryDao,
+            LabVesselDao labVesselDao,
+            LabVesselFactory labVesselFactory,
+            BSPSampleDataFetcher bspSampleDataFetcher,
+            BSPUserList bspUserList,
+            ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
@@ -98,7 +97,6 @@ public class BucketEjb {
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
-        this.workflowLoader = workflowLoader;
         this.productOrderDao = productOrderDao;
         this.mercurySampleDao = mercurySampleDao;
     }
@@ -347,7 +345,7 @@ public class BucketEjb {
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         boolean hasWorkflow = false;
-        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
         for (String workflow : order.getProductWorkflows()) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflow);
             ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
@@ -469,7 +467,7 @@ public class BucketEjb {
         possibleProducts.add(productOrder.getProduct());
         ProductWorkflowDefVersion workflowDefVersion = null;
         int offset = 0;
-        WorkflowConfig workflowConfig = workflowLoader.getWorkflowConfig();
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
         for (Product product : possibleProducts) {
             Date localDate = date;
             if (offset > 0) {

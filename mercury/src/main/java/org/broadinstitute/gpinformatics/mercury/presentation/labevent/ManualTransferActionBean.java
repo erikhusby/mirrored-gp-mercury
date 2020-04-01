@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.FluidigmSampleSheetG
 import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -169,9 +170,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private WorkflowConfig workflowConfig;
-
-    @Inject
     private LabBatchDao labBatchDao;
 
     @Inject
@@ -217,7 +215,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
             if (!StringUtils.isEmpty(workflowEffectiveDateLocal)) {
                 workflowStepDef = loadWorkflowStepDef(new Date(workflowEffectiveDateLocal),
-                        workflowConfig, getContext().getRequest().getParameter("workflowProcessName"),
+                        WorkflowLoader.getWorkflowConfig(), getContext().getRequest().getParameter("workflowProcessName"),
                         getContext().getRequest().getParameter("workflowStepName"));
             }
             if (workflowStepDef == null) {

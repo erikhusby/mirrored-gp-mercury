@@ -91,7 +91,7 @@ public class BucketEntryDBFreeTest {
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-1"))).thenReturn(productOrder1);
 
         BucketEjb bucketEjb = new BucketEjb(null, null, Mockito.mock(BucketDao.class), null,
-                Mockito.mock(LabVesselDao.class), null, null, null, null, productOrderDao,
+                Mockito.mock(LabVesselDao.class), null, null, null, productOrderDao,
                 Mockito.mock(MercurySampleDao.class));
 
         for (BucketEntry bucketEntry : bucketEntries) {
@@ -121,7 +121,7 @@ public class BucketEntryDBFreeTest {
         BucketEntry entry = new BucketEntry(
                 new BarcodedTube(barcode), productOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
 
-        entry.getWorkflows(new WorkflowLoader().getWorkflowConfig());
+        entry.getWorkflows(WorkflowLoader.getWorkflowConfig());
         Assert.assertTrue(entry.toString().contains("(no workflows)"));
 
     }

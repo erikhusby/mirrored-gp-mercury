@@ -30,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -101,7 +100,6 @@ public class DragenSimulatorTest extends BaseEventTest {
 
         super.setUp();
         SequencingTemplateFactory factory = new SequencingTemplateFactory();
-        factory.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         // Method calls on factory will always use our list of flowcell designations.
         List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
