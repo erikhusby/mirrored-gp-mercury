@@ -51,19 +51,20 @@ public class QueueEntitySearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("LabVesselID", "labVessel",
                 "labVessel", QueueEntity.class));
 
-        ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.QUEUE_ENTITY, criteriaProjections, mapGroupSearchTerms);
-        configurableSearchDefinition.setAddRowsListenerFactory(
-                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
-                    @Override
-                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
-                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
-                        listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(),
-                                new SampleDataFetcherAddRowsListener());
-                        return listeners;
-                    }
-                });
-
-        return configurableSearchDefinition;
+//        ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
+//                ColumnEntity.QUEUE_ENTITY, criteriaProjections, mapGroupSearchTerms);
+//        configurableSearchDefinition.setAddRowsListenerFactory(
+//                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+//                    @Override
+//                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+//                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+//                        listeners.put(SampleDataFetcherAddRowsListener.class.getSimpleName(),
+//                                new SampleDataFetcherAddRowsListener());
+//                        return listeners;
+//                    }
+//                });
+//
+//        return configurableSearchDefinition;
+        return null;
     }
 }

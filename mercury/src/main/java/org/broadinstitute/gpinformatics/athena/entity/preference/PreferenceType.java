@@ -109,14 +109,14 @@ public enum PreferenceType {
     USER_QUEUE_GROUPING_COLUMN_SETS("User Queue Grouping Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
 
-    GLOBAL_QUEUE_ENTITY_SEARCH_INSTANCES("Global Queue Entity Search Instances", PreferenceScope.GLOBAL, 1,
-            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
-    GLOBAL_QUEUE_ENTITY_COLUMN_SETS("Global Queue Entity Column Sets", PreferenceScope.GLOBAL, 1,
-            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
-    USER_QUEUE_ENTITY_SEARCH_INSTANCES("User Queue Entity Search Instances", PreferenceScope.USER, 1,
-            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
-    USER_QUEUE_ENTITY_COLUMN_SETS("User Queue Entity Column Sets", PreferenceScope.USER, 1,
-            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator())
+//    GLOBAL_QUEUE_ENTITY_SEARCH_INSTANCES("Global Queue Entity Search Instances", PreferenceScope.GLOBAL, 1,
+//            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+//    GLOBAL_QUEUE_ENTITY_COLUMN_SETS("Global Queue Entity Column Sets", PreferenceScope.GLOBAL, 1,
+//            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+//    USER_QUEUE_ENTITY_SEARCH_INSTANCES("User Queue Entity Search Instances", PreferenceScope.USER, 1,
+//            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+//    USER_QUEUE_ENTITY_COLUMN_SETS("User Queue Entity Column Sets", PreferenceScope.USER, 1,
+//            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator())
     ;
 
     private final String preferenceTypeName;

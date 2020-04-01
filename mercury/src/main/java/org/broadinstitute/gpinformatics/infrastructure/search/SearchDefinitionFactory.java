@@ -109,7 +109,7 @@ public class SearchDefinitionFactory {
         fact.buildProductOrderSearchDef();
         fact.buildSampleInstanceEntitySearchDef();
         fact.buildQueueGroupingSearchDef();
-        fact.buildDNAQuantQueueEntitySearchDef();
+//        fact.buildDNAQuantQueueEntitySearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -128,7 +128,7 @@ public class SearchDefinitionFactory {
             fact.buildProductOrderSearchDef();
             fact.buildSampleInstanceEntitySearchDef();
             fact.buildQueueGroupingSearchDef();
-            fact.buildDNAQuantQueueEntitySearchDef();
+//            fact.buildDNAQuantQueueEntitySearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -188,11 +188,11 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.QUEUE_GROUPING.getEntityName(), queueGroupingSearchDefinition);
     }
 
-    private void buildDNAQuantQueueEntitySearchDef() {
-        ConfigurableSearchDefinition queueGroupingSearchDefinition
-                = new QueueEntitySearchDefinition().buildSearchDefinition();
-        MAP_NAME_TO_DEF.put(ColumnEntity.QUEUE_ENTITY.getEntityName(), queueGroupingSearchDefinition);
-    }
+//    private void buildDNAQuantQueueEntitySearchDef() {
+//        ConfigurableSearchDefinition queueGroupingSearchDefinition
+//                = new QueueEntitySearchDefinition().buildSearchDefinition();
+//        MAP_NAME_TO_DEF.put(ColumnEntity.QUEUE_ENTITY.getEntityName(), queueGroupingSearchDefinition);
+//    }
 
     /**
      * Prepends batch type from search term name to a numeric entry <br/>
@@ -383,7 +383,7 @@ public class SearchDefinitionFactory {
     public static class QueueStatusValueConversionExpression extends SearchTerm.Evaluator<Object> {
         @Override
         public QueueStatus evaluate(Object entity, SearchContext context) {
-            return Enum.valueOf(QueueStatus.class, context.getSearchValueString());
+            return Enum.valueOf(QueueStatus.class, context.getSearchValueString().toUpperCase());
         }
     }
 }

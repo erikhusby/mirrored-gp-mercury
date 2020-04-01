@@ -95,12 +95,12 @@ public enum ColumnEntity {
             PreferenceType.GLOBAL_QUEUE_GROUPING_COLUMN_SETS, PreferenceType.USER_QUEUE_GROUPING_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_QUEUE_GROUPING_SEARCH_INSTANCES,
                     PreferenceType.USER_QUEUE_GROUPING_SEARCH_INSTANCES}),
-    // Todo I think I need to modify the column sets....
-    QUEUE_ENTITY("QueueEntity", "Queue Entity", "queueEntityId", QueueEntity.class,
-            entity -> {return ((QueueEntity)entity).getQueueEntityId().toString();},
-            PreferenceType.GLOBAL_QUEUE_ENTITY_COLUMN_SETS, PreferenceType.USER_QUEUE_ENTITY_COLUMN_SETS,
-            new PreferenceType[]{PreferenceType.GLOBAL_QUEUE_ENTITY_SEARCH_INSTANCES,
-                    PreferenceType.USER_QUEUE_ENTITY_SEARCH_INSTANCES});
+//    QUEUE_ENTITY("QueueEntity", "Queue Entity", "queueEntityId", QueueEntity.class,
+//            entity -> {return ((QueueEntity)entity).getQueueEntityId().toString();},
+//            PreferenceType.GLOBAL_QUEUE_ENTITY_COLUMN_SETS, PreferenceType.USER_QUEUE_ENTITY_COLUMN_SETS,
+//            new PreferenceType[]{PreferenceType.GLOBAL_QUEUE_ENTITY_SEARCH_INSTANCES,
+//                    PreferenceType.USER_QUEUE_ENTITY_SEARCH_INSTANCES})
+    ;
 
     private IdGetter idGetter;
     private String entityName;

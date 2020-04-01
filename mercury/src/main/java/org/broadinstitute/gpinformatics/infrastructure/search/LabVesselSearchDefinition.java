@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
@@ -485,8 +486,22 @@ public class LabVesselSearchDefinition {
             public Set<Long> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<Long> ids = new HashSet<>();
+
+                List<String> queueTypes = new ArrayList<>();
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    SearchTerm searchValueTerm = searchValue.getSearchTerm();
+
+                    if (searchValueTerm.getName().compareToIgnoreCase("Queue Type") == 0 &&
+                        CollectionUtils.isNotEmpty(searchValue.getValues())) {
+                        queueTypes.addAll(searchValue.getValues());
+                    }
+                }
+
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
-                    ids.add(queueEntity.getQueueGrouping().getQueueGroupingId());
+                    QueueType entityQueueType = queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType();
+                    if (queueTypes.isEmpty() || (queueTypes.contains(entityQueueType.name()))) {
+                        ids.add(queueEntity.getQueueGrouping().getQueueGroupingId());
+                    }
                 }
 
                 return ids;
@@ -512,8 +527,23 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> statuses = new HashSet<>();
+
+                List<String> queueTypes = new ArrayList<>();
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    SearchTerm searchValueTerm = searchValue.getSearchTerm();
+
+                    if (searchValueTerm.getName().compareToIgnoreCase("Queue Type") == 0 &&
+                            CollectionUtils.isNotEmpty(searchValue.getValues())) {
+                        queueTypes.addAll(searchValue.getValues());
+                    }
+                }
+
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
-                    statuses.add(queueEntity.getQueueStatus().getDisplayName());
+                    QueueType entityQueueType = queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType();
+                    // If there were no search values to restrict 'entity queue status' by queue type, otherwise check the queue type.
+                    if (queueTypes.isEmpty() || (queueTypes.contains(entityQueueType.name()))) {
+                        statuses.add(queueEntity.getQueueStatus().name());
+                    }
                 }
 
                 return statuses;
@@ -552,8 +582,22 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> types = new HashSet<>();
+
+                List<String> queueTypes = new ArrayList<>();
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    SearchTerm searchValueTerm = searchValue.getSearchTerm();
+
+                    if (searchValueTerm.getName().compareToIgnoreCase("Queue Type") == 0 &&
+                        CollectionUtils.isNotEmpty(searchValue.getValues())) {
+                        queueTypes.addAll(searchValue.getValues());
+                    }
+                }
+
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
-                    types.add(queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType().name());
+                    QueueType queueType = queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType();
+                    if (queueTypes.isEmpty() || (queueTypes.contains(queueType.name()))) {
+                        types.add(queueType.name());
+                    }
                 }
 
                 return types;
@@ -574,11 +618,8 @@ public class LabVesselSearchDefinition {
         searchTerm.setValueType(ColumnValueType.STRING);
         searchTerms.add(searchTerm);
 
-        queueStatusSearchTerm.setValueType(ColumnValueType.STRING);
-        searchTerms.add(queueStatusSearchTerm);
-
         searchTerm = new SearchTerm();
-        searchTerm.setName(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+        searchTerm.setName("Container Information");
 
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -650,7 +691,7 @@ public class LabVesselSearchDefinition {
                 Set<String> statuses = new HashSet<>();
                 for (QueueEntity queueEntity : labVessel.getQueueEntities()) {
                     if (queueEntity.getQueueGrouping().getAssociatedQueue().getQueueType() == QueueType.DNA_QUANT) {
-                        statuses.add(queueEntity.getQueueStatus().getDisplayName());
+                        statuses.add(queueEntity.getQueueStatus().name());
                     }
                 }
 
@@ -3003,7 +3044,7 @@ public class LabVesselSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
         {
             SearchTerm searchTerm = new SearchTerm();
-            searchTerm.setName(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm());
+            searchTerm.setName("Barcode");
             searchTerm.setRackScanSupported(Boolean.TRUE);
             SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
             criteriaPath.setPropertyName("label"); // might need to be label

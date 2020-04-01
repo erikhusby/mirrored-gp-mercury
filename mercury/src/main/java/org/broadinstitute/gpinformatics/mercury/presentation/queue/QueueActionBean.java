@@ -273,9 +273,9 @@ public class QueueActionBean extends CoreActionBean {
                 queue_type.setValues(Collections.singletonList(queueType.toString()));
                 queue_type.setIncludeInResults(false);
 
-                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm());
-                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm());
-                searchInstance.getPredefinedViewColumns().add(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm());
+                searchInstance.getPredefinedViewColumns().add("Nearest Sample ID");
+                searchInstance.getPredefinedViewColumns().add("Barcode");
+                searchInstance.getPredefinedViewColumns().add("Container Information");
                 // Note that in order for this search to work in all queues the corresponding queue type search definition MUST have a term named
                 // in the format of '[queue type] Entity Status' e.g. 'DNA Quant Entity Status'.
                 searchInstance.getPredefinedViewColumns().add(queueType.getTextName() + " Entity Status"); // Used to determine if the sample is active in the queue or not.
@@ -292,9 +292,9 @@ public class QueueActionBean extends CoreActionBean {
                 FinderFlag termToFind = FinderFlag.CONTAINER_BARCODE;   // Defaulting to container barcode because that is the most common use.
 
                 // Determine the index for the column we'll specifically be looking for to determine 'searched item found in results'
-                if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.MERCURY_SAMPLE_ID.getTerm()) == 0) {
+                if (selectedSearchTermType.compareToIgnoreCase("Mercury Sample ID") == 0) {
                     termToFind = FinderFlag.MERCURY_SAMPLE_ID;
-                } else if (selectedSearchTermType.compareToIgnoreCase(DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm()) == 0) {
+                } else if (selectedSearchTermType.compareToIgnoreCase("Barcode") == 0) {
                     termToFind = FinderFlag.BARCODE;
                 }
 
@@ -315,14 +315,12 @@ public class QueueActionBean extends CoreActionBean {
 
                         // Determine the index for the column we'll specifically be looking for to determine 'searched item found in results'
                         // as container barcode is handled differently in the search results.
-                        if (termToFind == FinderFlag.CONTAINER_BARCODE && viewHeader.compareToIgnoreCase(
-                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.CONTAINER_INFO.getTerm()) == 0) {
+                        if (termToFind == FinderFlag.CONTAINER_BARCODE && viewHeader.compareToIgnoreCase("Container Information") == 0) {
                             positionToVerifyNotFoundTerms = header.getOrder();
                         } else  if (termToFind == FinderFlag.MERCURY_SAMPLE_ID && viewHeader.compareToIgnoreCase(
-                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.NEAREST_SAMPLE_ID.getTerm()) == 0) {
+                                "Nearest Sample ID") == 0) {
                             positionToVerifyNotFoundTerms = header.getOrder();
-                        } else if (termToFind == FinderFlag.BARCODE && viewHeader.compareToIgnoreCase(
-                                DNAQuantQueueSearchTerms.DNA_QUANT_TERMS.BARCODE.getTerm()) == 0) {
+                        } else if (termToFind == FinderFlag.BARCODE && viewHeader.compareToIgnoreCase("Barcode") == 0) {
                             positionToVerifyNotFoundTerms = header.getOrder();
                         }
                     }
