@@ -202,11 +202,17 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
                 .collect(Collectors.toList());
 
         List<MetricsDto> selectedControls = metricsDtos.stream()
+                .filter(Objects::nonNull)
                 .filter(metric -> metric.getPdoSampleName() == null)
                 .collect(Collectors.toList());
 
         for (WaitForReviewTask task: tasks) {
-            LabVessel labVessel = task.getState().getLabVessels().iterator().next();
+            Set<LabVessel> labVessels = task.getState().getLabVessels();
+            if (labVessels.isEmpty()) {
+                // Sequencing
+                continue;
+            }
+            LabVessel labVessel = labVessels.iterator().next();
             for (MetricsDto metricsDto: selectedDtos) {
                 if (labVessel.getLabel().equals(metricsDto.getChipWellBarcode())) {
                     mapSampleToTask.put(metricsDto.getPdoSampleName(), task);
@@ -215,7 +221,12 @@ public class ArraysDataReviewActionBean extends CoreActionBean {
         }
 
         for (WaitForReviewTask task: tasks) {
-            LabVessel labVessel = task.getState().getLabVessels().iterator().next();
+            Set<LabVessel> labVessels = task.getState().getLabVessels();
+            if (labVessels.isEmpty()) {
+                // Sequencing
+                continue;
+            }
+            LabVessel labVessel = labVessels.iterator().next();
             for (MetricsDto metricsDto: selectedControls) {
                 if (labVessel.getLabel().equals(metricsDto.getChipWellBarcode())) {
                     controlTasks.add(task);

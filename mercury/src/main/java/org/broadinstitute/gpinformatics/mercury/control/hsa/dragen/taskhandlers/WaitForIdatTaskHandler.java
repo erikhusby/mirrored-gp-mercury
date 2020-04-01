@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarte
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForIdatTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -30,7 +31,7 @@ public class WaitForIdatTaskHandler extends AbstractTaskHandler<WaitForIdatTask>
 
         String red = String.format("%s_%s_Red.idat", chipBarcode, position);
         String green = String.format("%s_%s_Grn.idat", chipBarcode, position);
-        File dataFolder = new File(infiniumStarterConfig.getDataPath()); // todo jmt
+        File dataFolder = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()));
         File chipFolder = new File(dataFolder, chipBarcode);
 
         File redIdat = new File(chipFolder, red);

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -128,7 +129,7 @@ public class InfiniumRunResource {
      */
     private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition, Date effectiveDate) {
         if (DATA_PATH == null) {
-            DATA_PATH = infiniumStarterConfig.getDataPath();
+            DATA_PATH = ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath());
         }
         if (DATA_PATH == null) {
             throw new ResourceException("No configuration for DataPath", Response.Status.INTERNAL_SERVER_ERROR);

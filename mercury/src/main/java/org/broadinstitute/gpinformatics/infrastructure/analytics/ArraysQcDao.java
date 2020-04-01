@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -60,7 +61,7 @@ public class ArraysQcDao {
         List<ArraysQc> syntheticData = new ArrayList<>();
         if (deployment != Deployment.PROD) {
             // Check trigger files
-            File dataPath = new File(infiniumStarterConfig.getDataPath());
+            File dataPath = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()));
             File triggers = new File(dataPath, "triggers");
             File clinicalTriggers = new File(dataPath, "clinical_triggers");
             Set<String> triggerChipFolders = new HashSet<>();

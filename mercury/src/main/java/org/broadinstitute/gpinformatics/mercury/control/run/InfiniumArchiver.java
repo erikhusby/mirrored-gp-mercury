@@ -178,7 +178,7 @@ public class InfiniumArchiver {
     static boolean archiveChip(String barcode, InfiniumStarterConfig infiniumStarterConfig) {
         log.info("Archiving Chip Barcode " + barcode);
         boolean isSuccessful = true;
-        File baseDataDir = new File(infiniumStarterConfig.getDataPath());
+        File baseDataDir = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()));
         File dataDir = new File(baseDataDir, barcode);
 
         String baseDecodeDataDir = infiniumStarterConfig.getDecodeDataPath();

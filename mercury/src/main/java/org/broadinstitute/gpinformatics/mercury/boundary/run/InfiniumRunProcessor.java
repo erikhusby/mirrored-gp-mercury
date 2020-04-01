@@ -5,6 +5,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -106,7 +107,7 @@ public class InfiniumRunProcessor {
     }
 
     private File getRunDirectory(String chipBarcode) {
-        File rootDir = new File(infiniumStarterConfig.getDataPath());
+        File rootDir = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()));
         return new File(rootDir, chipBarcode);
     }
 
@@ -118,7 +119,8 @@ public class InfiniumRunProcessor {
         try {
             if (infiniumStarterConfig != null) {
                 FileFilter fileFilter = new WildcardFileFilter("*_Red.xml");
-                File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
+                File chipDir = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()),
+                        chipBarcode);
                 File[] files = chipDir.listFiles(fileFilter);
                 if (files != null && chipDir.length() > 0) {
                     File redXmlFile = files[0];

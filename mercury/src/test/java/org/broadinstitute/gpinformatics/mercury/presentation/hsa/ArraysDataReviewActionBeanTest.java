@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FiniteStateMac
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.CreateArraysStateMachineHandler;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -206,7 +207,7 @@ public class ArraysDataReviewActionBeanTest extends BaseEventTest {
         String vesselPosition = ((PlateWell) chipWell).getVesselPosition().name();
         String red = String.format("%s_%s_Red.idat", chipBarcode, vesselPosition);
         String green = String.format("%s_%s_Grn.idat", chipBarcode, vesselPosition);
-        File dataFolder = new File(infiniumConfig.getDataPath());
+        File dataFolder = new File(ConcordanceCalculator.convertFilePaths(infiniumConfig.getDataPath()));
         File chipFolder = new File(dataFolder, chipBarcode);
         chipFolder.mkdir();
 

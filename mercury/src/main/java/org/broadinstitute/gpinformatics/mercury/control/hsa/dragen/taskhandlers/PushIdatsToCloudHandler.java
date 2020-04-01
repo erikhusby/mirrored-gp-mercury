@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarte
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTaskBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.PushIdatsToCloudTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler.SchedulerContext;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -41,7 +41,7 @@ public class PushIdatsToCloudHandler extends AbstractTaskHandler<PushIdatsToClou
         String chipBarcode = chipWell.getPlate().getLabel();
         String position = chipWell.getVesselPosition().name();
         String idatName = String.format("%s_%s_%s.idat", chipBarcode, position, color);
-        File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
+        File chipDir = new File(ConcordanceCalculator.convertFilePaths(infiniumStarterConfig.getDataPath()), chipBarcode);
         File idatFile = new File(chipDir, idatName);
 
         GsUtilTaskBuilder taskBuilder = new GsUtilTaskBuilder().
