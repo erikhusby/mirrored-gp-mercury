@@ -22,11 +22,9 @@
 <fieldset width="300px">
     <legend>Scan Summary</legend>
     <div style="margin-left: 20px">
-        <p>Samples successfully scanned:
-        <div id="successfulScan">${actionBean.statusValues.samplesSuccessfullyScanned}</div></p>
-        <p>Samples eligible for accessioning in manifest:
-        <div id="eligibleForAccessioning">${actionBean.statusValues.samplesEligibleForAccessioningInManifest}</div></p>
+        <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}</p>
+        <p>Samples eligible for accessioning in manifest: ${actionBean.statusValues.samplesEligibleForAccessioningInManifest}</p>
         <p>Samples quarantined: ${actionBean.statusValues.samplesQuarantined}</p>
-        <p>Samples in manifest: <div>${actionBean.statusValues.samplesInManifest}</div></p>
+        <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}</p>
     </div>
 </fieldset>
