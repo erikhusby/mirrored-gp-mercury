@@ -50,7 +50,7 @@ public class DragenFolderUtil {
         File machineFolder = new File(baseFolder, illuminaSequencingRun.getMachineName());
         runFolder = new File(machineFolder, illuminaSequencingRun.getRunName());
         if (!runFolder.exists()) {
-            throw new RuntimeException("Run folder doesn't exist " + runFolder.getPath()); // todo jmt
+            throw new RuntimeException("Run folder doesn't exist " + runFolder.getPath());
         }
 
         dragenFolder = new File(runFolder, "dragen");
