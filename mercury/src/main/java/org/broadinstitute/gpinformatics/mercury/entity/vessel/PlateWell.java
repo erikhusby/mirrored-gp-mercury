@@ -105,8 +105,9 @@ public class PlateWell extends LabVessel {
     private VesselPosition vesselPosition;
     
     public PlateWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
-        // todo jmt need _ for Infinium chips
-        super(staticPlate.getLabel() + vesselPosition);
+        super(staticPlate.getLabel() +
+                (staticPlate.getPlateType().name().startsWith("InfiniumChip") ? "_" : "") +
+                vesselPosition);
         this.plate = staticPlate;
         this.vesselPosition = vesselPosition;
     }
