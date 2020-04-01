@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Well;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -106,6 +105,7 @@ public class PlateWell extends LabVessel {
     private VesselPosition vesselPosition;
     
     public PlateWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
+        // todo jmt need _ for Infinium chips
         super(staticPlate.getLabel() + vesselPosition);
         this.plate = staticPlate;
         this.vesselPosition = vesselPosition;
