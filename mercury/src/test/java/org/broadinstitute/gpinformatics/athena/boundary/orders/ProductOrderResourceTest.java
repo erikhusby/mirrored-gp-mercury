@@ -52,6 +52,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     // This RP has a Cohort and has two PMs. Both features are needed for testing.
     private static final String RP_CONTAINING_COHORTS = "RP-40";
     private static final String RP_WITHOUT_COHORTS = "RP-32";
+    private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
     private static final String EXOME_EXPRESS_V3_PART_NUMBER = "P-WG-0092";
     
     private static final String TEST_PDO_NAME = "test";
@@ -74,6 +75,28 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
         ProductOrderData data = new ProductOrderData();
         data.setProductPartNumber(EXOME_EXPRESS_V3_PART_NUMBER);
+        data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        data.setUsername("scottmat");
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
+        List<String> sampleIds = new ArrayList<>();
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
+        data.setSamples(sampleIds);
+
+        WebTarget resource = makeWebResource(baseUrl, "create");
+
+        ProductOrderData productOrderData = JaxRsUtils.postAndCheck(resource.request(), Entity.xml(data),
+                new GenericType<ProductOrderData>() {});
+        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderProductNameProvided(@ArquillianResource URL baseUrl) throws Exception {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
@@ -114,9 +137,35 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         }
     }
 
-    private static ProductOrderData createTestProductOrderData(String username) {
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderNoUserProductNameProvided(@ArquillianResource URL baseUrl) throws Exception{
+        Date testDate = new Date();
+
         ProductOrderData data = new ProductOrderData();
-        data.setProductPartNumber(EXOME_EXPRESS_V3_PART_NUMBER);
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
+        List<String> sampleIds = new ArrayList<>();
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
+        data.setSamples(sampleIds);
+
+        WebTarget resource = makeWebResource(baseUrl, "create");
+
+        try {
+            resource.request().post(Entity.xml(data), ProductOrderData.class);
+            Assert.fail();
+        } catch (WebApplicationException e) {
+            Assert.assertEquals(e.getResponse().getStatusInfo().getStatusCode(),
+                    Response.Status.UNAUTHORIZED.getStatusCode());
+        }
+    }
+
+    private static ProductOrderData createTestProductOrderData(String username, String partNumber, String productName) {
+        ProductOrderData data = new ProductOrderData();
+        data.setProductPartNumber(partNumber);
+        data.setProductName(productName);
         data.setTitle(TEST_PDO_NAME + " rest/createWithKitRequest " + new Date().getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         // Need to use a research project that has a cohort associated with it.
@@ -137,16 +186,36 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return kitDetailData;
     }
 
-    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) throws Exception {
+    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username, String partNumber,
+                                                      String productName) throws Exception {
         WebTarget resource = makeWebResource(baseUrl, "createWithKitRequest");
-        return JaxRsUtils.postAndCheck(resource.request(), Entity.xml(createTestProductOrderData(username)),
+        return JaxRsUtils.postAndCheck(resource.request(), Entity.xml(createTestProductOrderData(username,
+            partNumber, productName)),
                 new GenericType<ProductOrderData>() {});
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
-        ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
+        ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat", EXOME_EXPRESS_V3_PART_NUMBER, null);
+        Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
+
+        // Read data from JIRA.
+        JiraConfig jiraConfig = new JiraConfig(DEV);
+        JiraService jiraService = new JiraServiceImpl(jiraConfig);
+        JiraIssue jiraIssue = jiraService.getIssue(data.getProductOrderKey());
+        @SuppressWarnings("unchecked")
+        Collection<String> projectManagers =
+                (Collection<String>) jiraIssue.getField(ProductOrder.JiraField.PMS.getName());
+        // There should be two PMs in the PMs field.
+        Assert.assertEquals(projectManagers.size(), 2);
+    }
+
+    // Test is disabled since it fails for the same reason testCreateProductOrderWithKit fails
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @RunAsClient
+    public void testCreateProductOrderWithKitProductNameProvided(@ArquillianResource URL baseUrl) throws Exception {
+        ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat",null, EXOME_EXPRESS_V3_PRODUCT_NAME);
         Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
 
         // Read data from JIRA.
@@ -163,13 +232,26 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
     @RunAsClient
     public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) throws Exception {
-        sendCreateWithKitRequest(baseUrl, null);
+        sendCreateWithKitRequest(baseUrl, null, EXOME_EXPRESS_V3_PART_NUMBER, null);
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
     @RunAsClient
     public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) throws Exception {
-        sendCreateWithKitRequest(baseUrl, "invalid user name");
+        sendCreateWithKitRequest(baseUrl, "invalid user name", EXOME_EXPRESS_V3_PART_NUMBER, null);
+    }
+
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoUserProductNameProvided(@ArquillianResource URL baseUrl) throws Exception {
+        sendCreateWithKitRequest(baseUrl, null, null, EXOME_EXPRESS_V3_PRODUCT_NAME);
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = WebApplicationException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoGoodUserProductNameProvided(@ArquillianResource URL baseUrl) throws Exception {
+        sendCreateWithKitRequest(baseUrl, "invalid user name", null, EXOME_EXPRESS_V3_PRODUCT_NAME);
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
