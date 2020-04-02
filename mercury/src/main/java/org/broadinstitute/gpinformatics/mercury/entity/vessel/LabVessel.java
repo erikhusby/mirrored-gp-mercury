@@ -366,7 +366,9 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
+                if (mercurySample != null) {
+                    samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
+                }
             }
         }
 
