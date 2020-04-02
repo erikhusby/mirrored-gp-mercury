@@ -18,6 +18,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ContractClient;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class MayoManifestImportProcessor {
     public static final String DUPLICATE_HEADER = "Manifest file %s has duplicate header %s.";
     public static final String DUPLICATE_POSITION = "Manifest file %s has duplicate rack position %s.";
     public static final String DUPLICATE_TUBE = "Manifest file %s has duplicate tube barcode %s.";
-    public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s.";
+    public static final String INCONSISTENT = "Manifest file %s has inconsistent values for %s: %s.";
     public static final String INVALID_DATA = "Manifest file %s has invalid values for %s.";
     public static final String MISSING_DATA = "Manifest file %s is missing required values for %s.";
     public static final String MISSING_HEADER = "Manifest file %s is missing header %s.";
@@ -90,7 +91,7 @@ public class MayoManifestImportProcessor {
         TRACKING_NUMBER("tracking number", Metadata.Key.TRACKING_NUMBER),
         CONTACT("contact", Metadata.Key.CONTACT),
         EMAIL("email", Metadata.Key.CONTACT_EMAIL),
-        REQUESTING_PHYSICIAN("requesting physician", Metadata.Key.REQUESTING_PHYSICIAN),
+        STUDY_PI("study pi", Metadata.Key.STUDY_PI),
         TEST_NAME("test name", Metadata.Key.PRODUCT_TYPE),
         FAILURE_MODE("failure mode", null, Attribute.IGNORE),
         FAILURE_MODE_DESC("failure mode desc", null, Attribute.IGNORE);
@@ -248,6 +249,7 @@ public class MayoManifestImportProcessor {
             List<String> duplicateRackAndPosition = new ArrayList<>();
             Set<String> tubeBarcodes = new HashSet<>();
             List<String> duplicateTubeBarcodes = new ArrayList<>();
+            Set<String> testNames = new HashSet<>();
             if (!messages.hasErrors() && missingHeaders.isEmpty() && unknownUnits.isEmpty() &&
                     duplicateHeaders.isEmpty()) {
                 // Validates the data before attempting to persist ManifestRecords.
@@ -294,6 +296,8 @@ public class MayoManifestImportProcessor {
                                     rackBarcode = value;
                                 } else if (header == Header.WELL_POSITION) {
                                     position = value;
+                                } else if (header == Header.TEST_NAME) {
+                                    testNames.add(value);
                                 }
                             }
                         }
@@ -329,7 +333,7 @@ public class MayoManifestImportProcessor {
                 dataOk = false;
             }
             if (packageIds.size() > 1) {
-                messages.addError(String.format(INCONSISTENT, filename,
+                messages.addError(String.format(INCONSISTENT, filename, Header.PACKAGE_ID.getText(),
                         packageIds.stream().sorted().collect(Collectors.joining(", "))));
                 dataOk = false;
             }
@@ -341,6 +345,11 @@ public class MayoManifestImportProcessor {
             if (!duplicateRackAndPosition.isEmpty()) {
                 duplicateRackAndPosition.sort(Comparator.naturalOrder());
                 messages.addError(DUPLICATE_POSITION, filename, StringUtils.join(duplicateRackAndPosition, ", "));
+                dataOk = false;
+            }
+            if (testNames.size() > 1) {
+                messages.addError(String.format(INCONSISTENT, filename, Header.TEST_NAME.getText(),
+                        testNames.stream().sorted().collect(Collectors.joining(", "))));
                 dataOk = false;
             }
             if (dataOk) {
@@ -363,6 +372,7 @@ public class MayoManifestImportProcessor {
                             }
                         }
                     }
+                    manifestRecord.addMetadata(Metadata.Key.CLIENT, ContractClient.MAYO.name());
                 }
             }
         }

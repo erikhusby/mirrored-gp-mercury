@@ -8,12 +8,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.ejb.Lock;
-import javax.ejb.LockType;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -23,37 +19,37 @@ import java.io.Serializable;
  * This class holds the most recent copy of WorkflowConfig, loaded from either the database
  * or from a file when doing database-free tests.
  */
-@ApplicationScoped
 public class WorkflowLoader extends AbstractCache implements Serializable {
-    @Inject
-    private PreferenceDao preferenceDao;
+    private static PreferenceDao preferenceDao;
+    private static SessionContextUtility sessionContextUtility;
+    private static WorkflowConfig workflowConfig;
 
-    @Inject
-    private SessionContextUtility sessionContextUtility;
-
-    private WorkflowConfig workflowConfig;
-
-    public WorkflowLoader() {
-        if (preferenceDao == null) {
-            // A null preferenceDao indicates the DB Free test environment.
-            loadFromFile();
-        } else {
-            sessionContextUtility.executeInContext(() -> loadFromPrefs());
-        }
+    private WorkflowLoader() {
     }
 
-    public WorkflowConfig getWorkflowConfig() {
+    /** One-time initialization is done by calling this when the CDI container starts up. */
+    static WorkflowLoader init(PreferenceDao preferenceDao, SessionContextUtility sessionContextUtility) {
+        WorkflowLoader.preferenceDao = preferenceDao;
+        WorkflowLoader.sessionContextUtility = sessionContextUtility;
+        sessionContextUtility.executeInContext(() -> loadFromPrefs());
+        return new WorkflowLoader();
+    }
+
+    public static WorkflowConfig getWorkflowConfig() {
+        // workflowConfig will be null only when container-free unit tests are run.
+        if (workflowConfig == null) {
+            workflowConfig = loadFromFile();
+        }
         return workflowConfig;
     }
 
     /**
-     * Periodically reloads the WorkflowConfig from the database. Synchronization is expected to be
-     * provided by the container since this class is annotated ApplicationScoped.
+     * Periodically reloads the WorkflowConfig from the database.
      */
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
-        if (preferenceDao != null) {
+        if (sessionContextUtility != null) {
             sessionContextUtility.executeInContext(() -> loadFromPrefs());
         }
     }
@@ -61,10 +57,10 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     /**
      * Pulls workflow configuration from preference xml in the database.
      */
-    private void loadFromPrefs() {
+    private static void loadFromPrefs() {
         Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
         if (workflowConfigPref == null) {
-            throw new RuntimeException("Failed to retreive WORKFLOW_CONFIGURATION preference");
+            throw new RuntimeException("Failed to retrieve WORKFLOW_CONFIGURATION preference");
         }
         try {
             workflowConfig = (WorkflowConfig) PreferenceType.WORKFLOW_CONFIGURATION.getCreator()
@@ -79,11 +75,11 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     /**
      *  Pull workflow configuration from file when running outside a container
      */
-    private void loadFromFile() {
+    public static WorkflowConfig loadFromFile() {
         try {
             JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
             Unmarshaller unmarshaller = jc.createUnmarshaller();
-            workflowConfig = (WorkflowConfig) unmarshaller.unmarshal(
+            return (WorkflowConfig) unmarshaller.unmarshal(
                     Thread.currentThread().getContextClassLoader().getResourceAsStream("WorkflowConfig.xml"));
         } catch (JAXBException e) {
             throw new RuntimeException(e);

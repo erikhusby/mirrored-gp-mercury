@@ -41,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -243,7 +242,7 @@ public class LabEventTest extends BaseEventTest {
     @Override
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
-        new BettaLimsMessageResource(new WorkflowLoader().getWorkflowConfig());
+        new BettaLimsMessageResource().postConstructor();
         templateEngine.postConstruct();
         super.setUp();
     }

@@ -21,11 +21,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
@@ -89,13 +89,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
 
-    /**
-     * Need this here because Arquillian CDI enricher does something strange with scopes <br/>
-     * See note in BatchToJiraTest
-     */
-    @Inject
-    private WorkflowConfig workflowConfig;
-
     private Bucket bucket;
     private boolean isClinical;
     private LabBatch labBatch;
@@ -136,7 +129,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
     }
 
     @AfterMethod
@@ -202,7 +195,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
@@ -267,7 +260,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList, MaterialType.CELLS_PELLET_FROZEN);
 
         bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
                 BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);

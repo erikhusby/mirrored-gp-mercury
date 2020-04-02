@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplate
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -139,8 +138,6 @@ public class LabBatchEjbDBFreeTest {
         });
 
         labBatchEJB.setProductOrderDao(productOrderDao);
-
-        labBatchEJB.setWorkflowConfig(new WorkflowLoader().getWorkflowConfig());
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);

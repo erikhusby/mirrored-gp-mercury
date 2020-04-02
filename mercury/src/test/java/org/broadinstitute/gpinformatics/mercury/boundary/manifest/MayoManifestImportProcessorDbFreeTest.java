@@ -26,30 +26,30 @@ public class MayoManifestImportProcessorDbFreeTest {
                         "Sample_Id,Parent_Sample_Id,Matrix_Id,Collection_Date,Biobank_Id,Sex_At_Birth," +
                         "Age,NY_State_(Y/N),Sample_Type,Treatments,Quantity_(ul),Total_Concentration_(ng/ul)," +
                         "Total_Dna(ng),Visit_Description,Sample_Source," +
-                        "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name," +
+                        "Study,Tracking_Number,Contact,Email,Study_PI,Test_Name," +
                         "Failure Mode,Failure Mode Desc",
                 // Alternative StorageUnit Id
                 "Package_Id,BiobankId_SampleId,Box StorageUnit Id,Box_Id/Plate_Id,Well_Position," +
                         "Sample_Id,Parent_Sample_Id,Matrix_Id,Collection_Date,Biobank_Id,Sex_At_Birth," +
                         "Age,NY_State_(Y/N),Sample_Type,Treatments,Quantity_(ul),Total_Concentration_(ng/ul)," +
                         "Total_Dna(ng),Visit_Description,Sample_Source," +
-                        "Study,Tracking_Number,Contact,Email,Requesting_Physician,Test_Name," +
+                        "Study,Tracking_Number,Contact,Email,Study_PI,Test_Name," +
                         "Failure Mode,Failure Mode Desc",
                 // With run-on Id, no parens.
                 "PackageId,BiobankId SampleId,Package StorageunitId,BoxId,Well Position,SampleId,Parent SampleId," +
                         "MatrixId,Collection Date,BiobankId,Sex At Birth,Age,NY State Y/N,Sample Type,Treatments," +
                         "Quantity ul,Total Concentration ng/ul,Total Dna ng,Visit Description,Sample Source," +
-                        "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name",
+                        "Study,Tracking Number,Contact,Email,Study PI,Test Name",
                 // Units.
                 "Package_Id,Biobankid_Sampleid,Package StorageunitId,Box_id,Well_Position,Sample_Id,Parent_Sample_Id," +
                         "MatrixId,Collection_Date,Biobank_Id,Sex_At_Birth,Age,Sample_Type,Treatments,Quantity_ul," +
                         "Total_Concentration ( ng / ul ) ,Total_Dna ng,Visit  Description  ,Sample_Source,Study," +
-                        "Tracking_Number,Contact,Email,Requesting_Physician,Test_Name",
+                        "Tracking_Number,Contact,Email,Study_PI,Test_Name",
                 // Mixed case, dropped parentheses.
                 "PACKAGE_ID,BIOBANKID_SAMPLEID,PACKAGE STORAGEUNITID,BOXID,WELL_POSITION,SAMPLE_ID,PARENT_SAMPLE_ID," +
                         "MATRIX_ID,collection_date,biobank_id,sex_at_birth,age,sample_type,treatments,quantity_(ul)," +
                         "tOTAL_cONCENTRATION_nG/uL,Total Dna NG,vISIT_dESCRIPTION,sAMPLE_SOURCE,sTUDY," +
-                        "Tracking Number,Contact,Email,Requesting Physician,Test Name"
+                        "Tracking Number,Contact,Email,Study Pi,Test Name"
         )) {
             parseAndReturnErrorsAndWarnings(headers, true);
         }
@@ -165,8 +165,8 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "ll_Position,", "", "Sample_Id", "", ",Parent_Sa", "mple_Id,",
                 "Matrix_Id,Collection_Date,Biobank_Id,Sex_At_B", "irth,Age,Sample_Type,Treatments,Quantity_(",
                 "ul", "),Total_Concen", "tration_(n", "g/ul),",
-                "Total_Dna(ng),Visit_Description,Sample_Source,Study,", "Tracking_Number,Contact,Email,Reques",
-                "ting_Physician,Test_Name\n9317", "107,", "2816424,71", "33,584,C12", ",6963270,6016485,6607943,01",
+                "Total_Dna(ng),Visit_Description,Sample_Source,Study,", "Tracking_Number,Contact,Email,Study_",
+                "PI,Test_Name\n9317", "107,", "2816424,71", "33,584,C12", ",6963270,6016485,6607943,01",
                 "/01/2019,8109786,M,43,DNA,None,3", "42.18,103.", "87,348,First,8043153,7153373,3912376,15",
                 "06172,5338480,", "", ","};
         // Joins the header and values with invalid chars that should be stripped out.
@@ -190,7 +190,7 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Sample Id,Parent Sample Id," +
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
-                "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
+                "Study,Tracking Number,Contact,Email,Study PI,Test Name";
         String values = "\nPK001,B001_S001,S-1,B001,A1,S001,PS001,M001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
                 "2400,2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all,extra1";
         MessageCollection messages = new MessageCollection();
@@ -235,11 +235,11 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Sample Id,Parent Sample Id," +
                 "Matrix Id,Collection Date,Biobank Id,Sex At Birth,Age,Sample Type,Treatments," +
                 "Quantity (ul),Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
-                "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name";
+                "Study,Tracking Number,Contact,Email,Study PI,Test Name";
         String values = "\nPKG-001,B001_S001,SU-0000001,B001,A1,S001,PS001," +
                 "089728001,03/26/2019,B001,F,22,DNA,None,0.01,1.01," +
                 // Tests if parser can handle a quoted Total Dna(ng) field that has a comma.
-                "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,all";
+                "\"2,400\",2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email1@email.org,The Name,aou_array";
         MessageCollection messages = new MessageCollection();
         MayoManifestImportProcessor processor;
         String expected;
@@ -267,7 +267,19 @@ public class MayoManifestImportProcessorDbFreeTest {
                 (headers + values + values.replace("PKG-001,", "PKG-002,")).getBytes(), CSV, messages), CSV, messages)
                 .isEmpty());
         Assert.assertTrue(StringUtils.join(messages.getErrors()).contains(
-                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV, "PKG-001, PKG-002")),
+                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV,
+                        MayoManifestImportProcessor.Header.PACKAGE_ID.getText(), "PKG-001, PKG-002")),
+                StringUtils.join(messages.getErrors(), "; "));
+
+        // Not ok if there are two different test names.
+        processor = new MayoManifestImportProcessor();
+        messages.clearAll();
+        Assert.assertTrue(processor.makeManifestRecords(processor.parseAsCellGrid(
+                (headers + values + values.replace("aou_array", "aou_wgs")).getBytes(), CSV, messages), CSV, messages)
+                .isEmpty());
+        Assert.assertTrue(StringUtils.join(messages.getErrors()).contains(
+                String.format(MayoManifestImportProcessor.INCONSISTENT, CSV,
+                        MayoManifestImportProcessor.Header.TEST_NAME.getText(), "aou_array, aou_wgs")),
                 StringUtils.join(messages.getErrors(), "; "));
 
         // Not ok if quantity is NaN.
@@ -350,22 +362,22 @@ public class MayoManifestImportProcessorDbFreeTest {
                 "Well Position,Sample Id,Parent Sample Id,Matrix Id,Collection Date," +
                 "Biobank Id,Sex At Birth,Age,Sample Type,Treatments,Quantity (ul)," +
                 "Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source," +
-                "Study,Tracking Number,Contact,Email,Requesting Physician,Test Name\n" +
+                "Study,Tracking Number,Contact,Email,Study PI,Test Name\n" +
 
                 "PK001,B001_S001,SU-001,BX001," +
                 "A1,S001,PS001,M001,03/26/2019," +
                 "B001,F,22,DNA,No Treatments,10," +
                 "1,2,2nd Visit,Whole Blood," +
-                "The Study Title,TRK001,theContact,email1@email.org,The Name,all\n" +
+                "The Study Title,TRK001,theContact,email1@email.org,The Name,aou_wgs\n" +
 
                 "PK001,B001_S002,SU-001,BX001,B1,S002,PS001,M002,03/26/2019,B001,F,22,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email2@email.org,The Name,all\n" +
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email2@email.org,The Name,aou_wgs\n" +
 
                 "PK001,B002_S003,SU-002,BX002,B1,S003,PS002,M003,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email3@email.org,Other,some\n" +
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email3@email.org,Other,aou_wgs\n" +
 
                 "PK001,B002_S004,SU-002,BX002,C1,S004,PS002,M004,03/26/2019,B002,M,33,DNA,No Treatments,10,1,2," +
-                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,a few\n";
+                "2nd Visit,Whole Blood,The Study Title,TRK001,theContact,email4@email.org,Other,aou_wgs\n";
 
         List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
         List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);
@@ -385,11 +397,11 @@ public class MayoManifestImportProcessorDbFreeTest {
                         "Box Id/plate Id,Well Position,Sample Id,Parent Sample Id,Matrix Id,Collection Date," +
                         "Biobank Id,Sex At Birth,Age,Ny State (y/n),Sample Type,Treatments,Quantity (ul)," +
                         "Total Concentration (ng/ul),Total Dna(ng),Visit Description,Sample Source,Study," +
-                        "Tracking Number,Contact,Email,Requesting Physician,Test Name,Failure Mode,Failure Mode Desc",
+                        "Tracking Number,Contact,Email,Study PI,Test Name,Failure Mode,Failure Mode Desc",
                 "PKG-1907-120820,T792687523_19816200399,SU-0013058994,BX-00147944,A01,19816200399," +
                         "19812007779,1194525422,2019-04-29T21:28:00Z,T792687523,M,,N,DNA,Water,40,60,2400," +
                         "Baseline,Whole Blood,16-005532 (PMI) Thibodeau - LVInt,486630257960,Samantha Wirkus," +
-                        "Wirkus.Samantha@mayo.edu,Josh Denny,aou_wgs,,",
+                        "Wirkus.Samantha@mayo.edu,,aou_wgs,,",
                 "PKG-1907-120820,,SU-0013058994,BX-00147944,G12,,,,,,,,,,,,,,,Other,,486630257960," +
                         " ,,Josh Denny,aou_wgs,,",
                 "PKG-1907-120820,T736295373_19816200406,SU-0013058994,BX-00147944,H01,19816200406," +
@@ -397,7 +409,7 @@ public class MayoManifestImportProcessorDbFreeTest {
                         "Baseline,Whole Blood,16-005532 (PMI) Thibodeau - LVInt,486630257960,Samantha Wirkus," +
                         "Wirkus.Samantha@mayo.edu,Josh Denny,aou_wgs,,",
                 "PKG-1907-120820,,SU-0013058994,BX-00147944,H12,,,,,,,,,,,,,,,Other,,486630257960," +
-                        " ,,Josh Denny,aou_wgs,,");
+                        " ,,,aou_wgs,,");
         List<List<String>> cellGrid = processor.parseAsCellGrid(content.getBytes(), CSV, messageCollection);
         List<ManifestRecord> records = processor.makeManifestRecords(cellGrid, CSV, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors()));

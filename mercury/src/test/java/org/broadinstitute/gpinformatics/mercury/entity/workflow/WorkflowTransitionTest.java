@@ -150,7 +150,7 @@ public class WorkflowTransitionTest extends Arquillian {
     @Test
     public void testShearingTransferTransitionsToInShearing() throws IOException {
         Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
-        genomeIssue.postTransition("Ready for Booking", null);
+        genomeIssue.postTransition("In Shearing", null);
 
         String sourceRackBarcode = "ShearingRackSource" + timestampFormat.format(new Date());
         String destPlateBarcode = "CovarisRackPlateBarcode" + timestampFormat.format(new Date());
@@ -189,7 +189,7 @@ public class WorkflowTransitionTest extends Arquillian {
     @Test
     public void testPoolCorrectionTransitionsToSeq() throws IOException {
         Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
-        genomeIssue.postTransition("Return to Ready For Sequencing", null);
+        genomeIssue.postTransition("Ready for Sequencing", null);
         genomeIssue.postTransition("Pool Correction", null);
         genomeIssue = jiraService.getIssue(genomeJiraTicket);
         Assert.assertEquals(genomeIssue.getStatus(), "Pool Correction");

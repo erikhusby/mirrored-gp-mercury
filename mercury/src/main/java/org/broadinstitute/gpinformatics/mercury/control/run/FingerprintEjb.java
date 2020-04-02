@@ -232,14 +232,20 @@ public class FingerprintEjb {
                                                             String participantId,
                                                             MercurySampleDao mercurySampleDao) {
         if (StringUtils.isNotBlank(participantId)) {
-            SearchItem searchItem =
-                    new SearchItem("Participant ID", "IN", Arrays.asList((participantId.toUpperCase().split("\\s+"))));
-            List<Object> ptMercurySamples = LabMetricSearchDefinition.runBspSearch(searchItem);
-            List<String> mercurySamples = ptMercurySamples.stream()
-                    .map(object -> Objects.toString(object, null))
+            List<String> partIds = Arrays.asList((participantId.toUpperCase().split("\\s+")));
+            List<String> ptIds = partIds.stream()
+                    .filter(partId -> partId.startsWith("PT-") )
                     .collect(Collectors.toList());
-            mapSmidToMercurySample =
-                    mercurySampleDao.findMapIdToMercurySample(mercurySamples);
+            if (!ptIds.isEmpty()) {
+                SearchItem searchItem =
+                        new SearchItem("Participant ID", "IN", ptIds);
+                List<Object> ptMercurySamples = LabMetricSearchDefinition.runBspSearch(searchItem);
+                List<String> mercurySamples = ptMercurySamples.stream()
+                        .map(object -> Objects.toString(object, null))
+                        .collect(Collectors.toList());
+                mapSmidToMercurySample =
+                        mercurySampleDao.findMapIdToMercurySample(mercurySamples);
+            }
         }
         return mapSmidToMercurySample;
     }

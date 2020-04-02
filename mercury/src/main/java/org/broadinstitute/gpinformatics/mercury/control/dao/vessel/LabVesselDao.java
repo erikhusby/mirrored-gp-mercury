@@ -33,6 +33,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -71,18 +72,18 @@ public class LabVesselDao extends GenericDao {
         return findSingle(LabVessel.class, LabVessel_.labVesselId, vid);
     }
 
-    public List<LabVessel> findBySampleKeyList(List<String> sampleKeys) {
-        return findBySampleKeyList((Collection<String>) sampleKeys);
-    }
+    public List<LabVessel> findBySampleKeyOrLabVesselLabel(Collection<String> sampleKeys) {
 
-    public List<LabVessel> findBySampleKeyList(Collection<String> sampleKeys) {
-        List<LabVessel> resultList = new ArrayList<>();
+        LinkedHashSet<LabVessel> labVessels = new LinkedHashSet<>();
+        List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
 
-        for (String sampleKey : sampleKeys) {
-            resultList.addAll(findBySampleKey(sampleKey));
+        for (MercurySample mercurySample : mercurySamples) {
+            labVessels.addAll(mercurySample.getLabVessel());
         }
 
-        return resultList;
+        labVessels.addAll(findListByList(LabVessel.class, LabVessel_.label, sampleKeys));
+
+        return new ArrayList<>(labVessels);
     }
 
     /**

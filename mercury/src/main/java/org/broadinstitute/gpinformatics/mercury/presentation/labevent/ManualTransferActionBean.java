@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.FluidigmSampleSheetG
 import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -169,9 +170,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private WorkflowConfig workflowConfig;
-
-    @Inject
     private LabBatchDao labBatchDao;
 
     @Inject
@@ -217,7 +215,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
             if (!StringUtils.isEmpty(workflowEffectiveDateLocal)) {
                 workflowStepDef = loadWorkflowStepDef(new Date(workflowEffectiveDateLocal),
-                        workflowConfig, getContext().getRequest().getParameter("workflowProcessName"),
+                        WorkflowLoader.getWorkflowConfig(), getContext().getRequest().getParameter("workflowProcessName"),
                         getContext().getRequest().getParameter("workflowStepName"));
             }
             if (workflowStepDef == null) {
@@ -858,7 +856,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
                     Map<String, LabVessel> stringLabVesselMap = loadPlateFromDb(plateCherryPickEvent.getPlate().get(0),
                             plateCherryPickEvent.getPositionMap().get(0),
-                            false, null, labBatch, messageCollection, Direction.TARGET, true);
+                            false, null, labBatch, messageCollection, Direction.TARGET, manualTransferDetails.allowKnownDestination());
                     verifyCherryPickDestinations(((PlateCherryPickEvent) stationEvent).getPositionMap().get(0), ((PlateCherryPickEvent) stationEvent).getSource(), stringLabVesselMap , messageCollection);
                 }
                 break;
@@ -902,7 +900,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         for (String destinationBarcode : destinationBarcodes) {
-            if (labelLabVesselMap.get(destinationBarcode) != null) {
+            if (labelLabVesselMap.get(destinationBarcode) != null && !manualTransferDetails.allowKnownDestination()) {
                 messageCollection.addError("Unable to use destination " + destinationBarcode
                                            + " as it is in the database and has seen transfers.");
             }
@@ -1112,12 +1110,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else if (!allowKnownDestinations){
                         messageCollection.addError(message);
                     } else {
-                        // If we are allowing known destinations in the plate (e.g. cherry pick transfer event expects cherry picks to be unknown, but regular position map can have known)
-                        if (labEventType != LabEventType.DEV && !allowKnownDestinations) {
-                            messageCollection.addError(message);
-                        } else {
-                            messageCollection.addWarning(message);
-                        }
+                        messageCollection.addWarning(message);
                     }
                     if (expectedEmpty != null) {
                         if (labVessel.getTransfersTo().isEmpty()) {

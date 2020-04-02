@@ -322,6 +322,7 @@ public class Metadata {
         STORAGE_CONDITIONS(Category.REAGENT, DataType.STRING, "Storage Conditions", Visibility.USER),
         MANUFACTURER_DESIGN_ID(Category.REAGENT, DataType.STRING, "Manufacturer Design ID", Visibility.USER),
         MARK_STOCK(Category.SAMPLE, DataType.STRING, "Mark Stock", Visibility.USER),
+        CLIENT(Category.SAMPLE, DataType.STRING, "Client", Visibility.SYSTEM),
         // Mayo sample metadata.
         PACKAGE_ID(Category.SAMPLE, DataType.STRING, "Package ID", Visibility.USER),
         RACK_LABEL(Category.SAMPLE, DataType.STRING, "Rack Label", Visibility.NONE),
@@ -338,12 +339,14 @@ public class Metadata {
         TRACKING_NUMBER(Category.SAMPLE, DataType.STRING, "Tracking Number", Visibility.USER),
         CONTACT(Category.SAMPLE, DataType.STRING, "Contact", Visibility.USER),
         CONTACT_EMAIL(Category.SAMPLE, DataType.STRING, "Contact Email", Visibility.USER),
-        REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.USER),
+        REQUESTING_PHYSICIAN(Category.SAMPLE, DataType.STRING, "Requesting Physician", Visibility.NONE),
+        STUDY_PI(Category.SAMPLE, DataType.STRING, "Study PI", Visibility.USER),
         PRODUCT_TYPE(Category.SAMPLE, DataType.STRING, "Product Type", Visibility.USER),
         // Fingerprinting Metadata
         TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
         FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
+        INSTITUTE_ID(Category.SAMPLE, DataType.STRING, "Institute ID", Visibility.USER),
         ;
 
         private final Category category;
@@ -391,6 +394,19 @@ public class Metadata {
 
             for (Key key : values()) {
                 if (key.getDisplayName().equals(displayName)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
+        }
+        public static Key fromName(String Name) {
+
+            // todo jmt improve
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.name().equals(Name)) {
                     foundKey = key;
                     break;
                 }

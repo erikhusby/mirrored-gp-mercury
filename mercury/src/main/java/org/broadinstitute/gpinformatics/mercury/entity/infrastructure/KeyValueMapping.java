@@ -22,8 +22,9 @@ import java.util.Collection;
 @Audited
 @Entity
 public class KeyValueMapping extends AttributeArchetype {
-    // The first implementation of a KeyValueMapping.
     public static final String BAIT_PRODUCT_MAPPING = "BaitToProductMapping";
+    public static final String AOU_PDO_WGS = "AoU_PDO_WGS";
+    public static final String AOU_PDO_ARRAY = "AoU_PDO_array";
 
     private static final String GENERIC_KEY_VALUE_ATTRIBUTE = "theValue";
 
@@ -44,5 +45,12 @@ public class KeyValueMapping extends AttributeArchetype {
     public String getValue() {
         ArchetypeAttribute archetypeAttribute = getAttribute(GENERIC_KEY_VALUE_ATTRIBUTE);
         return (archetypeAttribute != null) ? archetypeAttribute.getAttributeValue() : null;
+    }
+
+    public void setValue(String value) {
+        ArchetypeAttribute archetypeAttribute = getAttribute(GENERIC_KEY_VALUE_ATTRIBUTE);
+        if (archetypeAttribute != null) {
+            archetypeAttribute.setAttributeValue(value);
+        }
     }
 }

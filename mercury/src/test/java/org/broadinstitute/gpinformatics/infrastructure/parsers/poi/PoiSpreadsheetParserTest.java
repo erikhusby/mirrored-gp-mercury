@@ -171,6 +171,11 @@ public class PoiSpreadsheetParserTest {
             return isStringColumn;
         }
 
+        @Override
+        public boolean isIgnoreColumn() {
+            return false;
+        }
+
     }
 
     private static class TestProcessor extends TableProcessor {
@@ -249,6 +254,11 @@ public class PoiSpreadsheetParserTest {
             @Override
             public boolean isStringColumn() {
                 return true;
+            }
+
+            @Override
+            public boolean isIgnoreColumn() {
+                return false;
             }
         }
 
