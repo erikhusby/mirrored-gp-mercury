@@ -630,18 +630,33 @@ public class LabVesselSearchDefinition {
                 TreeMap<String, String> sortedResults = new TreeMap<>();
 
                 for (LabVessel container : labVessel.getContainers()) {
-                    TubeFormation containerTubeFormation = (TubeFormation) container;
 
-                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+                    if (OrmUtil.proxySafeIsInstance(labVessel.getContainers().iterator().next(), StaticPlate.class)) {
+                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel.getContainers().iterator().next(), StaticPlate.class);
 
-                    String vesselPositionInContainer = tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name();
-                    Date createdOn = containerTubeFormation.getCreatedOn();
+                        String vesselPositionInContainer = staticPlate.getContainerRole().getPositionOfVessel(labVessel).name();
+                        Date createdOn = staticPlate.getCreatedOn();
 
-                    Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
-                    for (RackOfTubes rackOfTubes : racksOfTubes) {
                         String formattedCreatedOn = ColumnValueType.DATE_TIME.format(createdOn, "");
-                        String containerInfo = rackOfTubes.getLabel() + "/" + vesselPositionInContainer + ":" + formattedCreatedOn;
+                        String containerInfo = staticPlate.getLabel() + "/" + vesselPositionInContainer + ":" + formattedCreatedOn;
                         sortedResults.put(formattedCreatedOn, containerInfo);
+                    } else {
+                        // If it's not a static plate then should be tube formation.
+                        TubeFormation containerTubeFormation = (TubeFormation) container;
+
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(container, TubeFormation.class);
+
+                        String vesselPositionInContainer =
+                                tubeFormation.getContainerRole().getPositionOfVessel(labVessel).name();
+                        Date createdOn = containerTubeFormation.getCreatedOn();
+
+                        Set<RackOfTubes> racksOfTubes = containerTubeFormation.getRacksOfTubes();
+                        for (RackOfTubes rackOfTubes : racksOfTubes) {
+                            String formattedCreatedOn = ColumnValueType.DATE_TIME.format(createdOn, "");
+                            String containerInfo =
+                                    rackOfTubes.getLabel() + "/" + vesselPositionInContainer + ":" + formattedCreatedOn;
+                            sortedResults.put(formattedCreatedOn, containerInfo);
+                        }
                     }
                 }
                 for (Map.Entry<String, String> containerInformation : sortedResults.entrySet()) {

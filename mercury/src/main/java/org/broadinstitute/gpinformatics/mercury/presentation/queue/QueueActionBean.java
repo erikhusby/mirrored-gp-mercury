@@ -369,7 +369,7 @@ public class QueueActionBean extends CoreActionBean {
                     }
                 } else {
                     // no results found!!!
-                    addGlobalValidationError("No Mercury samples were found!");
+                    addGlobalValidationError("None of the searched samples were found in the queue!");
                 }
             } else {
                 addGlobalValidationError("You must enter a search value.");
