@@ -5,8 +5,8 @@ import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtil
 import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
@@ -25,7 +25,7 @@ import javax.inject.Inject;
  * initialized by this class.
  */
 @Startup
-@Singleton
+@ApplicationScoped
 public class WorkflowLoaderInit {
     @Inject
     private PreferenceDao preferenceDao;
