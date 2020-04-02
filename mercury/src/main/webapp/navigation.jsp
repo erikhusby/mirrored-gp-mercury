@@ -189,6 +189,15 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PlateMetadataActionBean"
                                           event="view">Single Cell Metadata Upload</stripes:link>
                         </li>
+                    </ul>
+                </li>
+            </security:authorizeBlock>
+
+            <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, GPProjectManager, PM, Developer)%>">
+                <li class="dropdown">
+                    <a id="fingerprintNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-user"></span> Fingerprint <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
                         <li>
                             <stripes:link id="fingerprintReport"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintReportActionBean"
@@ -200,11 +209,15 @@
                                           event="view">Fingerprint Matrix</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="fingerprintGenotype"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.FingerprintGenotypeActionBean"
+                                          event="view">Fingerprint Genotype File</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="uploadFingerprintingRun"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
                                           event="view">Upload Fingerprinting Run</stripes:link>
                         </li>
-
                     </ul>
                 </li>
             </security:authorizeBlock>
