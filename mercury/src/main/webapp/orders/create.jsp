@@ -1033,7 +1033,6 @@
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key;
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
                 if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
                     (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
                     checkboxText += ' (';
@@ -1059,7 +1058,6 @@
                     (val.clinicalPrice !== undefined && val.clinicalPrice.length > 0)) {
                     checkboxText += ')';
                 }
-                </security:authorizeBlock>
                 checkboxText += ']</label>';
                 checkboxText += '  <br>';
             });
@@ -1067,6 +1065,11 @@
             var checkboxes = $j("#addOnCheckboxes");
             checkboxes.hide();
             checkboxes.html(checkboxText);
+            <c:if test="${!actionBean.userBean.PDMOrDev|| !actionBean.userBean.GPPMUser}">
+            checkboxes.find('input').each(function () {
+                $j(this).attr("type", "hidden");
+            });
+            </c:if>
             checkboxes.fadeIn(fadeDuration);
         }
 
@@ -1652,7 +1655,7 @@
                             <c:if test="${actionBean.editOrder.product != null}">
                                 <input type="hidden" name="productTokenInput.listOfKeys" value="${actionBean.editOrder.product.partNumber}"/>
                                 <div class="controls">
-                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                <stripes:link id="product" title="Product" href="${ctxpath}/products/product.action?view">
                                     <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
                                     <c:if test="${actionBean.editOrder.orderType != null}">
                                         ${actionBean.editOrder.orderTypeDisplay} --
