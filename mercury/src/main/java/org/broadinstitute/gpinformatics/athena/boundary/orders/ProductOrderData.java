@@ -38,11 +38,10 @@ public class ProductOrderData {
     private Date createdDate;
     private Date placedDate;
     private Date modifiedDate;
-    private String product;
     private String status;
     private String aggregationDataType;
     private String researchProjectId;
-    private String productName;
+    private String productPartNumber;
     private String quoteId;
     private String username;
     private String requisitionName;
@@ -99,8 +98,7 @@ public class ProductOrderData {
 
         Product product = productOrder.getProduct();
         if (product != null) {
-            this.product = product.getBusinessKey();
-            productName = product.getProductName();
+            productPartNumber = product.getPartNumber();
             aggregationDataType = product.getPipelineDataTypeString();
         }
 
@@ -180,14 +178,6 @@ public class ProductOrderData {
         this.modifiedDate = modifiedDate;
     }
 
-    public String getProduct() {
-        return (product == null) ? "" : product;
-    }
-
-    public void setProduct(String product) {
-        this.product = product;
-    }
-
     public String getStatus() {
         return (status == null) ? "" : status;
     }
@@ -242,12 +232,12 @@ public class ProductOrderData {
         return (workRequestId == null) ? "" : workRequestId;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    public void setProductPartNumber(String productPartNumber) {
+        this.productPartNumber = productPartNumber;
     }
 
-    public String getProductName() {
-        return (productName == null) ? "" : productName;
+    public String getProductPartNumber() {
+        return (productPartNumber == null) ? "" : productPartNumber;
     }
 
     public void setQuoteId(String quoteId) {
@@ -304,9 +294,9 @@ public class ProductOrderData {
 
         ProductOrder productOrder = new ProductOrder(title, comments, quoteId);
 
-        // Find the product by the product name.
-        if (!StringUtils.isBlank(productName)) {
-            productOrder.setProduct(productDao.findByName(productName));
+        // Find the product by the product part number.
+        if (!StringUtils.isBlank(productPartNumber)) {
+            productOrder.setProduct(productDao.findByPartNumber(productPartNumber));
         }
 
         if (StringUtils.isNumeric(quoteId)) {
