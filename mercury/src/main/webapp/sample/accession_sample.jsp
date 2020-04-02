@@ -80,6 +80,7 @@
                             id: "acceptScnId",
                             click: function() {
                                 $j('#covidAccessionScanVerificationDialog').dialog("close");
+                                $j("#scanAlert").html("");
                                 performAccessionScan();
                             }
                         },
@@ -141,6 +142,14 @@
                     }
                 });
             }
+
+            function updateScanAlert() {
+                var scannedSampleId = $j("#accessionSourceText").val();
+                var scannedDestinationTube = $j("#accessionTubeText").val();
+                $j("#scanAlert").html("You scanned source sample " + scannedSampleId +
+                    " with a destination tube of " + scannedDestinationTube + ".  Is this Correct?");
+            }
+
             function showPreviewSessionCloseDialog() {
                 $j('#previewSessionCloseDialog').html('');
 
