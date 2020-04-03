@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.GenericState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Transition;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -454,7 +455,7 @@ public class FiniteStateMachineFactory {
         finiteStateMachine.setStateMachineName("Demultiplex_" + run.getRunName());
         DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run,
                 finiteStateMachine.getDateQueuedString());
-        File runDir = new File(run.getRunDirectory());
+        File runDir = new File(ConcordanceCalculator.convertFilePaths(run.getRunDirectory()));
 
         File ssFile = new File(dragenFolderUtil.getAnalysisFolder(), "SampleSheet_hsa.csv");
         Set<VesselPosition> lanes =

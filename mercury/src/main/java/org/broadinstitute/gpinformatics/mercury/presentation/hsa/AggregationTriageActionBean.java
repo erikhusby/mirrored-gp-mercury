@@ -164,7 +164,8 @@ public class AggregationTriageActionBean extends CoreActionBean {
         List<FingerprintScore> sampleLodScores =
                 fingerprintScoreDao.findFingerprintScoresBySampleAlias(sampleIds);
         Map<String, FingerprintScore> mapAliasToFpScore = sampleLodScores.stream()
-                .collect(Collectors.toMap(FingerprintScore::getSampleAlias, Function.identity()));
+                .collect(Collectors.toMap(FingerprintScore::getSampleAlias, Function.identity(),
+                        (fs1, fs2) -> fs1.getRunDate().compareTo(fs2.getRunDate()) < 0 ? fs2 : fs1));
 
         List<TriageDto> dtos = new ArrayList<>();
         Map<String, SampleData> mapIdToSampleData = sampleDataFetcher.fetchSampleDataForSamples(mercurySamples,

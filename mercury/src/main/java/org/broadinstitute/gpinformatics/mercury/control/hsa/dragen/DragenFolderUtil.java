@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DragenConfig;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.control.run.ConcordanceCalculator;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -49,7 +50,7 @@ public class DragenFolderUtil {
         File machineFolder = new File(baseFolder, illuminaSequencingRun.getMachineName());
         runFolder = new File(machineFolder, illuminaSequencingRun.getRunName());
         if (!runFolder.exists()) {
-            throw new RuntimeException("Run folder doesn't exists " + runFolder.getPath());
+            throw new RuntimeException("Run folder doesn't exist " + runFolder.getPath());
         }
 
         dragenFolder = new File(runFolder, "dragen");
@@ -99,9 +100,9 @@ public class DragenFolderUtil {
         this.illuminaSequencingRun = illuminaSequencingRun;
         this.analysisKey = analysisKey;
 
-        runFolder = new File(illuminaSequencingRun.getRunDirectory());
+        runFolder = new File(ConcordanceCalculator.convertFilePaths(illuminaSequencingRun.getRunDirectory()));
         if (!runFolder.exists()) {
-            throw new RuntimeException("Run folder doesn't exists " + runFolder.getPath());
+            throw new RuntimeException("Run folder doesn't exist " + runFolder.getPath());
         }
 
         dragenFolder = new File(runFolder, "dragen");
