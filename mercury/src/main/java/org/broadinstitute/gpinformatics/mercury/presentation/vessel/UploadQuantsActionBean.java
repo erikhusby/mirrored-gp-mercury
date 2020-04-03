@@ -172,17 +172,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addMessage("Successfully uploaded quant.");
         }
 
-        // Bounce initial pico to rework disposition view, existence of labMetricRun means success for all but GENERIC
-        if (labMetricRun != null && LabMetric.MetricType.INITIAL_PICO.equals(quantType)) {
-            getContext().getRequest().setAttribute("labMetricRun", labMetricRun);
-            ForwardResolution forwardResolution = new ForwardResolution(PicoDispositionActionBean.class, PicoDispositionActionBean.EVT_FWD_VESSEL_LIST);
-            // Doesn't work:
-            // forwardResolution.addParameter("labMetricRun", labMetricRun );
-            return forwardResolution;
-        } else {
-            buildColumns();
-            return new ForwardResolution(VIEW_PAGE);
-        }
+        buildColumns();
+        return new ForwardResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = UPLOAD_QUANT)

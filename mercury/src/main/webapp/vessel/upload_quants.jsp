@@ -129,11 +129,11 @@
             </stripes:form>
 
             <c:if test="${actionBean.quantType == 'INITIAL_PICO'}">
-                <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
-                    <c:forEach items="${actionBean.tubeFormationLabels}" var="item" varStatus="loop">
-                        <stripes:hidden name="tubeFormationLabels[${loop.index}]" value="${item}"/>
-                    </c:forEach>
-                    <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
+                <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm"
+                              class="form-horizontal">
+                    <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
+                    <stripes:submit name="buildFwdTableData" value="Manage Dispsitions" class="btn btn-primary"
+                                    id="viewNextStepsBtn"/>
                 </stripes:form>
             </c:if>
 

@@ -102,29 +102,28 @@ public class LabMetric implements Comparable<LabMetric> {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 // There may already be a metricDecision and we've got to overwrite it and keep disposition and note if so
-                LabMetricDecision metricDecision = labMetric.getLabMetricDecision();
-
-                boolean wasFailure = false;
-                boolean isClinical = false;
+                LabMetricDecision incomingDecision = labMetric.getLabMetricDecision();
                 String note = null;
 
-                if (labVessel.getVolume() != null) {
-                    BigDecimal totalNg = labMetric.getValue().multiply(labVessel.getVolume());
-                    if (totalNg.compareTo(new BigDecimal("250")) < 0 ) {
-                        note = "Total Ng " + MathUtils.scaleTwoDecimalPlaces(totalNg) + " less than 250";
-                        wasFailure = true;
-                    }
-                } else {
-                    note = "No volume recorded for vessel " + labVessel.getLabel();
-                    wasFailure = true;
+                if (labVessel.getVolume() == null) {
+                    // Case should never get this far, but die with FAIL regardless
+                    LabMetricDecision failDecision = new LabMetricDecision(LabMetricDecision.Decision.FAIL, new Date(), decidingUser, labMetric);
+                    failDecision.setNote("No volume recorded for vessel " + labVessel.getLabel());
+                    return failDecision;
                 }
 
-                if (!wasFailure) {
-                    // No failure - simply return whatever was already attached to metric
-                    return metricDecision;
+                BigDecimal totalNg = labMetric.getValue().multiply(labVessel.getVolume());
+                if (totalNg.compareTo(new BigDecimal("250")) < 0) {
+                    // Fail logic
+                    note = "Total Ng " + MathUtils.scaleTwoDecimalPlaces(totalNg) + " less than 250";
+                } else if (incomingDecision == null) {
+                    // Nothing coming in from optional detailed curve fit logic, return PASS
+                    return new LabMetricDecision(LabMetricDecision.Decision.PASS, new Date(), decidingUser, labMetric);
                 }
 
-                // check if clinical
+                // Only one case we're still here, was a fail!
+                // Check if clinical to overwrite nuance with FAIL_ACCEPTANCE_CRITERIA
+                boolean isClinical = false;
                 for (SampleInstanceV2 si : labVessel.getSampleInstancesV2()) {
                     if (si.getSingleProductOrderSample() != null) {
                         ResearchProject project = si.getSingleProductOrderSample().getProductOrder().getResearchProject();
@@ -137,22 +136,19 @@ public class LabMetric implements Comparable<LabMetric> {
                     }
                 }
 
-                if (!isClinical) {
-                    // Non-clinical - Ignore criteria and simply return whatever was already attached to metric
-                    return metricDecision;
-                }
-
-                if (metricDecision == null) {
-                    metricDecision = new LabMetricDecision(LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA, new Date(), decidingUser, labMetric);
-                    metricDecision.setNote(note);
+                if (isClinical || incomingDecision == null) {
+                    // No nuance - was a fail
+                    LabMetricDecision failDecision = new LabMetricDecision(LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA, new Date(), decidingUser, labMetric);
+                    failDecision.setNote(note);
+                    return failDecision;
                 } else {
                     // Don't overwrite rework disposition or note
-                    metricDecision.setDecision(LabMetricDecision.Decision.FAIL_ACCEPTANCE_CRITERIA);
-                    String existingNote = metricDecision.getNote();
-                    metricDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
+                    String existingNote = incomingDecision.getNote();
+                    if (note != null) {
+                        incomingDecision.setNote(existingNote == null ? note : note + "  " + existingNote);
+                    }
+                    return incomingDecision;
                 }
-
-                return metricDecision;
             }
 
             @Override

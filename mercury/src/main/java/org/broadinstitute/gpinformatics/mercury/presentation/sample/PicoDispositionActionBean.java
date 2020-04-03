@@ -77,8 +77,8 @@ public class PicoDispositionActionBean extends CoreActionBean {
     private BarcodedTubeDao barcodedTubeDao;
 
     private boolean isRackScanEnabled = true;
-    // Internal forward from quant upload page
-    private LabMetricRun labMetricRun;
+    // Forward from quant upload page
+    private Long labMetricRunId;
 
     /**
      * Have to hold these because ajax calls blow up in stripes if there's global validation errors
@@ -168,10 +168,10 @@ public class PicoDispositionActionBean extends CoreActionBean {
     }
 
     /**
-     * Internal forward from quant upload page
+     * Forward from quant upload page
      */
-    public void setLabMetricRun(LabMetricRun labMetricRun) {
-        this.labMetricRun = labMetricRun;
+    public void setLabMetricRunId(Long labMetricRunId) {
+        this.labMetricRunId = labMetricRunId;
     }
 
     public Set<String> getDestRacks() {
@@ -299,9 +299,9 @@ public class PicoDispositionActionBean extends CoreActionBean {
             if (decision != null) {
                 this.reworkDisposition = decision.getReworkDisposition();
                 this.riskOverride = decision.equals(LabMetricDecision.Decision.RISK);
+                determineDestinationRackType();
             }
             this.srcRackBarcode = srcRackBarcode;
-            determineDestinationRackType();
             toBePicked = destinationRackType != DestinationRackType.NONE;
         }
 
@@ -416,7 +416,7 @@ public class PicoDispositionActionBean extends CoreActionBean {
         }
 
         private void determineDestinationRackType() {
-            if (decision == null || decision.equals(LabMetricDecision.Decision.PASS)) {
+            if (reworkDisposition == null || decision.equals(LabMetricDecision.Decision.PASS)) {
                 destinationRackType = DestinationRackType.NONE;
                 sysDestRackBarcode = "";
             } else {
@@ -474,9 +474,15 @@ public class PicoDispositionActionBean extends CoreActionBean {
      */
     @HandlesEvent(EVT_FWD_VESSEL_LIST)
     public Resolution buildFwdVesselListJson() {
-        setLabMetricRun((LabMetricRun) getContext().getRequest().getAttribute("labMetricRun"));
-        if (labMetricRun == null) { // Something went wrong - this is required for an internal forward
-            addGlobalValidationError("Lab metric run was unavailable with internal redirect");
+        if (labMetricRunId == null) { // Something went wrong - this is required for forward
+            addGlobalValidationError("Lab metric run ID is required");
+            isRackScanEnabled = true;
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+
+        LabMetricRun labMetricRun = barcodedTubeDao.findById(LabMetricRun.class, labMetricRunId);
+        if (labMetricRun == null) {
+            addGlobalValidationError("No lab metric run exists for ID = " + labMetricRunId);
             isRackScanEnabled = true;
             return new ForwardResolution(DEFAULT_PAGE);
         }

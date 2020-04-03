@@ -304,6 +304,7 @@ public class QueueEjb {
                         // Note:  There is no functional differnce between failling due to low ng, and passing as both are meant to fall out of the queue.
                     case PASS:
                     case RISK:
+                    case FAIL_ACCEPTANCE_CRITERIA:
                         completed.add(labMetric.getLabVessel());
                         break;
                     case BAD_TRIP:
@@ -316,7 +317,7 @@ public class QueueEjb {
                         break;
 
                     default:
-                        throw new RuntimeException("Unknown Metric Decision.");
+                        throw new RuntimeException("Unknown Metric Decision: " + labMetric.getLabMetricDecision().getDecision());
                 }
             }
         }
