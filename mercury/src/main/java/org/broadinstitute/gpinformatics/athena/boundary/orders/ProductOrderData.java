@@ -41,6 +41,7 @@ public class ProductOrderData {
     private String status;
     private String aggregationDataType;
     private String researchProjectId;
+    private String productName;
     private String productPartNumber;
     private String quoteId;
     private String username;
@@ -98,6 +99,7 @@ public class ProductOrderData {
 
         Product product = productOrder.getProduct();
         if (product != null) {
+            productName = product.getProductName();
             productPartNumber = product.getPartNumber();
             aggregationDataType = product.getPipelineDataTypeString();
         }
@@ -232,6 +234,14 @@ public class ProductOrderData {
         return (workRequestId == null) ? "" : workRequestId;
     }
 
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
     public void setProductPartNumber(String productPartNumber) {
         this.productPartNumber = productPartNumber;
     }
@@ -294,9 +304,11 @@ public class ProductOrderData {
 
         ProductOrder productOrder = new ProductOrder(title, comments, quoteId);
 
-        // Find the product by the product part number.
+        // Find the product by the product part number, or by name if part number isn't available.
         if (!StringUtils.isBlank(productPartNumber)) {
             productOrder.setProduct(productDao.findByPartNumber(productPartNumber));
+        } else if (!StringUtils.isBlank(productName)) {
+            productOrder.setProduct(productDao.findByName(productName));
         }
 
         if (StringUtils.isNumeric(quoteId)) {
