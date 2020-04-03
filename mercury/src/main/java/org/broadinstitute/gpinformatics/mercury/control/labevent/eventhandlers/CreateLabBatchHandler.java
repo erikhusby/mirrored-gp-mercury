@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -51,12 +52,15 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
         boolean nonAouSampleFound = false;
+        boolean anySamplesFound = false;
         for (LabVessel labVessel : QueueEventHandler.getVesselsPreferTubes(targetEvent,
                 QueueEventHandler.Direction.SOURCE)) {
             MercurySample mercurySample = labVessel.getSampleInstancesV2().stream().
                     map(sampleInstance -> sampleInstance.getRootOrEarliestMercurySample()).
+                    filter(Objects::nonNull).
                     findFirst().orElse(null);
             if (mercurySample != null) {
+                anySamplesFound = true;
                 // Create LabBatch only when all samples originated in Mercury (not BSP).
                 if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                     return;
@@ -69,6 +73,10 @@ public class CreateLabBatchHandler extends AbstractEventHandler {
                     nonAouSampleFound = true;
                 }
             }
+        }
+        if (!anySamplesFound) {
+            // Probably a bulk transfer of controls only
+            return;
         }
         String productFamily;
         boolean bucketedControls;
