@@ -135,6 +135,7 @@ public class GenotypeVCFGenerator {
         // Setup a TreeSet that will sort contexts properly and squish out duplicate genotypes!
         final TreeSet<VariantContext> contexts = new VariantContextSet(
                 haplotypes.getHeader().getSequenceDictionary());
+        Map<String, ?> attributesMap = new HashMap<>();
 
         genotypes.forEach(gt -> {
             final byte refAllele = StringUtil.toUpperCase(
@@ -155,10 +156,15 @@ public class GenotypeVCFGenerator {
 
             final VariantContextBuilder builder = new VariantContextBuilder(
                     gt.snp.getName(), gt.snp.getChrom(), gt.snp.getPos(), gt.snp.getPos(), alleles);
+
             builder.log10PError(VariantContext.NO_LOG10_PERROR);
             builder.id(gt.snp.getName());
             builder.genotypes(GenotypeBuilder.create(enteredFp.getMercurySample().getSampleKey(), sampleAlleles));
             builder.passFilters();
+            builder.attributes(attributesMap);
+            builder.putAttributes(attributesMap);
+//            builder.attribute(enteredFp.getMercurySample().getSampleKey(), attributesMap.values());
+
 
             contexts.add(builder.make());
         });

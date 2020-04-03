@@ -178,7 +178,7 @@ public class FingerprintGenotypeActionBean extends CoreActionBean {
 
         List<GenotypeVCFGenerator.SnpGenotype> genotypes;
         List<GenotypeVCFGenerator.SnpGenotype> cleanGts;
-        SortedSet<VariantContext> variantContexts = new TreeSet<>();
+        SortedSet<VariantContext> variantContexts = null;
         List<String> sampleIds = getSmIds();
 
         mapSmidToMercurySample =
@@ -205,68 +205,68 @@ public class FingerprintGenotypeActionBean extends CoreActionBean {
             }
         }
 
-
-        File out = new File("/Users/cnolet/Desktop/untitled folder/single vcf");
-        final List<File> UNROLLED_INPUT = IOUtil.unrollFiles(Arrays.asList(out.listFiles()), IOUtil.VCF_EXTENSIONS);for (final File f: UNROLLED_INPUT) IOUtil.assertFileIsReadable(f);
-
-        final SAMSequenceDictionary sequenceDictionary = VCFFileReader.getSequenceDictionary(UNROLLED_INPUT.get(0));
-
-        final List<String> sampleList = new ArrayList<String>();
-        final Collection<CloseableIterator<VariantContext>> iteratorCollection = new ArrayList<>(UNROLLED_INPUT.size());
-        final Collection<VCFHeader> headers = new HashSet<VCFHeader>(UNROLLED_INPUT.size());
-
-        Set<String> sampleNames = new HashSet<>();
-
-        for (final File file : UNROLLED_INPUT) {
-            final VCFFileReader fileReader = new VCFFileReader(file, false);
-            final VCFHeader fileHeader = fileReader.getFileHeader();
-
-            for (final String sampleName : fileHeader.getSampleNamesInOrder()) {
-                if (!sampleNames.add(sampleName)) {
-                    throw new IllegalArgumentException("Input file " + file.getAbsolutePath() + " contains a sample entry (" + sampleName + ") that appears in another input file.");
-                }
-                sampleList.add(sampleName);
-            }
-
-            headers.add(fileHeader);
-            iteratorCollection.add(fileReader.iterator());
-        }
-
-        if (CREATE_INDEX && sequenceDictionary == null) {
-            throw new IOException("A sequence dictionary must be available (either through the input file or by setting it explicitly) when creating indexed output.");
-        }
-
-        final VariantContextWriterBuilder builder = new VariantContextWriterBuilder()
-                .setOutputFile("/Users/cnolet/Desktop/untitled folder/" + getSampleId() + "_combined_" + new Date() + ".vcf")
-                .setReferenceDictionary(sequenceDictionary);
-        if (CREATE_INDEX) {
-            builder.setOption(Options.INDEX_ON_THE_FLY);
-        }
-        final VariantContextWriter writer = builder.build();
-
-        Set<VCFHeaderLine> headerLines = VCFUtils.smartMergeHeaders(headers, false);
-        headerLines.removeIf(line -> sampleSpecificHeaders.contains(line.getKey()));
-        writer.writeHeader(new VCFHeader(headerLines, sampleList));
-
-        int closedIteratorCount = 0;
-        while (closedIteratorCount == 0) {
-//            List<VariantContext> variantContexts = new ArrayList<>();
-            for (final CloseableIterator<VariantContext> iterator: iteratorCollection) {
-                if (iterator.hasNext()) {
-                    variantContexts.add(iterator.next());
-                } else {
-                    closedIteratorCount++;
-                }
-            }
-            if (closedIteratorCount == 0) {
-//                progressLogger.record(variantContexts.get(0).getContig(), variantContexts.get(0).getStart());
-                writer.add(GenotypeVCFGenerator.merge(variantContexts));
-            }
-        }
-        if (closedIteratorCount != iteratorCollection.size()) {
-            throw new IOException("Mismatch in number of variants among input VCFs");
-        }
-        writer.close();
+//
+//        File out = new File("/Users/cnolet/Desktop/untitled folder/single vcf");
+//        final List<File> UNROLLED_INPUT = IOUtil.unrollFiles(Arrays.asList(out.listFiles()), IOUtil.VCF_EXTENSIONS);for (final File f: UNROLLED_INPUT) IOUtil.assertFileIsReadable(f);
+//
+//        final SAMSequenceDictionary sequenceDictionary = VCFFileReader.getSequenceDictionary(UNROLLED_INPUT.get(0));
+//
+//        final List<String> sampleList = new ArrayList<String>();
+//        final Collection<CloseableIterator<VariantContext>> iteratorCollection = new ArrayList<>(UNROLLED_INPUT.size());
+//        final Collection<VCFHeader> headers = new HashSet<VCFHeader>(UNROLLED_INPUT.size());
+//
+//        Set<String> sampleNames = new HashSet<>();
+//
+//        for (final File file : UNROLLED_INPUT) {
+//            final VCFFileReader fileReader = new VCFFileReader(file, false);
+//            final VCFHeader fileHeader = fileReader.getFileHeader();
+//
+//            for (final String sampleName : fileHeader.getSampleNamesInOrder()) {
+//                if (!sampleNames.add(sampleName)) {
+//                    throw new IllegalArgumentException("Input file " + file.getAbsolutePath() + " contains a sample entry (" + sampleName + ") that appears in another input file.");
+//                }
+//                sampleList.add(sampleName);
+//            }
+//
+//            headers.add(fileHeader);
+//            iteratorCollection.add(fileReader.iterator());
+//        }
+//
+//        if (CREATE_INDEX && sequenceDictionary == null) {
+//            throw new IOException("A sequence dictionary must be available (either through the input file or by setting it explicitly) when creating indexed output.");
+//        }
+//
+//        final VariantContextWriterBuilder builder = new VariantContextWriterBuilder()
+//                .setOutputFile("/Users/cnolet/Desktop/untitled folder/" + "combined_" + getSampleId() + new Date() + ".vcf")
+//                .setReferenceDictionary(sequenceDictionary);
+//        if (CREATE_INDEX) {
+//            builder.setOption(Options.INDEX_ON_THE_FLY);
+//        }
+//        final VariantContextWriter writer = builder.build();
+//
+//        Set<VCFHeaderLine> headerLines = VCFUtils.smartMergeHeaders(headers, false);
+//        headerLines.removeIf(line -> sampleSpecificHeaders.contains(line.getKey()));
+//        writer.writeHeader(new VCFHeader(headerLines, sampleList));
+//
+//        int closedIteratorCount = 0;
+//        while (closedIteratorCount == 0) {
+////            List<VariantContext> variantContexts = new ArrayList<>();
+//            for (final CloseableIterator<VariantContext> iterator: iteratorCollection) {
+//                if (iterator.hasNext()) {
+//                    variantContexts.add(iterator.next());
+//                } else {
+//                    closedIteratorCount++;
+//                }
+//            }
+//            if (closedIteratorCount == 0) {
+////                progressLogger.record(variantContexts.get(0).getContig(), variantContexts.get(0).getStart());
+//                writer.add(GenotypeVCFGenerator.merge(variantContexts));
+//            }
+//        }
+//        if (closedIteratorCount != iteratorCollection.size()) {
+//            throw new IOException("Mismatch in number of variants among input VCFs");
+//        }
+//        writer.close();
 
 
 
