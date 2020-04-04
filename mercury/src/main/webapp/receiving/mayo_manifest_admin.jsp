@@ -7,10 +7,20 @@
         <stripes:form beanclass="${actionBean.class.name}" id="manifestAdminForm" class="form-horizontal">
             <!-- Tests access to manifest file storage. -->
             <div style="padding-top: 20px;">
-                <stripes:submit id="testAccessBtn" name="testAccessBtn" value="Test Bucket Access"
-                                class="btn btn-primary"
-                                title="Logs the status of step-by-step access to the configured bucket storage."/>
-
+                <span>
+                    <stripes:submit id="testAccessBtn" name="testAccessBtn" value="Test Bucket Access"
+                                    class="btn btn-primary"
+                                    title="Logs the status of step-by-step access to the configured bucket storage."/>
+                    <span style="padding-left: 50px;">
+                        Alternative bucket and credential to test:
+                        <stripes:text id="alternativeBucketName" name="alternativeBucketName"
+                                      title="The bucket name to test."/>
+                        <span style="padding-left: 20px;">
+                            <stripes:text id="alternativeCredentialFilename" name="alternativeCredentialFilename"
+                                          title="The name of the json credential file in your home directory."/>
+                        </span>
+                    </span>
+                </span>
                 <!-- After doing the test access, a list of files is obtained and can be downloaded as a txt file. -->
                 <c:if test="${fn:length(actionBean.bucketList) > 0}">
                     <c:forEach items="${actionBean.bucketList}" var="filename" varStatus="item">

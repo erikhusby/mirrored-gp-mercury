@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSes
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleStorageConfig;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -942,7 +943,22 @@ public class MayoManifestEjb {
      * Puts a listing of all bucket filenames in the bean.
      */
     public void testAccess(MayoAdminActionBean bean) {
-        bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
+        if (StringUtils.isNotBlank(bean.getAlternativeBucketName())) {
+            GoogleBucketDao alternativeDao = new GoogleBucketDao();
+            alternativeDao.setConfigGoogleStorageConfig(new GoogleStorageConfig() {
+                @Override
+                public String getCredentialFilename() {
+                    return bean.getAlternativeCredentialFilename();
+                }
+                @Override
+                public String getBucketName() {
+                    return bean.getAlternativeBucketName();
+                }
+            });
+            bean.setBucketList(alternativeDao.test(bean.getMessageCollection()));
+        } else {
+            bean.setBucketList(googleBucketDao.test(bean.getMessageCollection()));
+        }
     }
 
     /**
