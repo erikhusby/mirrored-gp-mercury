@@ -2305,8 +2305,6 @@ public class ProductOrderFixupTest extends Arquillian {
      * SUPPORT-6316 changing owner ship of all PDOs under RP from Ariel Lefkovith to Luke Besse
      * lbesse, RP-2100, RP-2166, RP-2192
      *
-     *
-     *
      * @throws Exception
      */
     @Test(enabled = false)
