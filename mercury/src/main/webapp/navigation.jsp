@@ -448,6 +448,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoSampleReceiptActionBean"
                                       event="view">Mayo Sample Receipt</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="colorCovidReceipt"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.receiving.ColorCovidReceiptActionBean"
+                                      event="view">Color Covid Sample Receipt</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>

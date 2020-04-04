@@ -16,8 +16,9 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("covidManifestGoogleStorage")
 @ApplicationScoped
-public class CovidManifestBucketConfig extends AbstractConfig implements Serializable, GoogleStorageConfig {
+public class CovidManifestBucketConfig extends GoogleStorageConfig implements Serializable {
     private String credentialFilename;
+    private String writerCredentialFilename;
     private String bucketName;
 
     public CovidManifestBucketConfig() {
@@ -35,7 +36,7 @@ public class CovidManifestBucketConfig extends AbstractConfig implements Seriali
 
     @Override
     public String getWriterCredentialFilename() {
-        return credentialFilename;
+        return writerCredentialFilename;
     }
 
     @Override
@@ -48,19 +49,10 @@ public class CovidManifestBucketConfig extends AbstractConfig implements Seriali
     }
 
     public void setWriterCredentialFilename(String writerCredentialFilename) {
-        this.credentialFilename = writerCredentialFilename;
+        this.writerCredentialFilename = writerCredentialFilename;
     }
 
     public void setBucketName(String bucketName) {
         this.bucketName = bucketName;
-    }
-
-    @Override
-    public String getDailyCredentialRenewal() {
-        return null;
-    }
-
-    public void setDailyCredentialRenewal(String dailyCredentialRenewal) {
-        // not used
     }
 }

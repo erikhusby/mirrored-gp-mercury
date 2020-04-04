@@ -283,7 +283,7 @@ sap:
       sapSupportEmailSubjectPrefix: "SAP Order"
       url:  https://quote.broadinstitute.org
 
-MayoManifestGoogleStorage:
+MayoManifestGoogleStorage: # the bucket that Mercury reads for Mayo All Of Us package manifests
     DEV:
         credentialFilename: serviceAccountKeys/dev_reader.json
         writerCredentialFilename: serviceAccountKeys/dev_writer.json
@@ -310,13 +310,30 @@ MayoManifestGoogleStorage:
         writerCredentialFilename: DISABLED
         bucketName: genomics-broad-dryrun
         dailyCredentialRenewal: true
-covidManifestGoogleStorage:
+
+covidManifestGoogleStorage:  # the bucket that Mercury writes a copy of covid manifests for downstream processing
     DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename: serviceAccountKeys/dev_writer.json
+        bucketName: mf_covid_1584612353
+    TEST:
         credentialFilename: serviceAccountKeys/covid-19-testing.json
+        writerCredentialFilename: serviceAccountKeys/covid-19-testing.json
         bucketName: covid-19-test-input-staging
     PROD:
         credentialFilename: serviceAccountKeys/covid-19-testing.json
+        writerCredentialFilename: serviceAccountKeys/covid-19-testing.json
         bucketName: covid-19-test-input-prod
+
+ColorCovidManifestGoogleStorage:  # the bucket that Mercury reads for Color Genomics covid manifests
+    DEV:
+        credentialFilename: serviceAccountKeys/dev_reader.json
+        writerCredentialFilename:
+        bucketName: color_covid_1584612353
+    PROD:
+        credentialFilename: serviceAccountKeys/covid-19-testing.json
+        writerCredentialFilename:
+        bucketName: color-manifests-prod
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
@@ -340,6 +357,7 @@ mercury:
       decoder: DEV
       MayoManifestGoogleStorage: DEV
       covidManifestGoogleStorage: DEV
+      ColorCovidManifestGoogleStorage: DEV
 
     AUTO_BUILD:
 
@@ -360,6 +378,7 @@ mercury:
       decoder: DEV
       MayoManifestGoogleStorage: DEV
       covidManifestGoogleStorage: DEV
+      ColorCovidManifestGoogleStorage: DEV
 
     TEST:
 
@@ -380,6 +399,7 @@ mercury:
       decoder: DEV
       MayoManifestGoogleStorage: TEST
       covidManifestGoogleStorage: DEV
+      ColorCovidManifestGoogleStorage: DEV
 
     QA:
       app:      QA
@@ -399,6 +419,7 @@ mercury:
       decoder: QA
       MayoManifestGoogleStorage: QA
       covidManifestGoogleStorage: DEV
+      ColorCovidManifestGoogleStorage: DEV
 
     RC:
 
@@ -419,6 +440,7 @@ mercury:
       decoder: QA
       MayoManifestGoogleStorage: RC
       covidManifestGoogleStorage: DEV
+      ColorCovidManifestGoogleStorage: DEV
 
     PROD:
 
@@ -439,3 +461,4 @@ mercury:
       decoder: PROD
       MayoManifestGoogleStorage: PROD
       covidManifestGoogleStorage: PROD
+      ColorCovidManifestGoogleStorage: PROD
