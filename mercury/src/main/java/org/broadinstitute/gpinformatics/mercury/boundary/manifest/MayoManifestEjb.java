@@ -1110,8 +1110,7 @@ public class MayoManifestEjb {
         productOrderData.setModifiedDate(now);
         productOrderData.setPlacedDate(now);
         productOrderData.setNumberOfSamples(accessionedTubes.size());
-        productOrderData.setProduct(productPartNumber);
-        productOrderData.setProductName(product.getProductName());
+        productOrderData.setProductPartNumber(productPartNumber);
         productOrderData.setQuoteId(quoteId);
         productOrderData.setResearchProjectId(rpId);
         // For Mayo the tube barcode is also used as the Broad sample name.
