@@ -425,6 +425,14 @@ public class ManifestSessionFixupTest extends Arquillian {
             assertThat(manifestRecord.getStatus(), is(equalTo(recordStatus)));
             System.out.println(String.format("The status of manifest record with sample ID %s has been changed to %s",
                     manifestRecord.getSampleId(), manifestRecord.getStatus().getDisplayName()));
+            if (!EnumSet.of(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE, ManifestRecord.Status.ACCESSIONED)
+                    .contains(manifestRecord.getStatus())) {
+                final ManifestSession.SessionStatus sessionStatus = ManifestSession.SessionStatus.ACCESSIONING;
+                manifestSession.setStatus(sessionStatus);
+                assertThat(manifestSession.getStatus(), is(equalTo(sessionStatus)));
+                System.out.println(String.format("The status of the manifest session %s is now %s",
+                        manifestSession.getSessionName(), manifestSession.getStatus()));
+            }
 
             if(fields.length>3) {
                 final String[] optionalMetadataDelete = fields[3].split(",");
