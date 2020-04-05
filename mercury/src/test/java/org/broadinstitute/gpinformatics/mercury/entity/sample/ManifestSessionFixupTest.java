@@ -37,6 +37,7 @@ import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -419,8 +420,9 @@ public class ManifestSessionFixupTest extends Arquillian {
             if (manifestRecord == null) {
                 throw new RuntimeException(String.format("The manifest record with Sample ID %s is not found", fields[1].trim()));
             }
-            manifestRecord.setStatus(ManifestRecord.Status.fromName(fields[2].trim()));
-            assertThat(manifestRecord.getStatus(), is(equalTo(ManifestRecord.Status.fromName(fields[2].trim()))));
+            final ManifestRecord.Status recordStatus = ManifestRecord.Status.fromName(fields[2].trim());
+            manifestRecord.setStatus(recordStatus);
+            assertThat(manifestRecord.getStatus(), is(equalTo(recordStatus)));
             System.out.println(String.format("The status of manifest record with sample ID %s has been changed to %s",
                     manifestRecord.getSampleId(), manifestRecord.getStatus().getDisplayName()));
 
