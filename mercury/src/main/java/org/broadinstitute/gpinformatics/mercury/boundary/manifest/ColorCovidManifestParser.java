@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 
 public class ColorCovidManifestParser {
-    private static int BARCODE_LENGTH = 10;
+    private static final int BARCODE_LENGTH = 10;
 
     private static Map<String, Metadata.Key> headerMap = new HashMap<String, Metadata.Key>() {{
         // For matching, the name is lowercased and stripped of ' ' and '_'.
@@ -25,14 +25,14 @@ public class ColorCovidManifestParser {
         put("sampleid", Metadata.Key.SAMPLE_ID); // this is Collaborator Sample Id
         put("institutionid", Metadata.Key.INSTITUTE_ID);
         put("timecollected", Metadata.Key.COLLECTION_DATE);
-        put("tier", Metadata.Key.COLLAB_SAMPLE_ID3);
-        put("welllocation", Metadata.Key.WELL_POSITION);
+        put("tier", Metadata.Key.CDC_TIER);
+        put("welllocation", Metadata.Key.WELL_POSITION); // optional
     }};
 
-    final private byte[] content;
-    final private String filename;
-    final private List<List<String>> cellGrid = new ArrayList<>();
-    final private List<Dto> dtos = new ArrayList<>();
+    private final byte[] content;
+    private final String filename;
+    private final List<List<String>> cellGrid = new ArrayList<>();
+    private final List<Dto> dtos = new ArrayList<>();
 
     public ColorCovidManifestParser(byte[] content, String filename) {
         this.content = content;
@@ -113,12 +113,18 @@ public class ColorCovidManifestParser {
             }
             ++rowNumber;
         }
-        // Well positions must be present on all rows or on none.
-        long positionCount = dtos.stream().
+        // Well positions must be present on all rows or on none. If present they must have no duplicates.
+        List<String> positions = dtos.stream().
                 map(dto -> dto.getSampleMetadata().get(Metadata.Key.WELL_POSITION)).
-                filter(StringUtils::isNotBlank).count();
-        if (positionCount > 0 && positionCount != dtos.size()) {
-            messages.addError("Some manifest well positions values are missing.");
+                filter(StringUtils::isNotBlank).
+                collect(Collectors.toList());
+        if (positions.size() > 0) {
+            if (positions.size() != dtos.size()) {
+                messages.addError("Some manifest well positions values are missing.");
+            }
+            if (positions.size() != positions.stream().distinct().count()) {
+                messages.addError("Manifest contains duplicate well positions.");
+            }
         }
     }
 
@@ -139,9 +145,9 @@ public class ColorCovidManifestParser {
         private String label;
         private String sampleName;
         private Map<Metadata.Key, String> sampleMetadata = new HashMap<>();
-        public final static String DTO_DELIMITER = ";";
-        public final static String TOKEN_DELIMITER = ",";
-        public final static String KEY_DELIMITER = ":";
+        public final static String DTO_DELIMITER = ";;";
+        public final static String TOKEN_DELIMITER = ",,";
+        public final static String KEY_DELIMITER = "::";
 
         public Dto() {
         }
