@@ -346,6 +346,7 @@ public class Metadata {
         CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER),
         FLUIDIGM_GENDER(Category.LAB_METRIC, DataType.STRING, "Fluidigm Gender", Visibility.USER),
         INSTITUTE_ID(Category.SAMPLE, DataType.STRING, "Institute ID", Visibility.USER),
+        CDC_TIER(Category.SAMPLE, DataType.STRING, "CDC Tier", Visibility.USER),
         ;
 
         private final Category category;
