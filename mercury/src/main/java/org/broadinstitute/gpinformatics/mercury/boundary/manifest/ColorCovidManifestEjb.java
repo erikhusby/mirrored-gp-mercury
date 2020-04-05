@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.receiving.ColorCovidReceiptActionBean;
 
-import javax.ejb.Stateless;
-import javax.enterprise.context.Dependent;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,11 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Stateless
-@Dependent
+@Stateful
+@RequestScoped
 public class ColorCovidManifestEjb {
     @Inject
     private GoogleBucketDao googleBucketDao;
@@ -104,7 +105,7 @@ public class ColorCovidManifestEjb {
             return;
         }
 
-        // Finds the manifest file and parses it into per-sample dtos.
+        // Finds the manifest file.
         googleBucketDao.setConfigGoogleStorageConfig((ColorCovidManifestConfig) MercuryConfiguration.getInstance().
                 getConfig(ColorCovidManifestConfig.class, deployment));
         // Looks for a file named with the plain rack barcode, then with .csv, then with .CSV.
@@ -120,50 +121,43 @@ public class ColorCovidManifestEjb {
         bean.setFilename(filename);
 
         // Parses the manifest into a list of dtos.
-        List<ColorCovidManifestParser.Dto> dtos = null;
-        String manifestContentString = null;
-        String dtoListString = null;
+        byte[] content = null;
         try {
-            byte[] content = googleBucketDao.download(filename, messages);
-            manifestContentString = new String(content);
-
-            ColorCovidManifestParser colorCovidManifestParser = new ColorCovidManifestParser(content, filename);
-            colorCovidManifestParser.parse(messages);
-            dtos = colorCovidManifestParser.getDtos();
-            dtoListString = colorCovidManifestParser.getDtoString();
+            content = googleBucketDao.download(filename, messages);
         } catch (Exception e) {
-            messages.addError("Failed to process manifest file " + filename, e);
+            messages.addError("Failed to download manifest file " + filename, e);
+            return;
         }
+        ColorCovidManifestParser colorCovidManifestParser = new ColorCovidManifestParser(content, filename);
+        colorCovidManifestParser.parse(messages);
         if (messages.hasErrors()) {
             return;
         }
+        List<ColorCovidManifestParser.Dto> dtos = colorCovidManifestParser.getDtos();
 
         // Rack scan and manifest must agree.
         List<String> rackScanBarcodes = bean.getRackScan().values().stream().
                 filter(StringUtils::isNotBlank).
                 collect(Collectors.toList());
-        // Uses positions if manifest supplies them. The parser errors if only some are present.
-        if (dtos.stream().
-                map(dto -> dto.getSampleMetadata().get(Metadata.Key.WELL_POSITION)).
-                anyMatch(StringUtils::isNotBlank)) {
-            Map<String, Pair<String, String>> mismatches = new HashMap<>();
-            for (ColorCovidManifestParser.Dto dto : dtos) {
-                String manifestTube = dto.getLabel();
-                String manifestPosition = dto.getSampleMetadata().get(Metadata.Key.WELL_POSITION);
-                String rackTube = bean.getRackScan().get(manifestPosition);
-                if (!Objects.equal(rackTube, manifestTube)) {
-                    mismatches.put(manifestPosition, Pair.of(rackTube, manifestTube));
-                }
-            }
-            if (!mismatches.isEmpty()) {
-                mismatches.keySet().stream().sorted().forEach(position -> {
-                    String rackTube = mismatches.get(position).getLeft();
-                    String manifestTube = mismatches.get(position).getRight();
-                    messages.addError(String.format(WRONG_TUBE_IN_POSITION, position,
-                            StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
-                            StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube));
-                });
-            }
+        // Uses positions if manifest supplies them. The parser will have errored if they are inconsistently supplied.
+        if (StringUtils.isNotBlank(dtos.get(0).getSampleMetadata().get(Metadata.Key.WELL_POSITION))) {
+            Map<String, ColorCovidManifestParser.Dto> positionToDto = dtos.stream().
+                    collect(Collectors.toMap(dto -> dto.getSampleMetadata().get(Metadata.Key.WELL_POSITION),
+                            Function.identity()));
+            // Iterates on the non-blank positions from both dtos and the manifest.
+            Stream.concat(positionToDto.keySet().stream(), bean.getRackScan().keySet().stream()).
+                    filter(StringUtils::isNotBlank).
+                    distinct().
+                    forEach(position -> {
+                        String manifestTube = positionToDto.get(position) == null ?
+                                null : positionToDto.get(position).getLabel();
+                        String rackTube = bean.getRackScan().get(position);
+                        if (!Objects.equal(rackTube, manifestTube)) {
+                            messages.addError(String.format(WRONG_TUBE_IN_POSITION, position,
+                                    StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
+                                    StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube));
+                        }
+                    });
         } else {
             // For manifests without position info, just compares tube barcodes.
             List<String> manifestTubeBarcodes = dtos.stream().
@@ -202,8 +196,9 @@ public class ColorCovidManifestEjb {
         }
 
         if (!messages.hasErrors()) {
-            bean.setDtoString(dtoListString);
-            bean.setManifestContent(manifestContentString);
+            // Writes the dtos and the original manifest to the bean for use in accessioning phase.
+            bean.setDtoString(colorCovidManifestParser.getDtoString());
+            bean.setManifestContent(new String(content));
             messages.addInfo(dtos.size() + " samples can be accessioned.");
         }
     }
@@ -254,8 +249,9 @@ public class ColorCovidManifestEjb {
             rack.getTubeFormations().add(tubeFormation);
 
             labVesselDao.persistAll(newEntities);
-            messages.addInfo("Accessioned rack " + rackBarcode + " having " +
-                    Math.max(0, dtos.size() - 1) + " sample tubes.");
+            messages.addInfo("Accessioned rack " + rackBarcode +
+                    " having " + Math.max(0, dtos.size() - 1) + " sample tubes " +
+                    " (for Transfer Visualizer use barcode " + tubeFormation.getDigest() + " ).");
             // Resets the dto and manifest info for the jsp.
             bean.setDtoString(null);
             bean.setManifestContent(null);
