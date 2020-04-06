@@ -1,23 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.QueueEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.queue.enqueuerules.DnaQuantEnqueueOverride;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueOrigin;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueSpecialization;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.QueueType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * BettaLims messages that are processed in mercury are, for the most part, generic.  There is no specific validation
@@ -102,6 +91,8 @@ public class EventHandlerSelector {
             break;
         }
 
+/*
+        // todo jmt disabling to focus on All of Us
         if (targetEvent.getLabEventType() != null && targetEvent.getLabEventType().getResultingMaterialType() != null
                 && targetEvent.getLabEventType().getResultingMaterialType().containsIgnoringCase("dna")) {
 
@@ -126,6 +117,7 @@ public class EventHandlerSelector {
             queueEjb.enqueueLabVessels(targetLabVessels, QueueType.DNA_QUANT, readableText, messageCollection,
                     QueueOrigin.EXTRACTION, queueSpecialization);
         }
+*/
     }
 
     public FlowcellMessageHandler getFlowcellMessageHandler() {
