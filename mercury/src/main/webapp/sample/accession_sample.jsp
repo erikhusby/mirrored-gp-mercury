@@ -14,6 +14,10 @@
         <script type="text/javascript">
 
             $j(document).ready(function () {
+                window.history.pushState(null, "", window.location.href);
+                window.onpopstate = function() {
+                    window.history.pushState(null, "", window.location.href);
+                };
                 $j("#accessionSourceText").blur(function () {
                     if (!($j(this).val() === '' || $j("#accessionTubeText").val() === '')) {
                         performAccessionScan();
