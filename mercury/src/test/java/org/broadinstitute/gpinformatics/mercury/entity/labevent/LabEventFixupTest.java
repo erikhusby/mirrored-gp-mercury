@@ -81,7 +81,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -2322,7 +2321,7 @@ public class LabEventFixupTest extends Arquillian {
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/ReplaceLabEventReagent.txt, so it can
      * be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * SUPPORT-5904 updating reagents
-     * 4079991,IceCatchEnrichmentSetup,RapCap Box#2 (Enrichment Amp Mix),19J28A0024,11/12/19
+     * 4079991|IceCatchEnrichmentSetup|RapCap Box#2 (Enrichment Amp Mix)|19J28A0024|11/12/19
      */
     @Test(enabled = false)
     public void fixupSupport5904ReplaceLabEventReagent() throws Exception {
@@ -2334,7 +2333,8 @@ public class LabEventFixupTest extends Arquillian {
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yy");
         for (String line : lines.subList(1, lines.size())) {
-            String[] fields = line.split("\\|");
+            // limit of -1 to allow empty trailing expiration date
+            String[] fields = line.split("\\|", -1);
             if (fields.length != 5) {
                 throw new RuntimeException("Expected five | separated fields in " + line);
             }
@@ -2346,7 +2346,7 @@ public class LabEventFixupTest extends Arquillian {
 
             String reagentName = fields[2];
             String reagentLot = fields[3];
-            Date reagentExpiration = simpleDateFormat.parse(fields[4]);
+            Date reagentExpiration = StringUtils.isEmpty(fields[4]) ? null : simpleDateFormat.parse(fields[4]);
             boolean foundReagent = false;
             Reagent reagentToRemove = null;
             for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
