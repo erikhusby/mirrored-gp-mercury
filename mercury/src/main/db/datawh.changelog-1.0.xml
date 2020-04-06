@@ -244,7 +244,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="1"/>
+        <createSequence schemaName="mercurydw" sequenceName="SEQ_FP_SCORE" incrementBy="50"/>
     </changeSet>
 
     <changeSet id="GPLIM-6242-43" author="jowalsh">

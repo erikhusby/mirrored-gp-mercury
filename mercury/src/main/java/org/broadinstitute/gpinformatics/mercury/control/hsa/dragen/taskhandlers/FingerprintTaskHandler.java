@@ -57,10 +57,19 @@ public class FingerprintTaskHandler extends AbstractTaskHandler<FingerprintTask>
         FingerprintState fingerprintState = OrmUtil.proxySafeCast(state, FingerprintState.class);
 
         File vcfFile = task.getGenotypesFile();
-        if (vcfFile == null || !vcfFile.exists()) {
+        if (vcfFile == null) {
             task.setStatus(Status.FAILED);
-            task.setErrorMessage("No vcf file found.");
+            task.setErrorMessage("No VCF in task arguments.");
             return;
+        } else if (!vcfFile.exists()) {
+            // Check for hard filtered - (Would also be in arguments of config file)
+            String path = vcfFile.getPath();
+            path = path.replaceAll("vcf.gz", "hard-filtered.vcf.gz");
+            vcfFile = new File(path);
+            if (vcfFile.exists()) {
+                task.setStatus(Status.FAILED);
+                task.setErrorMessage("VCF doesn't exist: " + vcfFile.getPath());
+            }
         }
 
         Optional<AggregationState> aggregationStateOpt =
