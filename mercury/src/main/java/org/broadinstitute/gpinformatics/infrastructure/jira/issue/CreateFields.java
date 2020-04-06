@@ -188,6 +188,7 @@ public class CreateFields extends UpdateFields {
         TENX_SINGLE_CELL("10x Single Cell"),
         TENX_5PRIME("10x 5' Gene Expression"),
         ISEQ("iSeq"),
+        CUSTOM_DESIGN_HYBSEL("Custom Design (HybSel)"),
         ;
 
         private final String jiraName;

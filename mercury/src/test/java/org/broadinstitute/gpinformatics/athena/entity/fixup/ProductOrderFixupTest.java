@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -227,6 +226,31 @@ public class ProductOrderFixupTest extends Arquillian {
                     ProductOrder productOrder = productOrderDao.findByBusinessKey(key);
                     productOrder.prepareToSave(user);
                     productOrderDao.persist(productOrder);
+                }
+                return;
+            }
+        }
+
+        throw new RuntimeException("No " + newOwnerUsername + " Found!");
+    }
+
+    /**
+     * Helper method to change the owner of a product order.
+     *
+     * @param newOwnerUsername new owner's username
+     * @param orderKeys        list of PDO keys
+     */
+    private void changePDOOwner(String newOwnerUsername, ProductOrder... orderKeys) {
+        for (BspUser user : bspUserList.find(newOwnerUsername)) {
+            if (user.getUsername().equals(newOwnerUsername)) {
+                for (ProductOrder key : orderKeys) {
+                    System.out.println(String.format("Changing ownership of %s-%s from %s to %s",
+                            key.getBusinessKey(), key.getName(), bspUserList.getById(key.getCreatedBy()).getFullName(),
+                            user.getFullName()));
+                    key.prepareToSave(user);
+                    productOrderDao.persist(key);
+                    System.out.println(String.format("Updated ownership of %s-%s to be associated with %s",
+                            key.getBusinessKey(), key.getName(), user.getFullName()));
                 }
                 return;
             }
@@ -1257,7 +1281,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1293,7 +1317,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1497,7 +1521,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         if(productOrder.isSavedInSAP()) {
-            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         }
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
@@ -2252,6 +2276,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    @Test(enabled = false)
     public void cleanupAccidentalProductionOrderCreation() throws Exception {
         userBean.loginOSUser();
 
@@ -2265,6 +2290,41 @@ public class ProductOrderFixupTest extends Arquillian {
         orderToClean.setJiraTicketKey("PDO-21736_bad");
 
         productOrderDao.persist(new FixupCommentary("GPLIM-6974 cleaning up accidental product order creation"));
+        commitTransaction();
+    }
+
+    /**
+     * Fixup Test to alter the owner of all PDOs under a research project to be associated with a different
+     * swapUserOnPDO.txt
+     *
+     * format:
+     * [GPLIM-xxx fixup commentary]
+     * [username],[list of RPs separated by comma]
+     *
+     * example:
+     * SUPPORT-6316 changing owner ship of all PDOs under RP from Ariel Lefkovith to Luke Besse
+     * lbesse, RP-2100, RP-2166, RP-2192
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void reassignPDOsToNewUser() throws Exception {
+        userBean.loginOSUser();
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("swapUserOnPDO.txt"));
+        final String fixupCommentary = fixupLines.get(0).trim();
+
+        beginTransaction();
+        for (String line : fixupLines.subList(1, fixupLines.size())) {
+            final String[] lineSegments = line.split(",");
+            final String newUserName = lineSegments[0].trim();
+            final String[] rpsOfPdosToChange = Arrays.copyOfRange(lineSegments, 1, lineSegments.length);
+            for(String rpKey: rpsOfPdosToChange) {
+                System.out.println(String.format("Updating product orders from Research Project %s.", rpKey));
+                ResearchProject projectToAlter = projectDao.findByBusinessKey(rpKey.trim());
+                changePDOOwner(newUserName, projectToAlter.getProductOrders().toArray(new ProductOrder[0]));
+            }
+        }
+        productOrderDao.persist(new FixupCommentary(fixupCommentary));
         commitTransaction();
     }
 }

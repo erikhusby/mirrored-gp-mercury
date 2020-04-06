@@ -271,6 +271,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     /**
      * Returns the root sample or if none, the earliest Mercury sample.
      */
+    @Nullable
     public MercurySample getRootOrEarliestMercurySample() {
         return CollectionUtils.isNotEmpty(rootMercurySamples) ?
                 rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
@@ -279,6 +280,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     /**
      * Returns the name of the root sample or if none, the earliest Mercury sample.
      */
+    @Nullable
     public String getRootOrEarliestMercurySampleName() {
         return CollectionUtils.isNotEmpty(rootMercurySamples) ?
                 rootMercurySamples.iterator().next().getSampleKey() :
