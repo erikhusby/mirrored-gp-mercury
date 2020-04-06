@@ -170,6 +170,12 @@ public class GoogleBucketDao {
         Exception exception = null;
         if ((forWriting ? writerCredentials : credentials) == null) {
             File homeDir = new File(System.getProperty("user.home"));
+            String credentialFilename = forWriting ? googleStorageConfig.getWriterCredentialFilename() :
+                    googleStorageConfig.getCredentialFilename();
+            if (StringUtils.isBlank(credentialFilename)) {
+                messages.addError((forWriting ? "Writer" : "Reader") + " credential filename is blank in the yaml.");
+                return false;
+            }
             File file = new File(homeDir, forWriting ? googleStorageConfig.getWriterCredentialFilename() :
                     googleStorageConfig.getCredentialFilename());
             if (file.exists()) {
@@ -296,9 +302,13 @@ public class GoogleBucketDao {
         try {
             Storage storage = StorageOptions.newBuilder().setCredentials(credentials).
                     setProjectId(credentials.getProjectId()).build().getService();
-            messageCollection.addInfo("Storage object service account: " +
-                    storage.getServiceAccount(credentials.getProjectId()).toString());
-            messageCollection.addInfo("Storage object host: " + storage.getOptions().getHost().toString());
+            try {
+                messageCollection.addInfo("Storage object service account: " +
+                        storage.getServiceAccount(credentials.getProjectId()).toString());
+                messageCollection.addInfo("Storage object host: " + storage.getOptions().getHost().toString());
+            } catch (Exception e) {
+                messageCollection.addInfo(e.getMessage());
+            }
             // Reading a non-existent file should return null. If it throws, there's a problem.
             storage.get(BlobId.of(googleStorageConfig.getBucketName(), "ProbablyDoesNotExist"));
             // Tries to get a file listing.
