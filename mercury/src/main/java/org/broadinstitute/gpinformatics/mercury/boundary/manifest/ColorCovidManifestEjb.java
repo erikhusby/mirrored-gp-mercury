@@ -249,8 +249,7 @@ public class ColorCovidManifestEjb {
             rack.getTubeFormations().add(tubeFormation);
 
             labVesselDao.persistAll(newEntities);
-            messages.addInfo("Accessioned rack " + rackBarcode +
-                    " having " + Math.max(0, dtos.size() - 1) + " sample tubes " +
+            messages.addInfo("Accessioned rack " + rackBarcode + " having " + dtos.size() + " sample tubes " +
                     " (for Transfer Visualizer use barcode " + tubeFormation.getDigest() + " ).");
             // Resets the dto and manifest info for the jsp.
             bean.setDtoString(null);
