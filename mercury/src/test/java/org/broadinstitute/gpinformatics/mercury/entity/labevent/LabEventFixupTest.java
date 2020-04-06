@@ -2321,7 +2321,7 @@ public class LabEventFixupTest extends Arquillian {
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/ReplaceLabEventReagent.txt, so it can
      * be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * SUPPORT-5904 updating reagents
-     * 4079991,IceCatchEnrichmentSetup,RapCap Box#2 (Enrichment Amp Mix),19J28A0024,11/12/19
+     * 4079991|IceCatchEnrichmentSetup|RapCap Box#2 (Enrichment Amp Mix)|19J28A0024|11/12/19
      */
     @Test(enabled = false)
     public void fixupSupport5904ReplaceLabEventReagent() throws Exception {
