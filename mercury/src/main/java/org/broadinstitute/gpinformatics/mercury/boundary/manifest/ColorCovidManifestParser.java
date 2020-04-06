@@ -26,7 +26,7 @@ public class ColorCovidManifestParser {
         put("institutionid", Metadata.Key.INSTITUTE_ID);
         put("timecollected", Metadata.Key.COLLECTION_DATE);
         put("tier", Metadata.Key.CDC_TIER);
-        put("welllocation", Metadata.Key.WELL_POSITION); // optional
+        put("welllocation", Metadata.Key.WELL_POSITION);
     }};
 
     private final byte[] content;
@@ -175,7 +175,12 @@ public class ColorCovidManifestParser {
         public boolean isValid() {
             return StringUtils.isNotBlank(label) &&
                     StringUtils.isNotBlank(sampleName) &&
-                    !sampleMetadata.isEmpty();
+                    sampleMetadata != null &&
+                    StringUtils.isNotBlank(sampleMetadata.get(Metadata.Key.SAMPLE_ID)) &&
+                    StringUtils.isNotBlank(sampleMetadata.get(Metadata.Key.INSTITUTE_ID)) &&
+                    StringUtils.isNotBlank(sampleMetadata.get(Metadata.Key.COLLECTION_DATE)) &&
+                    StringUtils.isNotBlank(sampleMetadata.get(Metadata.Key.CDC_TIER)) &&
+                    StringUtils.isNotBlank(sampleMetadata.get(Metadata.Key.WELL_POSITION));
         }
     }
 
