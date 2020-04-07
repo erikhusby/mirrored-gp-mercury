@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.csv.CsvParser;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderUtil;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FastQList;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -25,7 +22,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

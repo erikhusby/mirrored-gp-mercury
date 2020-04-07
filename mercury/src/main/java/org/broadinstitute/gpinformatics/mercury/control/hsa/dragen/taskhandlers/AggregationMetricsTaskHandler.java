@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationSta
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.ReadGroupUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Task;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.zeroturnaround.exec.ProcessResult;
 

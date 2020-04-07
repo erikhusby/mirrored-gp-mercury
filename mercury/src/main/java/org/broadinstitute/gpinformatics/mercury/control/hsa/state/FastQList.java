@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import javax.persistence.Column;
-import java.io.File;
 
 public class FastQList {
 

@@ -194,7 +194,6 @@ public class DragenSimulator implements Dragen {
             File alignmentOutputDir = new File(outputDir, sampleName);
             alignmentOutputDir.mkdir();
 
-//            createAlignmentAndVariantCallingMetrics(alignmentOutputDir, sampleData, rgId);
             sampleNameToOutputDir.put(sampleName, alignmentOutputDir);
         }
 

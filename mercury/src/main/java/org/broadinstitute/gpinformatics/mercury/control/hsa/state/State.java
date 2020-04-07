@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.ProcessTask;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -13,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -31,10 +29,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;

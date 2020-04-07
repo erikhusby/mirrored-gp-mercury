@@ -52,7 +52,6 @@ public class AggregationActionBean extends CoreActionBean {
 
     private static final String ALIGNMENT_CREATE_PAGE = "/hsa/workflows/aggregation/create.jsp";
 
-    private static final String CREATE_ALIGNMENT_ACTION = "createAlignment";
     private static final String SEARCH_ACTION = "search";
 
     @Validate(field = "sampleIds", label = "Sample ID", required = true, on = {SEARCH_ACTION})

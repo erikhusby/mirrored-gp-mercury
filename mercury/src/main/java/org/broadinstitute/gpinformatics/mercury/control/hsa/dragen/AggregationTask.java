@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.Transient;
 import java.io.File;
 import java.util.Objects;
 

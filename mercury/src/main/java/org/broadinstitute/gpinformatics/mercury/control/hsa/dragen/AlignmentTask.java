@@ -1,16 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.dragen;
 
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.State;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.io.File;
 import java.util.Objects;
 

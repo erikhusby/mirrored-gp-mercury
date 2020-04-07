@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.scheduler;
 
 import com.opencsv.bean.CsvBindByName;
-import com.opencsv.bean.CsvDate;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.Status;
 
 import java.text.ParseException;

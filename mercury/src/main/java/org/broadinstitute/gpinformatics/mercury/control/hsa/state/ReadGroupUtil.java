@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.state;
 
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

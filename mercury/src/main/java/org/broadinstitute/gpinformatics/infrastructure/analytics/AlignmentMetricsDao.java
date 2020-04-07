@@ -97,9 +97,4 @@ public class AlignmentMetricsDao {
             }
         });
     }
-
-    public Map<String, AlignmentMetric> findMapBySampleAlias(Collection<String> sampleAlias) {
-        return findAggregationBySampleAlias(sampleAlias).stream().collect(Collectors.toMap(AlignmentMetric::getSampleAlias,
-                Function.identity()));
-    }
 }
