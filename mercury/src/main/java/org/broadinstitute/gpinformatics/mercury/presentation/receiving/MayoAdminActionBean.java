@@ -45,6 +45,8 @@ public class MayoAdminActionBean extends CoreActionBean {
     private List<String> bucketList = new ArrayList<>();
     private List<String> failedFilesList = new ArrayList<>();
     private FileBean credentialFile;
+    private String alternativeBucketName;
+    private String alternativeCredentialFilename;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -164,5 +166,21 @@ public class MayoAdminActionBean extends CoreActionBean {
 
     public void setUploadCredentialAcknowledgement(boolean uploadCredentialAcknowledgement) {
         this.uploadCredentialAcknowledgement = uploadCredentialAcknowledgement;
+    }
+
+    public String getAlternativeBucketName() {
+        return alternativeBucketName;
+    }
+
+    public void setAlternativeBucketName(String alternativeBucketName) {
+        this.alternativeBucketName = alternativeBucketName;
+    }
+
+    public String getAlternativeCredentialFilename() {
+        return alternativeCredentialFilename;
+    }
+
+    public void setAlternativeCredentialFilename(String alternativeCredentialFilename) {
+        this.alternativeCredentialFilename = alternativeCredentialFilename;
     }
 }

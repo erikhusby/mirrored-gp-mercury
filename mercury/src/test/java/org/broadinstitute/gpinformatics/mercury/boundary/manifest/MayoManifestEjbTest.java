@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.GoogleBucketDao;
@@ -13,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.receiving.MayoPacka
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -37,14 +35,6 @@ public class MayoManifestEjbTest extends Arquillian {
     @org.jboss.arquillian.container.test.api.Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(deployment);
-    }
-
-    @BeforeTest(groups = TestGroups.STANDARD)
-    public void beforeTest() {
-        // This config is from the yaml file.
-        MayoManifestConfig mayoManifestConfig = (MayoManifestConfig) MercuryConfiguration.getInstance().
-                getConfig(MayoManifestConfig.class, deployment);
-        googleBucketDao.setConfigGoogleStorageConfig(mayoManifestConfig);
     }
 
     /** Tests the Mayo Admin page's bucket access and the Mayo Package Receipt page's download. */
