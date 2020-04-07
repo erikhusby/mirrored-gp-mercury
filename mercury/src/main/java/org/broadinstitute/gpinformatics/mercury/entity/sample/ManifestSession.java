@@ -519,10 +519,12 @@ public class ManifestSession implements Updatable {
      * To do so, it will set all non quarantined records within this session to the status of UPLOAD_ACCEPTED
      */
     public void acceptUpload() {
-        for (ManifestRecord record : getNonQuarantinedRecords()) {
-            record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+        if(EnumSet.of(SessionStatus.PENDING_SAMPLE_INFO,SessionStatus.OPEN).contains(getStatus())) {
+            for (ManifestRecord record : getNonQuarantinedRecords()) {
+                record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+            }
+            setStatus(SessionStatus.ACCESSIONING);
         }
-        setStatus(SessionStatus.ACCESSIONING);
     }
 
     /**
