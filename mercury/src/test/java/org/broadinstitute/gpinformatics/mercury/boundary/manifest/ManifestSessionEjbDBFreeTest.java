@@ -160,6 +160,7 @@ public class ManifestSessionEjbDBFreeTest {
     private UserBean mockUserBean;
     private ManifestSessionEjb manifestSessionEjb;
     private LabVesselFactory labVesselFactory;
+    private CovidManifestCopier covidManifestCopier;
     /**
      * How many instances of a particular collaborator barcode are seen in this manifest (anything more than 1 is
      * an error).
@@ -183,6 +184,7 @@ public class ManifestSessionEjbDBFreeTest {
         queueEjb = Mockito.mock(QueueEjb.class);
         dnaQuantEnqueueOverride = Mockito.mock(DnaQuantEnqueueOverride.class);
         labVesselFactory = Mockito.mock(LabVesselFactory.class);
+        covidManifestCopier = Mockito.mock(CovidManifestCopier.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
         Mockito.when(mockUserBean.getLoginUserName()).thenReturn(testLabUser.getUsername());
@@ -257,7 +259,7 @@ public class ManifestSessionEjbDBFreeTest {
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory,
-                        null, null);
+                        covidManifestCopier);
     }
 
     /**
@@ -296,7 +298,8 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory, null, null);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory,
+                covidManifestCopier);
     }
 
     /**
@@ -400,7 +403,8 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory, null, null);
+                mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride, labVesselFactory,
+                covidManifestCopier);
 
         return holder;
     }
@@ -412,7 +416,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory, null, null);
+                labVesselFactory, covidManifestCopier);
         try {
             ejb.uploadManifest(null, null, null, ManifestSessionEjb.AccessioningProcessType.CRSP, false);
             Assert.fail();
@@ -423,7 +427,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void covidResearchProjectNotFound() throws Exception {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory, null, null);
+                labVesselFactory, covidManifestCopier);
         try {
             String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/PHS_manifest_03232020.csv");
             InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
@@ -855,7 +859,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean, bspUserList, jiraService, queueEjb, dnaQuantEnqueueOverride,
-                labVesselFactory, null, null);
+                labVesselFactory, covidManifestCopier);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
