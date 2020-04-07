@@ -152,7 +152,7 @@ public class ColorCovidManifestEjb {
                         String manifestTube = positionToDto.get(position) == null ?
                                 null : positionToDto.get(position).getLabel();
                         String rackTube = bean.getRackScan().get(position);
-                        if (!Objects.equal(rackTube, manifestTube)) {
+                        if (!(rackTube == null && manifestTube == null) && !Objects.equal(rackTube, manifestTube)) {
                             messages.addError(String.format(WRONG_TUBE_IN_POSITION, position,
                                     StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
                                     StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube));
