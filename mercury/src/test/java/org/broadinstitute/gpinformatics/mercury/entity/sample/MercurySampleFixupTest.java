@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -681,7 +684,7 @@ public class MercurySampleFixupTest extends Arquillian {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void removeSamplesAndATheirVerssels() throws Exception {
         userBean.loginOSUser();
 
@@ -689,7 +692,12 @@ public class MercurySampleFixupTest extends Arquillian {
         final String fixupComment = lines.get(0);
         for (String line : lines.subList(1, lines.size())) {
             LabVessel labVessel = labVesselDao.findByIdentifier(line);
-            MatcherAssert.assertThat(labVessel, is(notNullValue()));
+            assertThat(labVessel, is(notNullValue()));
+
+            assertThat(labVessel.getMercurySamples().size(), is(equalTo(1)));
+
+            assertThat(labVessel.getDescendantVessels(), is(empty()));
+            assertThat(labVessel.getAncestors(), is(empty()));
 
             for (MercurySample mercurySample : labVessel.getMercurySamples()) {
                 labVessel.getMercurySamples().remove(mercurySample);
@@ -700,10 +708,7 @@ public class MercurySampleFixupTest extends Arquillian {
             }
             System.out.println(String.format("Deleting labVessel %s", labVessel.getLabel()));
             labVesselDao.remove(labVessel);
-
         }
-
-
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
         labVesselDao.flush();
     }
