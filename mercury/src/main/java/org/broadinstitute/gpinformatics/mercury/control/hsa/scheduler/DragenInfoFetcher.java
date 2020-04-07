@@ -15,7 +15,7 @@ import java.util.List;
 @Dependent
 public class DragenInfoFetcher {
 
-    private static final Log log = LogFactory.getLog(SlurmController.class);
+    private static final Log log = LogFactory.getLog(DragenInfoFetcher.class);
 
     @Inject
     private ShellUtils shellUtils;

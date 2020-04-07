@@ -3,16 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.control.hsa.metrics;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 
 import javax.enterprise.context.Dependent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -257,55 +254,6 @@ public class AlignmentStatsParser {
     private String parsePredictedSexChromosomePloidyFile(File predictedSexChromosomePloidy) throws IOException {
         String contents = FileUtils.readFileToString(predictedSexChromosomePloidy);
         return contents.replaceAll("Predicted sex chromosome ploidy", "").trim();
-    }
-
-    public AlignmentDataFiles parseStats(File outputDirectory, String filePrefix, DragenReplayInfo dragenReplayInfo,
-                                         MessageCollection messageCollection,
-                                         Map<String, String> mapReadGroupToSampleAlias,
-                                         Pair<String, String> runNameDatePair) {
-        try {
-            File averageCoverageMetrics = new File(outputDirectory, filePrefix + ".qc-coverage-region-1_overall_mean_cov.csv");
-            Float meanCoverage = MeanCoverageParser
-                    .parseMeanCoverage(new FileInputStream(averageCoverageMetrics), messageCollection);
-            if (meanCoverage == null) {
-                String err = "Failed to parse mean coverage " + averageCoverageMetrics.getPath();
-                log.error(err);
-                messageCollection.addError(err);
-            }
-
-            File mappingMetricsFile = new File(outputDirectory, filePrefix + ".mapping_metrics.csv");
-            File mappingMetricsOutputFile = new File(outputDirectory, filePrefix + ".mapping_metrics_mercury.dat");
-            File mappingSummaryOutputFile = new File(outputDirectory, filePrefix + ".mapping_summary_mercury.dat");
-            if (mappingMetricsFile.exists()) {
-                parseMappingMetrics(mappingMetricsFile, mappingSummaryOutputFile, mappingMetricsOutputFile,
-                        runNameDatePair.getLeft(), new Date(), dragenReplayInfo, mapReadGroupToSampleAlias,
-                        runNameDatePair.getRight(), meanCoverage, false);
-            } else {
-                messageCollection.addError("Failed to find mapping metrics file " + mappingMetricsFile.getPath());
-            }
-
-            File vcMetricsFile = new File(outputDirectory, filePrefix + ".vc_metrics.csv");
-            File vcMetricsOutputFile = new File(outputDirectory, filePrefix + ".vc_metrics_mercury.dat");
-            File vcSummaryOutputFile = new File(outputDirectory, filePrefix + ".vc_summary_mercury.dat");
-            if (vcMetricsFile.exists()) {
-                parseVcMetrics(vcMetricsFile, vcSummaryOutputFile, vcMetricsOutputFile, runNameDatePair.getLeft(),
-                        new Date(), dragenReplayInfo,  runNameDatePair.getRight(), false);
-            } else {
-                messageCollection.addError("Failed to find vc metrics file " + vcMetricsFile.getPath());
-            }
-
-            String alignSummaryLoad = String.format("%s_AlignRun_load.log", filePrefix);
-            String alignMetricLoad = String.format("%s_AlignRg_load.log", filePrefix);
-            String vcSummaryMetricLoad = String.format("%s_VCRunload.log", filePrefix);
-            String vcRGMetricLoad = String.format("%s_VCRGload.log", filePrefix);
-            return new AlignmentDataFiles(mappingSummaryOutputFile, mappingMetricsOutputFile, vcSummaryOutputFile, vcMetricsOutputFile,
-                    alignSummaryLoad, alignMetricLoad, vcSummaryMetricLoad, vcRGMetricLoad);
-        } catch (Exception e) {
-            log.error("Error parsing alignment/vc metrics", e);
-            messageCollection.addError("Error parsing alignment/vc metrics");
-        }
-
-        return null;
     }
 
     private void parseVcMetrics(File vcMetricsFile, File vcSummaryOutputFile, File vcMetricsOutputFile,

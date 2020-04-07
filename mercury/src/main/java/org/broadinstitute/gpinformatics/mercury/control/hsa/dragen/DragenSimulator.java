@@ -5,7 +5,6 @@ import com.opencsv.CSVWriter;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
@@ -216,22 +215,6 @@ public class DragenSimulator implements Dragen {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void createAlignmentAndVariantCallingMetrics(File alignmentOutputDir,
-                                                         SampleSheetBuilder.SampleData sampleData,
-                                                         String rgId) throws IOException {
-        File mappingMetrics = new File(alignmentOutputDir, sampleData.getSampleName() + ".mapping_metrics.csv");
-        String mappingMetricsTestData = IOUtils.toString(
-                getTestResource("dragen/TCGA-CF-A9FH-01A-11D-A38G-08.mapping_metrics.csv"));
-        mappingMetricsTestData = mappingMetricsTestData.replaceAll("CAATTAAC.CGAGATAT.2", rgId);
-        FileUtils.writeStringToFile(mappingMetrics, mappingMetricsTestData);
-
-        File vcMetrics = new File(alignmentOutputDir, sampleData.getSampleName() + ".vc_metrics.csv");
-        String vcMetricsTestData = IOUtils.toString(
-                getTestResource("dragen/TCGA-CF-A9FH-01A-11D-A38G-08.vc_metrics.csv"));
-        vcMetricsTestData = vcMetricsTestData.replaceAll("TCGA-CF-A9FH-01A-11D-A38G-08", sampleData.getSampleName());
-        FileUtils.writeStringToFile(vcMetrics, vcMetricsTestData);
     }
 
     private static void createDemultiplexMetricsFile(IlluminaSequencingRun run, File outputFile) throws IOException {

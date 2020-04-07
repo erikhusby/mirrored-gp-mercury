@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.hsa.engine;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -15,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.hsa.SampleSheetBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AggregationTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentMetricsTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.AlignmentTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.Bcl2FastqFolderUtil;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.BclDemultiplexTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.CrosscheckFingerprintTask;
@@ -26,10 +24,8 @@ import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.DragenFolderU
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.FingerprintUploadTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.GsUtilTask;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForFileTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.dragen.WaitForReviewTask;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AggregationState;
-import org.broadinstitute.gpinformatics.mercury.control.hsa.state.AlignmentState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.CrosscheckFingerprintState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.DemultiplexState;
 import org.broadinstitute.gpinformatics.mercury.control.hsa.state.FingerprintState;
@@ -64,7 +60,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -96,13 +91,6 @@ public class FiniteStateMachineFactory {
     private AggregationStateDao aggregationStateDao;
 
     public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
-                                                             MessageCollection messageCollection) {
-        RunCartridge flowcell = run.getSampleCartridge();
-        Set<VesselPosition> lanes = new HashSet<>(Arrays.asList(flowcell.getVesselGeometry().getVesselPositions()));
-        return createFiniteStateMachineForRun(run, lanes, runName, Collections.emptySet(), messageCollection);
-    }
-
-    public FiniteStateMachine createFiniteStateMachineForRun(IlluminaSequencingRun run, String runName,
                                                              Set<String> filterSampleIds,
                                                              MessageCollection messageCollection) {
         RunCartridge flowcell = run.getSampleCartridge();
@@ -132,107 +120,6 @@ public class FiniteStateMachineFactory {
             stateMachineDao.persist(finiteStateMachine);
         }
 
-        return finiteStateMachine;
-    }
-
-    @DaoFree
-    public FiniteStateMachine createFiniteStateMachineForRunDaoFree(IlluminaSequencingRun run,
-                                                                    Set<VesselPosition> lanes,
-                                                                    String runName,
-                                                                    Set<String> filterSampleIds,
-                                                                    MessageCollection messageCollection) {
-        List<State> states = new ArrayList<>();
-        List<Transition> transitions = new ArrayList<>();
-
-        FiniteStateMachine finiteStateMachine = new FiniteStateMachine();
-        finiteStateMachine.setStateMachineName(runName);
-
-        File runDir = new File(run.getRunDirectory());
-
-        // Create wait for RTA Complete Task
-        State sequencingRunComplete = new GenericState("SequencingRunComplete", finiteStateMachine);
-        sequencingRunComplete.setStartState(true);
-        sequencingRunComplete.setAlive(true);
-        File rtaCompleteFile = new File(runDir, "RTAComplete.txt");
-        WaitForFileTask waitForFileTask = new WaitForFileTask(rtaCompleteFile);
-        waitForFileTask.setTaskName("Waiting for RTAComplete.txt " + rtaCompleteFile.getPath());
-        sequencingRunComplete.addTask(waitForFileTask);
-        states.add(sequencingRunComplete);
-
-        Date dateQueued = new Date();
-        finiteStateMachine.setDateQueued(dateQueued);
-
-        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(filterSampleIds);
-
-        State demultiplex = new DemultiplexState(finiteStateMachine.getDateQueuedString(), finiteStateMachine,
-                new HashSet<>(mercurySamples), run.getSequencingRunChambers());
-        states.add(demultiplex);
-
-        DragenFolderUtil dragenFolderUtil = new DragenFolderUtil(dragenConfig, run, finiteStateMachine.getDateQueuedString());
-
-        // Default is to create 1 Sample Sheet for all of the lanes
-        File SampleSheetFile = new File(dragenFolderUtil.getAnalysisFolder(), "SampleSheet_hsa.csv");
-        SampleSheetBuilder.SampleSheet sampleSheet = sampleSheetBuilder.makeSampleSheet(run, lanes, filterSampleIds);
-        writeFile(SampleSheetFile, sampleSheet.toCsv(), messageCollection);
-
-        DemultiplexTask demultiplexTask = new DemultiplexTask(runDir, dragenFolderUtil.getFastQFolder(), SampleSheetFile);
-        demultiplexTask.setTaskName("Demultiplex_" + run.getRunName());
-        demultiplex.addTask(demultiplexTask);
-
-        DemultiplexMetricsTask demultiplexMetricsTask = new DemultiplexMetricsTask();
-        demultiplexMetricsTask.setTaskName("Demultiplex_Metrics_" + run.getRunName());
-        demultiplex.addExitTask(demultiplexMetricsTask);
-
-        Transition seqToDemux = new Transition("Sequencing Complete To Demultiplexing", finiteStateMachine);
-        seqToDemux.setFromState(sequencingRunComplete);
-        seqToDemux.setToState(demultiplex);
-        transitions.add(seqToDemux);
-
-        // Alignment
-        String fcBarcode = run.getSampleCartridge().getLabel();
-        for (SampleSheetBuilder.SampleData sampleData: sampleSheet.getData().getMapSampleNameToData().values()) {
-            MercurySample mercurySample =
-                    sampleSheet.getData().getMapSampleToMercurySample().get(sampleData.getSampleName());
-
-            IlluminaSequencingRunChamber runChamber = run.getSequencingRunChambers().stream()
-                    .filter(seq -> seq.getLaneNumber() == sampleData.getLane())
-                    .findFirst().get();
-            int laneNumber = runChamber.getLaneNumber();
-
-            String alignName = String.format("Align_%s_%d_%s", fcBarcode, laneNumber, sampleData.getSampleName());
-            AlignmentState alignmentState = new AlignmentState(alignName, finiteStateMachine,
-                    Collections.singleton(mercurySample), Collections.singleton(runChamber));
-            states.add(alignmentState);
-
-            File referenceFile = new File(AggregationActionBean.ReferenceGenome.HG38.getPath());
-            File fastQList = dragenFolderUtil.getFastQReadGroupFile(sampleData.getSampleId());
-            File outputDir = new File(dragenFolderUtil.getFastQFolder(), sampleData.getSampleName());
-            File intermediateResults = new File(dragenConfig.getIntermediateResults());
-
-            String gender = mercurySample.getSampleData().getGender();
-            if (!StringUtils.isBlank(gender)) {
-                gender = gender.toUpperCase();
-            }
-            AlignmentTask alignmentTask = new AlignmentTask(referenceFile, fastQList, sampleData.getSampleName(),
-                    outputDir, intermediateResults, sampleData.getSampleName(), sampleData.getSampleName(),
-                    new File(AggregationActionBean.ReferenceGenome.HG38.getContamFile()),
-                    new File(AggregationActionBean.ReferenceGenome.HG38.getCoverageBedFile()), gender);
-            alignmentTask.setTaskName("Alignment_" + sampleData.getSampleName() + "_" + runName);
-            alignmentState.addTask(alignmentTask);
-
-            AlignmentMetricsTask alignmentMetricsTask = new AlignmentMetricsTask();
-            alignmentMetricsTask.setTaskName("Alignment_Metric_" + runName);
-            alignmentState.addExitTask(alignmentMetricsTask);
-
-            Transition demuxToAlignment = new Transition("DemuxToAlign", finiteStateMachine);
-            demuxToAlignment.setFromState(demultiplex);
-            demuxToAlignment.setToState(alignmentState);
-            transitions.add(demuxToAlignment);
-        }
-
-        finiteStateMachine.setStatus(Status.RUNNING);
-        finiteStateMachine.setStates(states);
-        finiteStateMachine.setTransitions(transitions);
         return finiteStateMachine;
     }
 
@@ -529,10 +416,9 @@ public class FiniteStateMachineFactory {
         demultiplexState.setStartState(true);
         demultiplexState.addTask(task);
 
-        // TODO Metrics
-//        DemultiplexMetricsTask demultiplexMetricsTask = new DemultiplexMetricsTask();
-//        demultiplexMetricsTask.setTaskName("Demultiplex_Metrics_" + run.getRunName());
-//        demultiplexState.addExitTask(demultiplexMetricsTask);
+        DemultiplexMetricsTask demultiplexMetricsTask = new DemultiplexMetricsTask();
+        demultiplexMetricsTask.setTaskName("Demultiplex_Metrics_" + run.getRunName());
+        demultiplexState.addExitTask(demultiplexMetricsTask);
 
         finiteStateMachine.setStatus(Status.RUNNING);
         finiteStateMachine.setStates(Collections.singletonList(demultiplexState));
@@ -589,44 +475,6 @@ public class FiniteStateMachineFactory {
             finiteStateMachines.add(finiteStateMachine);
         }
         return finiteStateMachines;
-    }
-
-    public FiniteStateMachine createUploadTasks(List<String> sampleKeys, MessageCollection messageCollection) {
-        List<File> uploadFiles = new ArrayList<>();
-        for (String sampleKey: sampleKeys) {
-            try {
-                Optional<File> mostRecentAggregation =
-                        DragenFolderUtil.findMostRecentAggregation(dragenConfig, sampleKey);
-                if (!mostRecentAggregation.isPresent()) {
-                    messageCollection.addError("Failed to find aggregation for " + sampleKey);
-                } else {
-                    uploadFiles.add(mostRecentAggregation.get());
-                }
-            } catch (Exception e) {
-                messageCollection.addError(e.getMessage());
-            }
-        }
-
-        if (messageCollection.hasErrors()) {
-            return null;
-        }
-
-        FiniteStateMachine fsm = new FiniteStateMachine();
-        fsm.setStateMachineName("Upload");
-        fsm.setStatus(Status.RUNNING);
-
-        State state = new GenericState("Upload", fsm, Collections.emptySet());
-        state.setAlive(true);
-        state.setStartState(true);
-        fsm.setStates(Collections.singletonList(state));
-        for (File f: uploadFiles) {
-            String gsBucket = dragenConfig.getGsBucket();
-            GsUtilTask gsUtilTask = GsUtilTask.cp(f, gsBucket);
-            state.addTask(gsUtilTask);
-        }
-
-        stateMachineDao.persist(fsm);
-        return fsm;
     }
 
     public static boolean writeFile(File f, String content, MessageCollection messageCollection) {
