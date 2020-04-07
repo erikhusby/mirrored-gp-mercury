@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.MatcherAssert;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -43,6 +44,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.FIXUP)
 public class MercurySampleFixupTest extends Arquillian {
@@ -661,6 +665,44 @@ public class MercurySampleFixupTest extends Arquillian {
             labVessel.getMercurySamples().remove(mercurySample);
             mercurySample.getLabVessel().remove(labVessel);
         }
+
+        labVesselDao.persist(new FixupCommentary(lines.get(0)));
+        labVesselDao.flush();
+    }
+
+    /**
+     *
+     * Using file RemoveSamplesAndVessels.txt, we can clean up vessels which were accidentally created
+     *
+     * Format
+     * GPLIM-xxx fixup commentary
+     * [single lab vessel label]
+     * [single lab vessel label]
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void removeSamplesAndATheirVerssels() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("RemoveSamplesAndVessels.txt"));
+        final String fixupComment = lines.get(0);
+        for (String line : lines.subList(1, lines.size())) {
+            LabVessel labVessel = labVesselDao.findByIdentifier(line);
+            MatcherAssert.assertThat(labVessel, is(notNullValue()));
+
+            for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+                labVessel.getMercurySamples().remove(mercurySample);
+                mercurySample.getLabVessel().remove(labVessel);
+                System.out.println(String.format("Removed %s from lab vessel %s and deleting it.", mercurySample.getSampleKey(),
+                        labVessel.getLabel()));
+                mercurySampleDao.remove(mercurySample);
+            }
+            System.out.println(String.format("Deleting labVessel %s", labVessel.getLabel()));
+            labVesselDao.remove(labVessel);
+
+        }
+
 
         labVesselDao.persist(new FixupCommentary(lines.get(0)));
         labVesselDao.flush();
