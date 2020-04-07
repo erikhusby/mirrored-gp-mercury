@@ -149,11 +149,10 @@ public class ColorCovidManifestEjb {
                     filter(StringUtils::isNotBlank).
                     distinct().
                     forEach(position -> {
-                        String manifestTube = positionToDto.get(position) == null ?
-                                null : positionToDto.get(position).getLabel();
-                        String rackTube = bean.getRackScan().get(position);
-                        if (StringUtils.isNotBlank(manifestTube) && StringUtils.isNotBlank(rackTube) &&
-                                !rackTube.equals(manifestTube)) {
+                        String manifestTube = StringUtils.trimToEmpty(positionToDto.get(position) == null ?
+                                null : positionToDto.get(position).getLabel());
+                        String rackTube = StringUtils.trimToEmpty(bean.getRackScan().get(position));
+                        if (!Objects.equal(rackTube, manifestTube)) {
                             messages.addError(String.format(WRONG_TUBE_IN_POSITION, position,
                                     StringUtils.isBlank(rackTube) ? "no tube" : rackTube,
                                     StringUtils.isBlank(manifestTube) ? "no tube" : manifestTube));
