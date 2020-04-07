@@ -63,6 +63,9 @@ public class AbcInitialValuesFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    /**
+     * Set up default billing triggers on the ResearchProject.
+     */
     @Test(enabled = false)
     public void testGPLIM_6698_AoUProductBillingTriggers() throws Exception {
         userBean.loginOSUser();
@@ -84,7 +87,10 @@ public class AbcInitialValuesFixupTest extends Arquillian {
 
         utx.commit();
     }
-
+    /**
+     * Configure key-value mappings for AoU Parameters page. The key-value mappings are used to configure PDOs created
+     * through ProductOrderResource
+     */
     @Test(enabled = false)
     public void gplim6698_billingTriggerValueMappings() throws Exception {
         utx.begin();
@@ -112,6 +118,10 @@ public class AbcInitialValuesFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    /**
+     * Configure AllOfUs products/add-ons for automatic billing.
+     */
     @Test(enabled = false)
        public void testGPLIM_6698_AoUBillingRequirements() throws Exception {
            userBean.loginOSUser();
