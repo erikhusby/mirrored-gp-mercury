@@ -80,7 +80,7 @@
             .searchWrapper > input,label {
                 float: left;
                 clear:none;
-                margin-top:5px;
+                margin-top:10px;
                 margin-right:5px;
             }
         </style>
