@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -113,18 +114,27 @@ public class ColorCovidManifestParser {
             }
             ++rowNumber;
         }
-        // Well positions must be present on all rows or on none. If present they must have no duplicates.
-        List<String> positions = dtos.stream().
+        // Tube barcodes must have no duplicates.
+        String duplicateBarcodes = dtos.stream().
+                map(dto -> dto.getLabel()).
+                collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream().
+                filter(keyValue -> keyValue.getValue() > 1).
+                map(keyValue -> keyValue.getKey()).
+                sorted().
+                collect(Collectors.joining(", "));
+        if (!duplicateBarcodes.isEmpty()) {
+            messages.addError("Manifest contains duplicate matrix_ids " + duplicateBarcodes);
+        }
+        // Well positions must have no duplicates.
+        String duplicatePositions = dtos.stream().
                 map(dto -> dto.getSampleMetadata().get(Metadata.Key.WELL_POSITION)).
-                filter(StringUtils::isNotBlank).
-                collect(Collectors.toList());
-        if (positions.size() > 0) {
-            if (positions.size() != dtos.size()) {
-                messages.addError("Some manifest well positions values are missing.");
-            }
-            if (positions.size() != positions.stream().distinct().count()) {
-                messages.addError("Manifest contains duplicate well positions.");
-            }
+                collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).entrySet().stream().
+                filter(keyValue -> keyValue.getValue() > 1).
+                map(keyValue -> keyValue.getKey()).
+                sorted().
+                collect(Collectors.joining(", "));
+        if (!duplicatePositions.isEmpty()) {
+            messages.addError("Manifest contains duplicate well_locations " + duplicatePositions);
         }
     }
 
