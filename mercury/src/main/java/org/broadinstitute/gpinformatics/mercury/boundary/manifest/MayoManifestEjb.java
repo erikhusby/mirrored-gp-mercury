@@ -1151,6 +1151,11 @@ public class MayoManifestEjb {
         messages.addAll(pdoMessageCollection);
     }
 
+    /**
+     * For the given ProductOrder, create a WorkCompleteMessage for each Product and Sample combination (including
+     * Product AddOns). Clients calling this method are responsible for determining if automatically billing is
+     * appropriate.
+     */
     public List<WorkCompleteMessage> buildWorkCompleteMessages(ProductOrder productOrder) {
         List<WorkCompleteMessage> workCompleteMessages = new ArrayList<>();
         productOrder.getSamples().forEach(productOrderSample -> {

@@ -324,7 +324,7 @@ public class BillingEjb {
             return true;
         }
 
-        Product product = order.findProduct(partNumber);
+        Product product = order.findOrderedProduct(partNumber);
         if (product == null) {
             log.error("Attempt to bill with no product");
             return false;

@@ -160,8 +160,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return cachedSapQuote;
     }
 
+    /**
+     * Find Product in this order by partNumber. The product can be either the primary Product or an add-on
+     *
+     * @return Returns the found Product with the given part number or null if the part number is not
+     * associated with any products or add-ons in this ProductOrder
+     */
     @Nullable
-    public Product findProduct(String partNumber) {
+    public Product findOrderedProduct(String partNumber) {
         Product foundProduct;
         if (partNumber == null || getProduct().getPartNumber().equals(partNumber)) {
             foundProduct = getProduct();
@@ -171,7 +177,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return foundProduct;
     }
 
-    public boolean hasBillingTriggerSelected() {
+    public boolean isBillingTriggerSelected() {
         return CollectionUtils.isNotEmpty(billingTriggers);
     }
 
