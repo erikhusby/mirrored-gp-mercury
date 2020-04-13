@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,10 +11,12 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -98,5 +101,19 @@ public class WorkflowContainerTest extends Arquillian {
         verify(emailSender, times(1)).
                 sendHtmlEmail(any(AppConfig.class), anyString(), anyCollection(), anyString(), anyString(), anyBoolean(), anyBoolean());
 
+    }
+
+    /** Verifies that WorkflowConfig is loaded from db preferences when running in a CDI container. */
+    @Test
+    public void testLoadFromDb() throws Exception {
+        WorkflowConfig workflowConfig = WorkflowLoader.getWorkflowConfig();
+        WorkflowConfig workflowConfigFile = WorkflowLoader.loadFromFile();
+        // Just needs to find one mismatch to establish that the config was not loaded from file.
+        Assert.assertTrue(!CollectionUtils.isEqualCollection(workflowConfig.getProductWorkflowDefs(),
+                workflowConfigFile.getProductWorkflowDefs()) ||
+                !CollectionUtils.isEqualCollection(workflowConfig.getMapProcessDefToWorkflow().keySet(),
+                        workflowConfigFile.getMapProcessDefToWorkflow().keySet()) ||
+                !CollectionUtils.isEqualCollection(workflowConfig.getMapProcessDefToWorkflow().values(),
+                        workflowConfigFile.getMapProcessDefToWorkflow().values()));
     }
 }

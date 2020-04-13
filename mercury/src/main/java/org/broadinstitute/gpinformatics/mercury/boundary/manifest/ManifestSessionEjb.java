@@ -342,8 +342,10 @@ public class ManifestSessionEjb {
                 .filter(manifestRecord -> manifestRecord.getStatus() == ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)
                 .collect(Collectors.toList());
 
-        if (scannedRecords.size() == manifestSession.getRecords().size()) {
-            closeSession(manifestSession);
+        if(manifestSession.getAccessioningProcessType() == AccessioningProcessType.COVID) {
+            if (scannedRecords.size() == manifestSession.getRecords().size()) {
+                closeSession(manifestSession);
+            }
         }
 
         return manifestSession;
