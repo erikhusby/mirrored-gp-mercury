@@ -2273,7 +2273,7 @@ public class LabBatchFixUpTest extends Arquillian {
             }
             System.out.println("Adding " + labVessel.getLabel() + " to " + labBatch.getBatchName());
             LabBatchResource.addToBatch(vessels, labBatch, fields[1],
-                    fields[4], ArchetypeAttribute.dateFormat.parse(fields[3]), bucketEjb);
+                    fields[4], ArchetypeAttribute.dateFormat.parse(fields[3]), bucketEjb, true);
             TransferTraverserCriteria transferTraverserCriteria = new LabBatchFixUpTest.ComputeLabBatchTtc(true);
             for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
                 containerRole.evaluateCriteria(vesselPosition, transferTraverserCriteria,

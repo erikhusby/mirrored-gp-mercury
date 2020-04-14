@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
@@ -1257,7 +1256,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1293,7 +1292,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
-        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
 
@@ -1497,7 +1496,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         if(productOrder.isSavedInSAP()) {
-            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
         }
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
@@ -2252,6 +2251,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    @Test(enabled = false)
     public void cleanupAccidentalProductionOrderCreation() throws Exception {
         userBean.loginOSUser();
 

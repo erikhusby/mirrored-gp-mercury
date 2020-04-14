@@ -73,7 +73,6 @@ public class WorkflowTest {
 
     @BeforeTest
     public void setupWorkflow() {
-        workflowConfig = new WorkflowLoader().getWorkflowConfig();
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration =  new BSPSetVolumeConcentrationStub();
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
@@ -85,7 +84,7 @@ public class WorkflowTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        workflowConfig = new WorkflowLoader().getWorkflowConfig();
+        workflowConfig = WorkflowLoader.getWorkflowConfig();
     }
 
     @Test

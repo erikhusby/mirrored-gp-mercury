@@ -144,8 +144,6 @@ public class MayoManifestEjb {
                 put("ShipmentCondition", new CustomFieldDefinition("customfield_15661", "Shipment Condition", false));
                 put("TrackingNumber", new CustomFieldDefinition("customfield_15663", "Tracking Number", false));
                 put("KitDeliveryMethod", new CustomFieldDefinition("customfield_13767", "Kit Delivery Method", false));
-                put("RequestingPhysician",
-                        new CustomFieldDefinition("customfield_16163", "Requesting Physician", false));
                 put("ReceiptType", new CustomFieldDefinition("customfield_17360", "Receipt Type", false));
             }};
 
@@ -1001,7 +999,6 @@ public class MayoManifestEjb {
                 add(new CustomField(bean.getDeliveryMethod(), JIRA_DEFINITION_MAP.get("KitDeliveryMethod")));
             }
             add(new CustomField(JIRA_DEFINITION_MAP.get("Racks"), bean.getRackBarcodeString()));
-            add(new CustomField(JIRA_DEFINITION_MAP.get("RequestingPhysician"), " "));
             add(new CustomField(JIRA_DEFINITION_MAP.get("MaterialTypeCounts"), " "));
         }};
 
@@ -1129,8 +1126,7 @@ public class MayoManifestEjb {
         productOrderData.setModifiedDate(now);
         productOrderData.setPlacedDate(now);
         productOrderData.setNumberOfSamples(accessionedTubes.size());
-        productOrderData.setProduct(productPartNumber);
-        productOrderData.setProductName(product.getProductName());
+        productOrderData.setProductPartNumber(productPartNumber);
         productOrderData.setQuoteId(quoteId);
         productOrderData.setResearchProjectId(rpId);
         // For Mayo the tube barcode is also used as the Broad sample name.

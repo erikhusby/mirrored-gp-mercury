@@ -155,14 +155,14 @@ public class LabBatchResource {
                     labBatchBean.getCreatedDate());
         }
         addToBatch(labVesselSet, labBatch, labBatchBean.getWorkflowName(), labBatchBean.getUsername(),
-                labBatchBean.getCreatedDate(), bucketEjb);
+                labBatchBean.getCreatedDate(), bucketEjb, true);
 
         return labBatch;
     }
 
     public static Set<ProductOrder> addToBatch(Set<LabVessel> labVesselSet, LabBatch labBatch, String productFamilyName,
-            String username, Date createdDate, BucketEjb bucketEjb) {
-        // Create bucket entries (if any) and add to batch
+            String username, Date createdDate, BucketEjb bucketEjb, boolean bucketedControls) {
+        // Finds PDOs for the samples.
         LabVessel.loadSampleDataForBuckets(labVesselSet);
         ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
         List<LabVessel> controls = new ArrayList<>();
@@ -201,7 +201,7 @@ public class LabBatchResource {
         }
 
         if (!mapPdoToVessels.isEmpty()) {
-            // Pick a PDO arbitrarily
+            // For controls, picks one of the other sample's PDO arbitrarily.
             ProductOrder controlPdo = mapPdoToVessels.keySet().iterator().next();
             for (LabVessel control : controls) {
                 mapPdoToVessels.put(controlPdo, control);
@@ -210,7 +210,7 @@ public class LabBatchResource {
 
         int offset = 0;
         for (ProductOrder productOrder : mapPdoToVessels.keySet()) {
-            // Remove vessels that have already been bucketed for this PDO
+            // Finds vessels that haven't yet been bucketed for this PDO.
             List<LabVessel> vessels = mapPdoToVessels.get(productOrder);
             List<LabVessel> noBucketEntryVessels = new ArrayList<>();
             for (LabVessel vessel : vessels) {
@@ -221,7 +221,8 @@ public class LabBatchResource {
                         break;
                     }
                 }
-                if (!found) {
+                // Excludes control samples if controls should not be bucketed.
+                if (!found && (bucketedControls || !controls.contains(vessel))) {
                     noBucketEntryVessels.add(vessel);
                 }
             }
@@ -232,6 +233,7 @@ public class LabBatchResource {
                 // Avoid unique constraint on bucket lab events
                 localCreatedDate = new Date(createdDate.getTime() + offset);
             }
+            // Creates bucket entries.
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             productOrder, username,
@@ -241,7 +243,7 @@ public class LabBatchResource {
                 throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
             }
             labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
-            // todo jmt check that bucket entries count matches lab vessel count?
+            // Moves the bucket entries to the batch.
             bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
             offset++;
         }

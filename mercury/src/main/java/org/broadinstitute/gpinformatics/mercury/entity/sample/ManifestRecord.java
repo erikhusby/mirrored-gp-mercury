@@ -370,6 +370,21 @@ public class ManifestRecord implements Updatable {
         public String getDisplayName() {
             return displayName;
         }
+
+        public static Status fromName(String Name) {
+
+            // todo jmt improve
+            Status foundStatus = null;
+
+            for (Status key : values()) {
+                if (key.name().equals(Name)) {
+                    foundStatus = key;
+                    break;
+                }
+            }
+            return foundStatus;
+        }
+
     }
 
     /**
