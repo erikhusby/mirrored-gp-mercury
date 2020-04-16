@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.138-SNAPSHOT</version>
+    <version>1.139-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
