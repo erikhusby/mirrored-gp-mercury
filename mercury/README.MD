@@ -10,4 +10,4 @@ This has been modified ont the release branch.
 
 This has been modified on the develop_test branch
 
-And was merged into the hotfix branch.
+And was merged into the hotfix branch. EDITED ON HOTFIX BRANCH.
